@@ -1,0 +1,60 @@
+const sendOtp = async () => {
+  try {
+    const response = await axios.post(
+      `${backendUrl}/api/user/send-otp`,
+      {
+        email,
+      }
+    );
+
+    if (response.data.success) {
+      alert("Verification code sent to your email");
+    }
+
+  } catch (error) {
+
+    alert(
+      error.response?.data?.message ||
+      "Unable to send verification code"
+    );
+  }
+};
+
+
+<button
+  type="button"
+  onClick={sendOtp}
+>
+  Send OTP
+</button>
+
+const [otp, setOtp] = useState("");
+
+
+const verifyOtp = async () => {
+  try {
+
+    const response = await axios.post(
+      `${backendUrl}/api/user/verify-otp`,
+      {
+        email,
+        otp,
+      }
+    );
+
+    if (response.data.success) {
+
+      alert("Email verified successfully");
+
+      // Now allow registration
+      setEmailVerified(true);
+    }
+
+  } catch (error) {
+
+    alert(
+      error.response?.data?.message ||
+      "Invalid verification code"
+    );
+  }
+};
