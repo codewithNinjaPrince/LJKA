@@ -8,10 +8,11 @@ import Navbar from "../components/Navbar";
 const PublicLayout = () => (
   <div className="w-full min-h-screen bg-[var(--ljka-bg)] text-[var(--ljka-text)] overflow-x-hidden">
     {/* FIXED WEBSITE HEADER */}
-    <div className="fixed top-0 left-0 z-50 w-full">
-      <AnnouncementBar />
-      <Navbar />
-    </div>
+   <div className="fixed inset-x-0 top-0 z-[100]">
+    <AnnouncementBar />
+  <Navbar />
+  
+</div>
 
     {/* PAGE CONTENT */}
     <main className="pt-[108px] sm:pt-[112px]">

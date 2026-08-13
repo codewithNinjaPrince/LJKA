@@ -1,73 +1,210 @@
 @import "tailwindcss";
 
+/* =========================================================
+   LJKA — GLOBAL DESIGN SYSTEM
+   Lakhdaatar Jeevan Kalyan Association
+   ========================================================= */
+
 :root {
-  --ljka-primary: #0B1F33;
-  --ljka-gold: #C98A1A;
-  --ljka-bg: #F7F8FA;
+
+  /* =======================================================
+     BRAND COLORS
+     ======================================================= */
+
+  /* Primary — Deep Emerald */
+  --ljka-primary: #006B4F;
+
+  /* Dark Emerald — hover / active / deep sections */
+  --ljka-primary-dark: #00523D;
+
+  /* Light Emerald — subtle brand areas */
+  --ljka-primary-light: #0A8060;
+
+  /* Secondary — Rich Gold */
+  --ljka-gold: #C99A24;
+
+  /* Dark Gold — hover / active */
+  --ljka-gold-dark: #A97F18;
+
+  /* Soft Gold — badges / highlights */
+  --ljka-gold-light: #F4E7BD;
+
+
+  /* =======================================================
+     BACKGROUNDS
+     ======================================================= */
+
+  /* Main website background — Ivory White */
+  --ljka-bg: #FAFAF5;
+
+  /* Card background */
   --ljka-card: #FFFFFF;
-  --ljka-text: #17212B;
-  --ljka-muted: #667085;
+
+  /* Section background — Soft Mint */
+  --ljka-mint: #E8F3EF;
+
+  /* Very light emerald background */
+  --ljka-primary-bg: #F0F7F4;
+
+
+  /* =======================================================
+     TEXT
+     ======================================================= */
+
+  /* Main text — Charcoal */
+  --ljka-text: #263238;
+
+  /* Secondary / muted text */
+  --ljka-muted: #607078;
+
+  /* Light / subtle text */
+  --ljka-text-light: #879398;
+
+  /* Text used on emerald */
+  --ljka-text-on-primary: #FFFFFF;
+
+  /* Text used on gold */
+  --ljka-text-on-gold: #263238;
+
+
+  /* =======================================================
+     BORDERS
+     ======================================================= */
+
+  --ljka-border: #DDE7E2;
+
+  --ljka-border-light: #E9EFEC;
+
+  --ljka-border-gold: #C99A24;
+
+
+  /* =======================================================
+     STATUS COLORS
+     ======================================================= */
+
   --ljka-success: #16805B;
+
   --ljka-danger: #C0392B;
+
+  --ljka-warning: #C98A1A;
+
+  --ljka-info: #2878A8;
+
+
+  /* =======================================================
+     SHADOWS
+     ======================================================= */
+
+  --ljka-shadow-sm:
+    0 2px 8px rgba(38, 50, 56, 0.06);
+
+  --ljka-shadow-md:
+    0 6px 20px rgba(38, 50, 56, 0.09);
+
+  --ljka-shadow-lg:
+    0 12px 35px rgba(38, 50, 56, 0.12);
+
+
+  /* =======================================================
+     BORDER RADIUS
+     ======================================================= */
+
+  --ljka-radius-sm: 6px;
+
+  --ljka-radius-md: 10px;
+
+  --ljka-radius-lg: 16px;
+
+  --ljka-radius-xl: 24px;
+
+
+  /* =======================================================
+     GRADIENTS
+     ======================================================= */
+
+  /* Deep Emerald */
+  --ljka-gradient-primary:
+    linear-gradient(
+      135deg,
+      #006B4F 0%,
+      #00523D 100%
+    );
+
+  /* Emerald + Gold */
+  --ljka-gradient-brand:
+    linear-gradient(
+      135deg,
+      #006B4F 0%,
+      #C99A24 100%
+    );
+
+  /* Soft background */
+  --ljka-gradient-soft:
+    linear-gradient(
+      135deg,
+      #E8F3EF 0%,
+      #FAFAF5 100%
+    );
 }
 
-a.active hr {
-  display: block;
-}
 
-html,
-body {
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;
-}
-
-body {
-  background: var(--ljka-bg);
-  color: var(--ljka-text);
-}
-
-@keyframes marquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-.animate-marquee {
-  animation: marquee 18s linear infinite;
-}
-
-@import "tailwindcss";
-
-:root {
-  --ljka-primary: #0b2239;
-  --ljka-gold: #d49a17;
-  --ljka-bg: #f8fafc;
-  --ljka-text: #172033;
-  --ljka-muted: #6b7280;
-}
+/* =========================================================
+   GLOBAL HTML
+   ========================================================= */
 
 html {
-  scrollbar-width: none;
+  margin: 0;
+  padding: 0;
+
   scroll-behavior: smooth;
+
+  /* Hide scrollbar */
+  scrollbar-width: none;
 }
+
+
+/* =========================================================
+   GLOBAL BODY
+   ========================================================= */
 
 body {
   margin: 0;
   padding: 0;
+
   overflow-x: hidden;
+
+  background: var(--ljka-bg);
+
+  color: var(--ljka-text);
+
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
   scrollbar-width: none;
 }
+
+
+/* =========================================================
+   HIDE SCROLLBAR — CHROME / EDGE / SAFARI
+   ========================================================= */
 
 html::-webkit-scrollbar,
 body::-webkit-scrollbar {
   display: none;
+
   width: 0;
   height: 0;
 }
+
+
+/* =========================================================
+   GLOBAL SCROLLBAR RESET
+   ========================================================= */
 
 * {
   scrollbar-width: none;
@@ -75,15 +212,49 @@ body::-webkit-scrollbar {
 
 *::-webkit-scrollbar {
   display: none;
+
   width: 0;
   height: 0;
 }
+
+
+/* =========================================================
+   LINKS
+   ========================================================= */
+
+a {
+  color: inherit;
+
+  text-decoration: none;
+}
+
+
+/* =========================================================
+   ACTIVE NAVIGATION
+   ========================================================= */
 
 a.active hr {
   display: block;
 }
 
+
+/* =========================================================
+   TEXT SELECTION
+   ========================================================= */
+
+::selection {
+  background: var(--ljka-primary);
+
+  color: var(--ljka-text-on-primary);
+}
+
+
+/* =========================================================
+   MARQUEE ANIMATION
+   ========================================================= */
+
 @keyframes marquee {
+
   from {
     transform: translateX(0);
   }
@@ -93,6 +264,23 @@ a.active hr {
   }
 }
 
+
 .animate-marquee {
   animation: marquee 18s linear infinite;
+}
+
+
+/* =========================================================
+   OPTIONAL — REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-marquee {
+    animation: none;
+  }
 }
