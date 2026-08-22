@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, NavLink } from "react-router-dom";
 import {
-  FaBars,
   FaTimes,
   FaArrowRight,
   FaUserCircle,
@@ -62,38 +61,38 @@ const Navbar = () => {
               </div>
             </button>
 
-           {/* DESKTOP NAVIGATION */}
-<nav className="hidden min-w-0 flex-1 items-center justify-center lg:flex">
-  <div className="flex items-center gap-0.5 xl:gap-1">
-    {NAV_LINKS.map(([path, name]) => (
-      <NavLink
-        key={path}
-        to={path}
-        className={({ isActive }) =>
-          `relative whitespace-nowrap rounded-lg px-2.5 py-2.5 text-[12px] font-semibold transition-all xl:px-3 xl:text-[13px] ${
-            isActive
-              ? "bg-white/20 text-white"
-              : "text-white/75 hover:bg-white/15 hover:text-white"
-          }`
-        }
-      >
-        {({ isActive }) => (
-          <>
-            {name}
+            {/* DESKTOP NAVIGATION */}
+            <nav className="hidden min-w-0 flex-1 items-center justify-center lg:flex">
+              <div className="flex items-center gap-0.5 xl:gap-1">
+                {NAV_LINKS.map(([path, name]) => (
+                  <NavLink
+                    key={path}
+                    to={path}
+                    className={({ isActive }) =>
+                      `relative whitespace-nowrap rounded-lg px-2.5 py-2.5 text-[12px] font-semibold transition-all xl:px-3 xl:text-[13px] ${
+                        isActive
+                          ? "bg-white/20 text-white"
+                          : "text-white/75 hover:bg-white/15 hover:text-white"
+                      }`
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
+                        {name}
 
-            <span
-              className={`absolute bottom-1 left-3 right-3 h-[2px] origin-center rounded-full bg-[var(--ljka-gold)] transition-transform duration-200 ${
-                isActive
-                  ? "scale-x-100"
-                  : "scale-x-0"
-              }`}
-            />
-          </>
-        )}
-      </NavLink>
-    ))}
-  </div>
-</nav>
+                        <span
+                          className={`absolute bottom-1 left-3 right-3 h-[2px] origin-center rounded-full bg-[var(--ljka-gold)] transition-transform duration-200 ${
+                            isActive
+                              ? "scale-x-100"
+                              : "scale-x-0"
+                          }`}
+                        />
+                      </>
+                    )}
+                  </NavLink>
+                ))}
+              </div>
+            </nav>
 
             {/* DESKTOP ACTIONS */}
             <div className="hidden shrink-0 items-center gap-2 lg:flex">
@@ -121,10 +120,15 @@ const Navbar = () => {
               onClick={() => setMenuOpen(true)}
               aria-label="Open menu"
               aria-expanded={menuOpen}
-              className="ml-auto flex h-10 w-10 shrink-0 items-center justify-center overflow-visible rounded-lg border border-white/20 bg-white/5 text-[var(--ljka-gold)] transition hover:border-[var(--ljka-gold)] hover:bg-white/10 lg:hidden"
+              className="ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-white/25 bg-white/5 transition hover:border-[var(--ljka-gold)] hover:bg-white/10 lg:hidden"
             >
-              <FaBars className="shrink-0 text-[17px] leading-none" />
+              <span className="flex h-5 w-5 flex-col justify-center gap-[4px]">
+                <span className="block h-[2px] w-5 rounded-full bg-[var(--ljka-gold)]" />
+                <span className="block h-[2px] w-5 rounded-full bg-[var(--ljka-gold)]" />
+                <span className="block h-[2px] w-5 rounded-full bg-[var(--ljka-gold)]" />
+              </span>
             </button>
+
           </div>
         </div>
       </header>
@@ -145,10 +149,9 @@ const Navbar = () => {
           ========================================================= */}
 
       <aside
-        className={`fixed right-0 top-0 z-[70] h-full w-[84%] max-w-[380px] bg-[var(--ljka-card)] shadow-2xl transition-transform duration-300 ease-out lg:hidden ${menuOpen
-            ? "translate-x-0"
-            : "translate-x-full"
-          }`}
+        className={`fixed right-0 top-0 z-[70] h-full w-[84%] max-w-[380px] bg-[var(--ljka-card)] shadow-2xl transition-transform duration-300 ease-out lg:hidden ${
+          menuOpen ? "translate-x-0" : "translate-x-full"
+        }`}
       >
         <div className="flex h-full flex-col">
 
@@ -183,7 +186,7 @@ const Navbar = () => {
 
           {/* MEMBERSHIP HIGHLIGHT */}
           <div className="mx-4 mt-5 rounded-xl border border-[var(--ljka-gold)]/30 bg-[var(--ljka-gold-light)]/45 px-4 py-3.5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ljka-muted)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ljka-primary-light)]">
               LJKA Membership
             </p>
 
@@ -209,9 +212,10 @@ const Navbar = () => {
                   to={path}
                   onClick={closeMenu}
                   className={({ isActive }) =>
-                    `flex items-center justify-between rounded-lg px-3.5 py-3.5 text-[14px] transition ${isActive
-                      ? "bg-[var(--ljka-primary)] font-semibold text-white shadow-sm"
-                      : "font-semibold text-[var(--ljka-primary-light)] hover:bg-[var(--ljka-primary-bg)] hover:text-[var(--ljka-primary)]"
+                    `flex items-center justify-between rounded-lg px-3.5 py-3.5 text-[14px] font-semibold transition-all duration-200 ${
+                      isActive
+                        ? "bg-[var(--ljka-primary)] text-white shadow-sm"
+                        : "text-[var(--ljka-primary-light)] hover:bg-[var(--ljka-primary)] hover:text-white"
                     }`
                   }
                 >
@@ -228,12 +232,13 @@ const Navbar = () => {
               ))}
             </div>
           </div>
+
           {/* MOBILE ACTIONS */}
           <div className="space-y-2 border-t border-[var(--ljka-border)] bg-[var(--ljka-bg)] p-4">
             <NavLink
               to="/login"
               onClick={closeMenu}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--ljka-primary)]/25 bg-[var(--ljka-card)] py-3 text-sm font-semibold text-[var(--ljka-primary)] transition hover:border-[var(--ljka-primary)] hover:bg-[var(--ljka-primary-bg)]"
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--ljka-primary)]/25 bg-[var(--ljka-card)] py-3 text-sm font-semibold text-[var(--ljka-primary)] transition hover:border-[var(--ljka-primary)] hover:bg-[var(--ljka-primary)] hover:text-white"
             >
               <FaUserCircle />
               Login
@@ -247,6 +252,7 @@ const Navbar = () => {
               Become a Member
             </NavLink>
           </div>
+
         </div>
       </aside>
     </>
