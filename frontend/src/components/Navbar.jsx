@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, NavLink } from "react-router-dom";
-import { FaBars, FaTimes, FaArrowRight, FaUserCircle } from "react-icons/fa";
+import {
+  FaBars,
+  FaTimes,
+  FaArrowRight,
+  FaUserCircle,
+} from "react-icons/fa";
 
 const NAV_LINKS = [
   ["/", "Home"],
@@ -18,7 +23,10 @@ const Navbar = () => {
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [menuOpen]);
 
   const closeMenu = () => setMenuOpen(false);
@@ -34,46 +42,88 @@ const Navbar = () => {
           <div className="flex min-h-[78px] items-center gap-5 xl:min-h-[84px] xl:gap-7">
 
             {/* BRAND */}
-            <button type="button" onClick={() => navigate("/")} className="flex shrink-0 items-center gap-3 text-left">
-              <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-[var(--ljka-gold)] bg-white text-base font-bold text-[var(--ljka-primary)] shadow-sm xl:h-12 xl:w-12 xl:text-lg">LJ</div>
+            <button
+              type="button"
+              onClick={() => navigate("/")}
+              className="flex shrink-0 items-center gap-3 text-left"
+            >
+              <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-[var(--ljka-gold)] bg-white text-base font-bold text-[var(--ljka-primary)] shadow-sm xl:h-12 xl:w-12 xl:text-lg">
+                LJ
+              </div>
 
               <div className="leading-tight">
-                <h1 className="whitespace-nowrap text-[14px] font-bold tracking-[-0.01em] text-white sm:text-[15px] xl:text-[17px]">Lakhdaatar Jeevan Kalyan Association</h1>
-                <p className="mt-1 whitespace-nowrap text-[9px] font-medium text-white/65 sm:text-[10px] xl:text-[11px]">लखदातार जीवन कल्याण एसोसिएशन</p>
+                <h1 className="whitespace-nowrap text-[14px] font-bold tracking-[-0.01em] text-white sm:text-[15px] xl:text-[17px]">
+                  Lakhdaatar Jeevan Kalyan Association
+                </h1>
+
+                <p className="mt-1 whitespace-nowrap text-[9px] font-medium text-white/65 sm:text-[10px] xl:text-[11px]">
+                  लखदातार जीवन कल्याण एसोसिएशन
+                </p>
               </div>
             </button>
 
-            {/* DESKTOP NAVIGATION */}
-            <nav className="hidden min-w-0 flex-1 items-center justify-center lg:flex">
-              <div className="flex items-center gap-0.5 xl:gap-1">
-                {NAV_LINKS.map(([path, name]) => (
-                  <NavLink key={path} to={path} className={({ isActive }) => `relative whitespace-nowrap rounded-lg px-2.5 py-2.5 text-[12px] font-semibold transition-all xl:px-3 xl:text-[13px] ${isActive ? "bg-white/10 text-white" : "text-white/75 hover:bg-white/10 hover:text-white"}`}>
-                    {({ isActive }) => (
-                      <>
-                        {name}
-                        <span className={`absolute bottom-1 left-3 right-3 h-[2px] origin-center rounded-full bg-[var(--ljka-gold)] transition-transform duration-200 ${isActive ? "scale-x-100" : "scale-x-0"}`} />
-                      </>
-                    )}
-                  </NavLink>
-                ))}
-              </div>
-            </nav>
+           {/* DESKTOP NAVIGATION */}
+<nav className="hidden min-w-0 flex-1 items-center justify-center lg:flex">
+  <div className="flex items-center gap-0.5 xl:gap-1">
+    {NAV_LINKS.map(([path, name]) => (
+      <NavLink
+        key={path}
+        to={path}
+        className={({ isActive }) =>
+          `relative whitespace-nowrap rounded-lg px-2.5 py-2.5 text-[12px] font-semibold transition-all xl:px-3 xl:text-[13px] ${
+            isActive
+              ? "bg-white/20 text-white"
+              : "text-white/75 hover:bg-white/15 hover:text-white"
+          }`
+        }
+      >
+        {({ isActive }) => (
+          <>
+            {name}
+
+            <span
+              className={`absolute bottom-1 left-3 right-3 h-[2px] origin-center rounded-full bg-[var(--ljka-gold)] transition-transform duration-200 ${
+                isActive
+                  ? "scale-x-100"
+                  : "scale-x-0"
+              }`}
+            />
+          </>
+        )}
+      </NavLink>
+    ))}
+  </div>
+</nav>
 
             {/* DESKTOP ACTIONS */}
             <div className="hidden shrink-0 items-center gap-2 lg:flex">
-              <button type="button" onClick={() => navigate("/login")} className="flex items-center gap-1.5 rounded-lg border border-white/25 bg-white/5 px-3 py-2.5 text-[12px] font-semibold text-white transition hover:border-[var(--ljka-gold)] hover:bg-white/10 xl:px-3.5 xl:text-[13px]">
+              <button
+                type="button"
+                onClick={() => navigate("/login")}
+                className="flex items-center gap-1.5 rounded-lg border border-white/25 bg-white/5 px-3 py-2.5 text-[12px] font-semibold text-white transition hover:border-[var(--ljka-gold)] hover:bg-white/10 xl:px-3.5 xl:text-[13px]"
+              >
                 <FaUserCircle className="text-sm text-[var(--ljka-gold)]" />
                 Login
               </button>
 
-              <button type="button" onClick={() => navigate("/register")} className="rounded-lg bg-[var(--ljka-gold)] px-3.5 py-2.5 text-[12px] font-bold whitespace-nowrap text-[var(--ljka-primary)] shadow-sm transition hover:bg-[var(--ljka-gold-light)] hover:shadow-md xl:px-4 xl:text-[13px]">
+              <button
+                type="button"
+                onClick={() => navigate("/register")}
+                className="whitespace-nowrap rounded-lg bg-[var(--ljka-gold)] px-3.5 py-2.5 text-[12px] font-bold text-[var(--ljka-primary)] shadow-sm transition hover:bg-[var(--ljka-gold-light)] hover:shadow-md xl:px-4 xl:text-[13px]"
+              >
                 Become a Member
               </button>
             </div>
 
             {/* MOBILE / TABLET MENU BUTTON */}
-            <button type="button" onClick={() => setMenuOpen(true)} aria-label="Open menu" aria-expanded={menuOpen} className="ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-white/20 bg-white/5 text-[var(--ljka-gold)] transition hover:border-[var(--ljka-gold)] hover:bg-white/10 lg:hidden">
-              <FaBars className="text-lg" />
+            <button
+              type="button"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Open menu"
+              aria-expanded={menuOpen}
+              className="ml-auto flex h-10 w-10 shrink-0 items-center justify-center overflow-visible rounded-lg border border-white/20 bg-white/5 text-[var(--ljka-gold)] transition hover:border-[var(--ljka-gold)] hover:bg-white/10 lg:hidden"
+            >
+              <FaBars className="shrink-0 text-[17px] leading-none" />
             </button>
           </div>
         </div>
@@ -83,60 +133,117 @@ const Navbar = () => {
           MOBILE OVERLAY
           ========================================================= */}
 
-      {menuOpen && <div onClick={closeMenu} className="fixed inset-0 z-[60] bg-[var(--ljka-text)]/45 backdrop-blur-[2px] lg:hidden" />}
+      {menuOpen && (
+        <div
+          onClick={closeMenu}
+          className="fixed inset-0 z-[60] bg-[var(--ljka-text)]/45 backdrop-blur-[2px] lg:hidden"
+        />
+      )}
 
       {/* =========================================================
           MOBILE DRAWER
           ========================================================= */}
 
-      <aside className={`fixed top-0 right-0 z-[70] h-full w-[84%] max-w-[380px] bg-[var(--ljka-card)] shadow-2xl transition-transform duration-300 ease-out lg:hidden ${menuOpen ? "translate-x-0" : "translate-x-full"}`}>
+      <aside
+        className={`fixed right-0 top-0 z-[70] h-full w-[84%] max-w-[380px] bg-[var(--ljka-card)] shadow-2xl transition-transform duration-300 ease-out lg:hidden ${menuOpen
+            ? "translate-x-0"
+            : "translate-x-full"
+          }`}
+      >
         <div className="flex h-full flex-col">
 
           {/* DRAWER HEADER */}
           <div className="flex items-center justify-between border-b border-[var(--ljka-gold)]/25 bg-[var(--ljka-primary)] px-5 py-4">
-            <button type="button" onClick={() => { closeMenu(); navigate("/"); }} className="text-left">
-              <p className="text-lg font-bold tracking-wide text-white">LJKA</p>
-              <p className="mt-0.5 text-[10px] font-medium text-white/65">Lakhdaatar Jeevan Kalyan Association</p>
+            <button
+              type="button"
+              onClick={() => {
+                closeMenu();
+                navigate("/");
+              }}
+              className="text-left"
+            >
+              <p className="text-lg font-bold tracking-wide text-white">
+                LJKA
+              </p>
+
+              <p className="mt-0.5 text-[10px] font-medium text-white/65">
+                Lakhdaatar Jeevan Kalyan Association
+              </p>
             </button>
 
-            <button type="button" onClick={closeMenu} aria-label="Close menu" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-[var(--ljka-gold)] transition hover:bg-[var(--ljka-gold)] hover:text-[var(--ljka-primary)]">
+            <button
+              type="button"
+              onClick={closeMenu}
+              aria-label="Close menu"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-[var(--ljka-gold)] transition hover:bg-[var(--ljka-gold)] hover:text-[var(--ljka-primary)]"
+            >
               <FaTimes />
             </button>
           </div>
 
           {/* MEMBERSHIP HIGHLIGHT */}
           <div className="mx-4 mt-5 rounded-xl border border-[var(--ljka-gold)]/30 bg-[var(--ljka-gold-light)]/45 px-4 py-3.5">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ljka-muted)]">LJKA Membership</p>
-            <p className="mt-1 text-sm font-bold text-[var(--ljka-primary)]">First 11,000 Members</p>
-            <p className="mt-0.5 text-xs font-bold text-[var(--ljka-primary)]">Registration is FREE</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ljka-muted)]">
+              LJKA Membership
+            </p>
+
+            <p className="mt-1 text-sm font-bold text-[var(--ljka-primary)]">
+              First 11,000 Members
+            </p>
+
+            <p className="mt-0.5 text-xs font-bold text-[var(--ljka-primary)]">
+              Registration is FREE
+            </p>
           </div>
 
           {/* NAVIGATION */}
           <div className="flex-1 overflow-y-auto px-4 py-5">
-            <p className="mb-3 px-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--ljka-text-light)]">Navigation</p>
+            <p className="mb-3 px-2 text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--ljka-gold-dark)]">
+              Navigation
+            </p>
 
             <div className="space-y-1">
               {NAV_LINKS.map(([path, name]) => (
-                <NavLink key={path} to={path} onClick={closeMenu} className={({ isActive }) => `flex items-center justify-between rounded-lg px-3.5 py-3.5 text-[14px] transition ${isActive ? "bg-[var(--ljka-primary)] font-semibold text-white shadow-sm" : "text-[var(--ljka-text)] hover:bg-[var(--ljka-primary-bg)] hover:text-[var(--ljka-primary)]"}`}>
+                <NavLink
+                  key={path}
+                  to={path}
+                  onClick={closeMenu}
+                  className={({ isActive }) =>
+                    `flex items-center justify-between rounded-lg px-3.5 py-3.5 text-[14px] transition ${isActive
+                      ? "bg-[var(--ljka-primary)] font-semibold text-white shadow-sm"
+                      : "font-semibold text-[var(--ljka-primary-light)] hover:bg-[var(--ljka-primary-bg)] hover:text-[var(--ljka-primary)]"
+                    }`
+                  }
+                >
                   {({ isActive }) => (
                     <>
                       <span>{name}</span>
-                      {isActive && <FaArrowRight className="text-xs text-[var(--ljka-gold)]" />}
+
+                      {isActive && (
+                        <FaArrowRight className="text-xs text-[var(--ljka-gold)]" />
+                      )}
                     </>
                   )}
                 </NavLink>
               ))}
             </div>
           </div>
-
           {/* MOBILE ACTIONS */}
           <div className="space-y-2 border-t border-[var(--ljka-border)] bg-[var(--ljka-bg)] p-4">
-            <NavLink to="/login" onClick={closeMenu} className="flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--ljka-primary)]/25 bg-[var(--ljka-card)] py-3 text-sm font-semibold text-[var(--ljka-primary)] transition hover:border-[var(--ljka-primary)]">
+            <NavLink
+              to="/login"
+              onClick={closeMenu}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--ljka-primary)]/25 bg-[var(--ljka-card)] py-3 text-sm font-semibold text-[var(--ljka-primary)] transition hover:border-[var(--ljka-primary)] hover:bg-[var(--ljka-primary-bg)]"
+            >
               <FaUserCircle />
               Login
             </NavLink>
 
-            <NavLink to="/register" onClick={closeMenu} className="flex w-full items-center justify-center rounded-lg bg-[var(--ljka-primary)] py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--ljka-primary-dark)]">
+            <NavLink
+              to="/register"
+              onClick={closeMenu}
+              className="flex w-full items-center justify-center rounded-lg bg-[var(--ljka-primary)] py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--ljka-primary-dark)]"
+            >
               Become a Member
             </NavLink>
           </div>
@@ -147,6 +254,162 @@ const Navbar = () => {
 };
 
 export default Navbar;
+
+// import React, { useEffect, useState } from "react";
+// import { useNavigate, NavLink } from "react-router-dom";
+// import { FaBars, FaTimes, FaArrowRight, FaUserCircle } from "react-icons/fa";
+
+// const NAV_LINKS = [
+//   ["/", "Home"],
+//   ["/about", "About LJKA"],
+//   ["/user-list", "Members"],
+//   ["/sahyog-list", "Sahyog"],
+//   ["/vyawastha-list", "Vyawastha"],
+//   ["/niyamawali", "Niyamawali"],
+//   ["/contact", "Contact"],
+// ];
+
+// const Navbar = () => {
+//   const navigate = useNavigate();
+//   const [menuOpen, setMenuOpen] = useState(false);
+
+//   useEffect(() => {
+//     document.body.style.overflow = menuOpen ? "hidden" : "";
+//     return () => { document.body.style.overflow = ""; };
+//   }, [menuOpen]);
+
+//   const closeMenu = () => setMenuOpen(false);
+
+//   return (
+//     <>
+//       {/* =========================================================
+//           MAIN NAVBAR
+//           ========================================================= */}
+
+//       <header className="sticky top-0 z-50 w-full border-b border-[var(--ljka-gold)]/25 bg-[var(--ljka-primary)] shadow-[var(--ljka-shadow-md)]">
+//         <div className="mx-auto max-w-[1440px] px-4 sm:px-6 xl:px-8">
+//           <div className="flex min-h-[78px] items-center gap-5 xl:min-h-[84px] xl:gap-7">
+
+//             {/* BRAND */}
+//             <button type="button" onClick={() => navigate("/")} className="flex shrink-0 items-center gap-3 text-left">
+//               <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-[var(--ljka-gold)] bg-white text-base font-bold text-[var(--ljka-primary)] shadow-sm xl:h-12 xl:w-12 xl:text-lg">LJ</div>
+
+//               <div className="leading-tight">
+//                 <h1 className="whitespace-nowrap text-[14px] font-bold tracking-[-0.01em] text-white sm:text-[15px] xl:text-[17px]">Lakhdaatar Jeevan Kalyan Association</h1>
+//                 <p className="mt-1 whitespace-nowrap text-[9px] font-medium text-white/65 sm:text-[10px] xl:text-[11px]">लखदातार जीवन कल्याण एसोसिएशन</p>
+//               </div>
+//             </button>
+
+//             {/* DESKTOP NAVIGATION */}
+//             <nav className="hidden min-w-0 flex-1 items-center justify-center lg:flex">
+//               <div className="flex items-center gap-0.5 xl:gap-1">
+//                 {NAV_LINKS.map(([path, name]) => (
+//                   <NavLink key={path} to={path} className={({ isActive }) => `relative whitespace-nowrap rounded-lg px-2.5 py-2.5 text-[12px] font-semibold transition-all xl:px-3 xl:text-[13px] ${isActive ? "bg-white/10 text-white" : "text-white/75 hover:bg-white/10 hover:text-white"}`}>
+//                     {({ isActive }) => (
+//                       <>
+//                         {name}
+//                         <span className={`absolute bottom-1 left-3 right-3 h-[2px] origin-center rounded-full bg-[var(--ljka-gold)] transition-transform duration-200 ${isActive ? "scale-x-100" : "scale-x-0"}`} />
+//                       </>
+//                     )}
+//                   </NavLink>
+//                 ))}
+//               </div>
+//             </nav>
+
+//             {/* DESKTOP ACTIONS */}
+//             <div className="hidden shrink-0 items-center gap-2 lg:flex">
+//               <button type="button" onClick={() => navigate("/login")} className="flex items-center gap-1.5 rounded-lg border border-white/25 bg-white/5 px-3 py-2.5 text-[12px] font-semibold text-white transition hover:border-[var(--ljka-gold)] hover:bg-white/10 xl:px-3.5 xl:text-[13px]">
+//                 <FaUserCircle className="text-sm text-[var(--ljka-gold)]" />
+//                 Login
+//               </button>
+
+//               <button type="button" onClick={() => navigate("/register")} className="rounded-lg bg-[var(--ljka-gold)] px-3.5 py-2.5 text-[12px] font-bold whitespace-nowrap text-[var(--ljka-primary)] shadow-sm transition hover:bg-[var(--ljka-gold-light)] hover:shadow-md xl:px-4 xl:text-[13px]">
+//                 Become a Member
+//               </button>
+//             </div>
+
+//             {/* MOBILE / TABLET MENU BUTTON */}
+//             <button
+//               type="button"
+//               onClick={() => setMenuOpen(true)}
+//               aria-label="Open menu"
+//               aria-expanded={menuOpen}
+//               className="ml-auto flex h-10 w-10 shrink-0 items-center justify-center overflow-visible rounded-lg border border-white/20 bg-white/5 text-[var(--ljka-gold)] transition hover:border-[var(--ljka-gold)] hover:bg-white/10 lg:hidden"
+//             >
+//               <FaBars className="shrink-0 text-lg leading-none" />
+//             </button>
+//           </div>
+//         </div>
+//       </header>
+
+//       {/* =========================================================
+//           MOBILE OVERLAY
+//           ========================================================= */}
+
+//       {menuOpen && <div onClick={closeMenu} className="fixed inset-0 z-[60] bg-[var(--ljka-text)]/45 backdrop-blur-[2px] lg:hidden" />}
+
+//       {/* =========================================================
+//           MOBILE DRAWER
+//           ========================================================= */}
+
+//       <aside className={`fixed top-0 right-0 z-[70] h-full w-[84%] max-w-[380px] bg-[var(--ljka-card)] shadow-2xl transition-transform duration-300 ease-out lg:hidden ${menuOpen ? "translate-x-0" : "translate-x-full"}`}>
+//         <div className="flex h-full flex-col">
+
+//           {/* DRAWER HEADER */}
+//           <div className="flex items-center justify-between border-b border-[var(--ljka-gold)]/25 bg-[var(--ljka-primary)] px-5 py-4">
+//             <button type="button" onClick={() => { closeMenu(); navigate("/"); }} className="text-left">
+//               <p className="text-lg font-bold tracking-wide text-white">LJKA</p>
+//               <p className="mt-0.5 text-[10px] font-medium text-white/65">Lakhdaatar Jeevan Kalyan Association</p>
+//             </button>
+
+//             <button type="button" onClick={closeMenu} aria-label="Close menu" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-[var(--ljka-gold)] transition hover:bg-[var(--ljka-gold)] hover:text-[var(--ljka-primary)]">
+//               <FaTimes />
+//             </button>
+//           </div>
+
+//           {/* MEMBERSHIP HIGHLIGHT */}
+//           <div className="mx-4 mt-5 rounded-xl border border-[var(--ljka-gold)]/30 bg-[var(--ljka-gold-light)]/45 px-4 py-3.5">
+//             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--ljka-muted)]">LJKA Membership</p>
+//             <p className="mt-1 text-sm font-bold text-[var(--ljka-primary)]">First 11,000 Members</p>
+//             <p className="mt-0.5 text-xs font-bold text-[var(--ljka-primary)]">Registration is FREE</p>
+//           </div>
+
+//           {/* NAVIGATION */}
+//           <div className="flex-1 overflow-y-auto px-4 py-5">
+//             <p className="mb-3 px-2 text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--ljka-text-light)]">Navigation</p>
+
+//             <div className="space-y-1">
+//               {NAV_LINKS.map(([path, name]) => (
+//                 <NavLink key={path} to={path} onClick={closeMenu} className={({ isActive }) => `flex items-center justify-between rounded-lg px-3.5 py-3.5 text-[14px] transition ${isActive ? "bg-[var(--ljka-primary)] font-semibold text-white shadow-sm" : "text-[var(--ljka-text)] hover:bg-[var(--ljka-primary-bg)] hover:text-[var(--ljka-primary)]"}`}>
+//                   {({ isActive }) => (
+//                     <>
+//                       <span>{name}</span>
+//                       {isActive && <FaArrowRight className="text-xs text-[var(--ljka-gold)]" />}
+//                     </>
+//                   )}
+//                 </NavLink>
+//               ))}
+//             </div>
+//           </div>
+
+//           {/* MOBILE ACTIONS */}
+//           <div className="space-y-2 border-t border-[var(--ljka-border)] bg-[var(--ljka-bg)] p-4">
+//             <NavLink to="/login" onClick={closeMenu} className="flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--ljka-primary)]/25 bg-[var(--ljka-card)] py-3 text-sm font-semibold text-[var(--ljka-primary)] transition hover:border-[var(--ljka-primary)]">
+//               <FaUserCircle />
+//               Login
+//             </NavLink>
+
+//             <NavLink to="/register" onClick={closeMenu} className="flex w-full items-center justify-center rounded-lg bg-[var(--ljka-primary)] py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--ljka-primary-dark)]">
+//               Become a Member
+//             </NavLink>
+//           </div>
+//         </div>
+//       </aside>
+//     </>
+//   );
+// };
+
+// export default Navbar;
 
 
 // import React, { useEffect, useState } from "react";
