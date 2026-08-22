@@ -5,6 +5,7 @@ import connectDB from "./config/mongodb.js";
 
 import userRouter from "./routes/userRoute.js";
 import kycRouter from "./routes/kycRoute.js";
+import contactRouter from "./routes/contactRoute.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -21,6 +22,7 @@ app.use(express.json());
 // Routes
 app.use("/api/user", userRouter);
 app.use("/api/user/kyc", kycRouter);
+app.use("/api/contact", contactRouter);
 
 // Root
 app.get("/", (req, res) => {

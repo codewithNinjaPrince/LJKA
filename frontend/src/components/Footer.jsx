@@ -15,58 +15,6 @@ const Footer = () => {
   return (
     <footer className="w-full bg-[var(--ljka-primary)] text-white">
 
-      {/* =========================================================
-          TOP CTA — LIGHT & PREMIUM
-          ========================================================= */}
-
-      <div className="border-b border-[var(--ljka-primary)]/10 bg-[var(--ljka-primary-bg)]">
-        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-5 py-9 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
-
-          <div>
-            <div className="mb-2 flex items-center gap-2">
-              <span className="h-1.5 w-7 rounded-full bg-[var(--ljka-gold)]" />
-
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--ljka-primary)]">
-                Together for a stronger community
-              </p>
-            </div>
-
-            <h2 className="text-2xl font-bold tracking-tight text-[var(--ljka-text)] sm:text-3xl">
-              Be part of the LJKA community.
-            </h2>
-
-            <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--ljka-muted)]">
-              Join a community built on trust, humanity and collective
-              responsibility.
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row">
-
-            <Link
-              to="/register"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--ljka-primary)] px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-[var(--ljka-primary-dark)] hover:shadow-md"
-            >
-              Become a Member
-              <FaArrowRight className="text-xs" />
-            </Link>
-
-            <Link
-              to="/contact"
-              className="inline-flex items-center justify-center rounded-lg border border-[var(--ljka-primary)] bg-white px-5 py-3 text-sm font-semibold !text-[var(--ljka-primary)] transition hover:bg-[var(--ljka-primary-bg)] hover:!text-[var(--ljka-primary-dark)]"
-            >
-              Contact LJKA
-            </Link>
-          </div>
-
-        </div>
-      </div>
-
-
-      {/* =========================================================
-          MAIN FOOTER — DEEP MAROON
-          ========================================================= */}
-
       <div className="relative overflow-hidden">
 
         {/* SOFT BACKGROUND EFFECT */}
