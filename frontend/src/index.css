@@ -11,24 +11,27 @@
      BRAND COLORS
      ======================================================= */
 
-  /* Primary — Deep Emerald */
-  --ljka-primary: #006B4F;
+  /* Primary — Aesthetic Maroon */
+  --ljka-primary: #78081C;
 
-  /* Dark Emerald — hover / active / deep sections */
-  --ljka-primary-dark: #00523D;
+  /* Dark Maroon — hover / active / deep sections */
+  --ljka-primary-dark: #5A0615;
 
-  /* Light Emerald — subtle brand areas */
-  --ljka-primary-light: #0A8060;
+  /* Light Maroon — subtle brand areas */
+  --ljka-primary-light: #9A1A30;
 
-  /* Secondary — Rich Gold */
-  --ljka-gold: #C99A24;
+  /* =======================================================
+     GOLD COLORS
+     ======================================================= */
+
+  /* Secondary — Refined Soft Gold */
+  --ljka-gold: #C8A24A;
 
   /* Dark Gold — hover / active */
-  --ljka-gold-dark: #A97F18;
+  --ljka-gold-dark: #A9822C;
 
   /* Soft Gold — badges / highlights */
-  --ljka-gold-light: #F4E7BD;
-
+  --ljka-gold-light: #F5EBCF;
 
   /* =======================================================
      BACKGROUNDS
@@ -40,11 +43,11 @@
   /* Card background */
   --ljka-card: #FFFFFF;
 
-  /* Section background — Soft Mint */
-  --ljka-mint: #E8F3EF;
+  /* Section background — Soft Blush */
+  --ljka-mint: #F6EDEF;
 
-  /* Very light emerald background */
-  --ljka-primary-bg: #F0F7F4;
+  /* Very light maroon background */
+  --ljka-primary-bg: #FBF4F5;
 
 
   /* =======================================================
@@ -60,7 +63,7 @@
   /* Light / subtle text */
   --ljka-text-light: #879398;
 
-  /* Text used on emerald */
+  /* Text used on maroon */
   --ljka-text-on-primary: #FFFFFF;
 
   /* Text used on gold */
@@ -71,11 +74,11 @@
      BORDERS
      ======================================================= */
 
-  --ljka-border: #DDE7E2;
+  --ljka-border: #E8D9DC;
 
-  --ljka-border-light: #E9EFEC;
+  --ljka-border-light: #F1E8E9;
 
-  --ljka-border-gold: #C99A24;
+  --ljka-border-gold: #C8A24A;
 
 
   /* =======================================================
@@ -122,29 +125,23 @@
      GRADIENTS
      ======================================================= */
 
-  /* Deep Emerald */
+  /* Deep Maroon */
   --ljka-gradient-primary:
-    linear-gradient(
-      135deg,
-      #006B4F 0%,
-      #00523D 100%
-    );
+    linear-gradient(135deg,
+      #78081C 0%,
+      #5A0615 100%);
 
-  /* Emerald + Gold */
+  /* Maroon + Gold */
   --ljka-gradient-brand:
-    linear-gradient(
-      135deg,
-      #006B4F 0%,
-      #C99A24 100%
-    );
+    linear-gradient(135deg,
+      #78081C 0%,
+      #C8A24A 100%);
 
   /* Soft background */
   --ljka-gradient-soft:
-    linear-gradient(
-      135deg,
-      #E8F3EF 0%,
-      #FAFAF5 100%
-    );
+    linear-gradient(135deg,
+      #F6EDEF 0%,
+      #FAFAF5 100%);
 }
 
 
