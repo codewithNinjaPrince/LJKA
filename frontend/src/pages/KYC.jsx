@@ -320,359 +320,537 @@ const KYC = () => {
   };
 
   /* ---------------- UI ---------------- */
-  return (
-    <form
-      onSubmit={handleSubmit}
-      className="
-        w-[94%] max-w-4xl mx-auto
-        mt-10 mb-16 sm:mt-14 sm:mb-20
-        bg-white/5 backdrop-blur-xl
-        border border-white/10 rounded-2xl
-        p-6 sm:p-10
-        shadow-2xl text-white
-        flex flex-col gap-8
-      "
-    >
-      {/* TITLE */}
-      <div>
-        <h2 className="text-3xl font-bold text-center tracking-wide">
-          Complete Your KYC
-        </h2>
-        <p className="mt-2 text-center text-gray-400 text-10px">
-          A few more details to activate your LJKA account
-        </p>
-      </div>
+ /* ---------------- UI ---------------- */
+return (
+  <div className="min-h-[calc(100vh-130px)] bg-[var(--ljka-bg)] px-4 py-10 sm:px-6 sm:py-14 lg:py-16">
+    <div className="mx-auto grid w-full max-w-7xl items-start gap-10 lg:grid-cols-[0.72fr_1.28fr]">
 
-      {/* PERSONAL DETAILS */}
-      <section className="flex flex-col gap-4">
-        <h3 className="section-title">Personal Details</h3>
+      {/* LEFT INFORMATION — DESKTOP */}
+      <div className="hidden lg:block lg:sticky lg:top-28">
+        <div className="max-w-md">
+          <span className="inline-flex items-center gap-2 rounded-full border border-[var(--ljka-gold)]/40 bg-white px-4 py-2 text-xs font-semibold tracking-wide text-[var(--ljka-primary)] shadow-sm">
+            <span className="h-2 w-2 rounded-full bg-[var(--ljka-gold)]" />
+            LJKA MEMBERSHIP
+          </span>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <input
-            name="mobile"
-            value={formData.mobile}
-            onChange={handleDigitsOnly("mobile", 10)}
-            placeholder="Mobile Number"
-            inputMode="numeric"
-            className="dark-input"
-          />
+          <h1 className="mt-6 text-4xl font-bold leading-tight text-[var(--ljka-primary)] xl:text-5xl">
+            Complete your
+            <span className="block text-[var(--ljka-gold)]">
+              KYC details
+            </span>
+          </h1>
 
-          <input
-            name="fatherHusbandName"
-            value={formData.fatherHusbandName}
-            onChange={handleChange}
-            placeholder="Father / Husband Name"
-            className="dark-input"
-          />
+          <p className="mt-5 text-base leading-7 text-[var(--ljka-muted)]">
+            Complete your personal, address, employment and nominee details
+            to activate your LJKA membership.
+          </p>
 
-          <input
-            name="aadhaar"
-            value={formData.aadhaar}
-            onChange={handleDigitsOnly("aadhaar", 12)}
-            placeholder="Aadhaar Number (12 digits)"
-            inputMode="numeric"
-            className="dark-input"
-          />
+          <div className="mt-8 rounded-2xl border border-[var(--ljka-gold)]/30 bg-white p-5 shadow-sm">
+            <p className="text-sm font-semibold text-[var(--ljka-primary)]">
+              Why KYC is required?
+            </p>
 
-          <select
-            name="gender"
-            value={formData.gender}
-            onChange={handleChange}
-            className="dark-input"
-          >
-            <option value="">Select Gender</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-          </select>
+            <p className="mt-2 text-xs leading-6 text-[var(--ljka-muted)]">
+              Your KYC information helps LJKA maintain accurate member
+              records and provide membership benefits securely.
+            </p>
+          </div>
 
-          <div className="flex flex-col gap-1 md:col-span-2">
-            <input
-              type="date"
-              name="dob"
-              value={formData.dob}
-              onChange={handleChange}
-              min={dobBounds.min}
-              max={dobBounds.max}
-              className="dark-input dob-input"
-              required
-            />
-            <p className="text-xs text-gray-500 px-1">
-              Age must be 18 and above, and below 60
+          <div className="mt-4 rounded-2xl bg-[var(--ljka-primary)] px-5 py-4 text-white shadow-sm">
+            <p className="text-xs uppercase tracking-[0.15em] text-white/50">
+              LJKA Community
+            </p>
+
+            <p className="mt-1 text-sm font-semibold">
+              Trust • Humanity • Cooperation
+            </p>
+
+            <p className="mt-1 text-xs text-white/60">
+              Together for a stronger and caring society.
             </p>
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* ADDRESS DETAILS */}
-      <section className="flex flex-col gap-4">
-        <h3 className="section-title">Address Details</h3>
-
-        <div className="grid gap-4 md:grid-cols-3">
-
-          {/* STATE */}
-          <select
-            name="state"
-            value={formData.state}
-            onChange={handleChange}
-            className="dark-input"
-          >
-            <option value="">Select State</option>
-
-            {stateOptions.map((state) => (
-              <option key={state.code} value={state.code}>
-                {state.name}
-              </option>
-            ))}
-          </select>
-
-
-          {/* DISTRICT */}
-          <select
-            name="district"
-            value={formData.district}
-            onChange={handleChange}
-            disabled={!formData.state}
-            className="dark-input"
-          >
-            <option value="">Select District</option>
-
-            {districtOptions.map((district) => (
-              <option key={district.code} value={district.code}>
-                {district.name}
-              </option>
-            ))}
-          </select>
-
-
-          {/* TEHSIL */}
-          <select
-            name="tehsil"
-            value={formData.tehsil}
-            onChange={handleChange}
-            disabled={!formData.district}
-            className="dark-input"
-          >
-            <option value="">Select Tehsil / Sub-District</option>
-
-            {tehsilOptions.map((tehsil) => (
-              <option key={tehsil.code} value={tehsil.code}>
-                {tehsil.name}
-              </option>
-            ))}
-          </select>
-
-
-          {/* TOWN / VILLAGE */}
-          <input
-            name="townVillage"
-            value={formData.townVillage}
-            onChange={handleChange}
-            placeholder="Town / Village / City"
-            className="dark-input"
-          />
-
-
-          {/* ADDRESS LINE */}
-          <textarea
-            name="addressLine"
-            value={formData.addressLine}
-            onChange={handleChange}
-            rows={2}
-            placeholder="House No., Street or Landmark"
-            className="dark-input md:col-span-2 resize-none"
-          />
-
-
-          {/* PINCODE */}
-          <input
-            name="pincode"
-            value={formData.pincode}
-            onChange={handleDigitsOnly("pincode", 6)}
-            placeholder="Pincode"
-            inputMode="numeric"
-            maxLength={6}
-            className="dark-input"
-          />
-
-        </div>
-      </section>
-      {/* EMPLOYMENT DETAILS */}
-      <section className="flex flex-col gap-4">
-        <h3 className="section-title">Employment Details</h3>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <select
-            name="employmentStatus"
-            value={formData.employmentStatus}
-            onChange={handleChange}
-            className="dark-input"
-          >
-            <option value="">Select Employment Status</option>
-            {EMPLOYMENT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-
-          <input
-            name="occupation"
-            value={formData.occupation}
-            onChange={handleChange}
-            placeholder="Occupation / Job Role"
-            className="dark-input"
-          />
-
-          <input
-            name="referralCode"
-            value={formData.referralCode}
-            onChange={handleChange}
-            placeholder="Referral Code (e.x- AY92) "
-            className="dark-input md:col-span-2"
-          />
-        </div>
-      </section>
-
-      {/* NOMINEE DETAILS */}
-      <section className="flex flex-col gap-4">
-        <h3 className="section-title">Nominee Details</h3>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <input
-            name="nomineeName"
-            value={formData.nomineeName}
-            onChange={handleChange}
-            placeholder="Nominee Full Name"
-            className="dark-input"
-          />
-
-          <input
-            name="nomineeMobile"
-            value={formData.nomineeMobile}
-            onChange={handleDigitsOnly("nomineeMobile", 10)}
-            placeholder="Nominee Mobile Number"
-            inputMode="numeric"
-            className="dark-input"
-          />
-
-          <input
-            name="nomineeEmail"
-            value={formData.nomineeEmail}
-            onChange={handleChange}
-            placeholder="Nominee Email (optional)"
-            type="email"
-            className="dark-input"
-          />
-
-          <select
-            name="nomineeRelationship"
-            value={formData.nomineeRelationship}
-            onChange={handleChange}
-            className="dark-input"
-          >
-            <option value="">Relationship with Nominee</option>
-            <option value="brother">Brother</option>
-            <option value="sister">Sister</option>
-            <option value="mother">Mother</option>
-            <option value="father">Father</option>
-            <option value="husband">Husband</option>
-            <option value="wife">Wife</option>
-            <option value="son">Son</option>
-            <option value="daughter">Daughter</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-      </section>
-
-      {/* SUBMIT */}
-      <button
-        disabled={loading}
-        className={`primary-btn flex items-center justify-center gap-2
-          ${loading && "opacity-60 cursor-not-allowed"}`}
+      {/* KYC CARD */}
+      <form
+        onSubmit={handleSubmit}
+        className="mx-auto w-full max-w-[820px] rounded-2xl border border-gray-200 bg-white p-5 shadow-[0_15px_50px_rgba(5,27,50,0.10)] sm:p-7 lg:p-8"
       >
-        {loading ? (
-          <>
-            <span className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
-            <span className="text-sm">Submitting...</span>
-          </>
-        ) : (
-          "Submit KYC"
-        )}
-      </button>
+        {/* MOBILE HEADING */}
+        <div className="mb-7 text-center lg:hidden">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--ljka-primary)] text-sm font-bold text-[var(--ljka-gold)] shadow-sm">
+            KYC
+          </div>
 
-      {/* STYLES — same theme as Register.jsx */}
-      <style>{`
-      .dark-input {
-        width: 100%;
-        padding: 12px 14px;
-        border-radius: 10px;
-        background: rgba(0,0,0,0.6);
-        border: 1px solid rgba(255,255,255,0.12);
-        color: white;
-        outline: none;
-        transition: all 0.2s ease;
+          <h1 className="mt-3 text-2xl font-bold text-[var(--ljka-primary)]">
+            Complete Your KYC
+          </h1>
+
+          <p className="mt-1 text-sm text-[var(--ljka-muted)]">
+            A few more details to activate your LJKA account
+          </p>
+        </div>
+
+        {/* DESKTOP CARD TITLE */}
+        <div className="mb-8 hidden lg:block">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ljka-gold)]">
+            Member Verification
+          </p>
+
+          <h2 className="mt-2 text-3xl font-bold text-[var(--ljka-primary)]">
+            Complete Your KYC
+          </h2>
+
+          <p className="mt-1 text-sm text-[var(--ljka-muted)]">
+            Please provide accurate information to complete your membership.
+          </p>
+        </div>
+
+        <div className="space-y-8">
+
+          {/* PERSONAL DETAILS */}
+          <section>
+            <div className="mb-5">
+              <h3 className="text-lg font-bold text-[var(--ljka-primary)]">
+                Personal Details
+              </h3>
+
+              <p className="mt-1 text-sm text-[var(--ljka-muted)]">
+                Enter your basic personal information.
+              </p>
+            </div>
+
+            <div className="grid gap-5 md:grid-cols-2">
+              <div>
+                <label className="ljka-login-label">
+                  Mobile Number
+                </label>
+
+                <input
+                  name="mobile"
+                  value={formData.mobile}
+                  onChange={handleDigitsOnly("mobile", 10)}
+                  placeholder="Enter mobile number"
+                  inputMode="numeric"
+                  className="ljka-login-input"
+                />
+              </div>
+
+              <div>
+                <label className="ljka-login-label">
+                  Father / Husband Name
+                </label>
+
+                <input
+                  name="fatherHusbandName"
+                  value={formData.fatherHusbandName}
+                  onChange={handleChange}
+                  placeholder="Enter name"
+                  className="ljka-login-input"
+                />
+              </div>
+
+              <div>
+                <label className="ljka-login-label">
+                  Aadhaar Number
+                </label>
+
+                <input
+                  name="aadhaar"
+                  value={formData.aadhaar}
+                  onChange={handleDigitsOnly("aadhaar", 12)}
+                  placeholder="Enter 12 digit Aadhaar number"
+                  inputMode="numeric"
+                  className="ljka-login-input"
+                />
+              </div>
+
+              <div>
+                <label className="ljka-login-label">
+                  Gender
+                </label>
+
+                <select
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  className="ljka-login-input"
+                >
+                  <option value="">Select Gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="ljka-login-label">
+                  Date of Birth
+                </label>
+
+                <input
+                  type="date"
+                  name="dob"
+                  value={formData.dob}
+                  onChange={handleChange}
+                  min={dobBounds.min}
+                  max={dobBounds.max}
+                  className="ljka-login-input"
+                  required
+                />
+
+                <p className="mt-1.5 px-1 text-xs text-[var(--ljka-muted)]">
+                  Age must be 18 years or above and below 60 years.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* ADDRESS DETAILS */}
+          <section className="border-t border-gray-100 pt-8">
+            <div className="mb-5">
+              <h3 className="text-lg font-bold text-[var(--ljka-primary)]">
+                Address Details
+              </h3>
+
+              <p className="mt-1 text-sm text-[var(--ljka-muted)]">
+                Select and enter your current residential address.
+              </p>
+            </div>
+
+            <div className="grid gap-5 md:grid-cols-3">
+              <div>
+                <label className="ljka-login-label">State</label>
+
+                <select
+                  name="state"
+                  value={formData.state}
+                  onChange={handleChange}
+                  className="ljka-login-input"
+                >
+                  <option value="">Select State</option>
+
+                  {stateOptions.map((state) => (
+                    <option key={state.code} value={state.code}>
+                      {state.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="ljka-login-label">District</label>
+
+                <select
+                  name="district"
+                  value={formData.district}
+                  onChange={handleChange}
+                  disabled={!formData.state}
+                  className="ljka-login-input"
+                >
+                  <option value="">Select District</option>
+
+                  {districtOptions.map((district) => (
+                    <option key={district.code} value={district.code}>
+                      {district.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="ljka-login-label">
+                  Tehsil / Sub-District
+                </label>
+
+                <select
+                  name="tehsil"
+                  value={formData.tehsil}
+                  onChange={handleChange}
+                  disabled={!formData.district}
+                  className="ljka-login-input"
+                >
+                  <option value="">Select Tehsil / Sub-District</option>
+
+                  {tehsilOptions.map((tehsil) => (
+                    <option key={tehsil.code} value={tehsil.code}>
+                      {tehsil.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="ljka-login-label">
+                  Town / Village / City
+                </label>
+
+                <input
+                  name="townVillage"
+                  value={formData.townVillage}
+                  onChange={handleChange}
+                  placeholder="Enter town or village"
+                  className="ljka-login-input"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="ljka-login-label">
+                  Address
+                </label>
+
+                <textarea
+                  name="addressLine"
+                  value={formData.addressLine}
+                  onChange={handleChange}
+                  rows={2}
+                  placeholder="House No., Street or Landmark"
+                  className="ljka-login-input resize-none"
+                />
+              </div>
+
+              <div>
+                <label className="ljka-login-label">
+                  Pincode
+                </label>
+
+                <input
+                  name="pincode"
+                  value={formData.pincode}
+                  onChange={handleDigitsOnly("pincode", 6)}
+                  placeholder="Enter pincode"
+                  inputMode="numeric"
+                  maxLength={6}
+                  className="ljka-login-input"
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* EMPLOYMENT DETAILS */}
+          <section className="border-t border-gray-100 pt-8">
+            <div className="mb-5">
+              <h3 className="text-lg font-bold text-[var(--ljka-primary)]">
+                Employment Details
+              </h3>
+
+              <p className="mt-1 text-sm text-[var(--ljka-muted)]">
+                Tell us about your current employment.
+              </p>
+            </div>
+
+            <div className="grid gap-5 md:grid-cols-2">
+              <div>
+                <label className="ljka-login-label">
+                  Employment Status
+                </label>
+
+                <select
+                  name="employmentStatus"
+                  value={formData.employmentStatus}
+                  onChange={handleChange}
+                  className="ljka-login-input"
+                >
+                  <option value="">Select Employment Status</option>
+
+                  {EMPLOYMENT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="ljka-login-label">
+                  Occupation / Job Role
+                </label>
+
+                <input
+                  name="occupation"
+                  value={formData.occupation}
+                  onChange={handleChange}
+                  placeholder="Enter your occupation"
+                  className="ljka-login-input"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="ljka-login-label">
+                  Referral Code
+                </label>
+
+                <input
+                  name="referralCode"
+                  value={formData.referralCode}
+                  onChange={handleChange}
+                  placeholder="e.g. AY92"
+                  className="ljka-login-input"
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* NOMINEE DETAILS */}
+          <section className="border-t border-gray-100 pt-8">
+            <div className="mb-5">
+              <h3 className="text-lg font-bold text-[var(--ljka-primary)]">
+                Nominee Details
+              </h3>
+
+              <p className="mt-1 text-sm text-[var(--ljka-muted)]">
+                Provide details of your registered nominee.
+              </p>
+            </div>
+
+            <div className="grid gap-5 md:grid-cols-2">
+              <div>
+                <label className="ljka-login-label">
+                  Nominee Full Name
+                </label>
+
+                <input
+                  name="nomineeName"
+                  value={formData.nomineeName}
+                  onChange={handleChange}
+                  placeholder="Enter nominee name"
+                  className="ljka-login-input"
+                />
+              </div>
+
+              <div>
+                <label className="ljka-login-label">
+                  Nominee Mobile Number
+                </label>
+
+                <input
+                  name="nomineeMobile"
+                  value={formData.nomineeMobile}
+                  onChange={handleDigitsOnly("nomineeMobile", 10)}
+                  placeholder="Enter nominee mobile number"
+                  inputMode="numeric"
+                  className="ljka-login-input"
+                />
+              </div>
+
+              <div>
+                <label className="ljka-login-label">
+                  Nominee Email
+                  <span className="ml-1 font-normal text-[var(--ljka-muted)]">
+                    (Optional)
+                  </span>
+                </label>
+
+                <input
+                  name="nomineeEmail"
+                  value={formData.nomineeEmail}
+                  onChange={handleChange}
+                  placeholder="Enter nominee email"
+                  type="email"
+                  className="ljka-login-input"
+                />
+              </div>
+
+              <div>
+                <label className="ljka-login-label">
+                  Relationship
+                </label>
+
+                <select
+                  name="nomineeRelationship"
+                  value={formData.nomineeRelationship}
+                  onChange={handleChange}
+                  className="ljka-login-input"
+                >
+                  <option value="">Select Relationship</option>
+                  <option value="brother">Brother</option>
+                  <option value="sister">Sister</option>
+                  <option value="mother">Mother</option>
+                  <option value="father">Father</option>
+                  <option value="husband">Husband</option>
+                  <option value="wife">Wife</option>
+                  <option value="son">Son</option>
+                  <option value="daughter">Daughter</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          {/* SUBMIT */}
+          <div className="border-t border-gray-100 pt-7">
+            <button
+              disabled={loading}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--ljka-primary)] px-5 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#102b45] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading ? (
+                <>
+                  <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  <span>Submitting KYC...</span>
+                </>
+              ) : (
+                <>
+                  Complete KYC
+                  <span className="text-[var(--ljka-gold)]">→</span>
+                </>
+              )}
+            </button>
+
+            <p className="mt-3 text-center text-xs text-[var(--ljka-muted)]">
+              Please review your information carefully before submitting.
+            </p>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <style>{`
+      .ljka-login-label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ljka-primary);
       }
 
-      .dark-input::placeholder {
+      .ljka-login-input {
+        width: 100%;
+        border: 1px solid #d9dde3;
+        border-radius: 9px;
+        background: #fff;
+        padding: 12px 13px;
+        color: #172b3d;
+        outline: none;
+        font-size: 14px;
+        transition: 0.2s;
+      }
+
+      .ljka-login-input::placeholder {
         color: #9ca3af;
       }
 
-      .dark-input:focus {
-        border-color: white;
-        background: rgba(0,0,0,0.8);
+      .ljka-login-input:focus {
+        border-color: var(--ljka-gold);
+        box-shadow: 0 0 0 3px rgba(232, 200, 116, 0.14);
       }
 
-      .dark-input:disabled {
-        opacity: 0.5;
+      .ljka-login-input:disabled {
         cursor: not-allowed;
+        background: #f8fafc;
+        opacity: 0.7;
       }
 
-      select.dark-input option {
-        background: #111;
-        color: white;
-      }
-
-      .primary-btn {
-        width: 100%;
-        padding: 12px;
-        border-radius: 10px;
-        background: white;
-        color: black;
-        font-weight: 600;
+      select.ljka-login-input {
         cursor: pointer;
-        transition: all 0.2s ease;
       }
 
-      .dob-input {
-  color-scheme: dark;
-  cursor: pointer;
-}
-
-.dob-input::-webkit-calendar-picker-indicator {
-  filter: invert(1);
-  cursor: pointer;
-  opacity: 0.9;
-}
-
-.dob-input::-webkit-calendar-picker-indicator:hover {
-  opacity: 1;
-}
-      .primary-btn:hover {
-        background: #e5e5e5;
-        transform: translateY(-1px);
-      }
-
-      .section-title {
-        font-size: 1.05rem;
-        font-weight: 600;
-        color: white;
-        border-bottom: 1px solid rgba(255,255,255,0.1);
-        padding-bottom: 8px;
+      textarea.ljka-login-input {
+        min-height: 90px;
       }
     `}</style>
-    </form>
-  );
+  </div>
+);
 };
 
 export default KYC;

@@ -223,34 +223,12 @@ const Footer = () => {
           BOTTOM BAR — DARKER MAROON
           ========================================================= */}
 
-      <div className="border-t border-white/10 bg-[var(--ljka-primary-dark)]">
+      <div className="mx-auto flex flex-col px-3 py-5 text-xs sm:flex-row sm:items-center sm:justify-center sm:px-6 lg:px-8 border-t border-white/10 bg-[var(--ljka-primary-dark)]">
 
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-5 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-
-          <p className="text-white/45">
-            © {year} Lakhdaatar Jeevan Kalyan Association (LJKA).
-            All Rights Reserved.
-          </p>
-
-          <div className="flex items-center gap-2 font-medium text-white/45">
-
-            <span>Help</span>
-
-            <span className="text-[var(--ljka-gold)]">
-              •
-            </span>
-
-            <span>Trust</span>
-
-            <span className="text-[var(--ljka-gold)]">
-              •
-            </span>
-
-            <span>Humanity</span>
-
-          </div>
-
-        </div>
+        <p className="text-white/45">
+          © {year} Lakhdaatar Jeevan Kalyan Association (LJKA).
+          All Rights Reserved.
+        </p>
 
       </div>
 
