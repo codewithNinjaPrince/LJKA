@@ -36,26 +36,26 @@ const Navbar = () => {
           MAIN NAVBAR
           ========================================================= */}
 
-      <header className="sticky top-0 z-50 w-full border-b border-[var(--ljka-gold)]/25 bg-[var(--ljka-primary)] shadow-[var(--ljka-shadow-md)]">
+      <header className="sticky top-0 z-50 w-full overflow-visible border-b border-[var(--ljka-gold)]/25 bg-[var(--ljka-primary)] shadow-[var(--ljka-shadow-md)]">
         <div className="mx-auto max-w-[1440px] px-4 sm:px-6 xl:px-8">
-          <div className="flex min-h-[78px] items-center gap-5 xl:min-h-[84px] xl:gap-7">
+          <div className="flex min-h-[78px] w-full items-center gap-3 xl:min-h-[84px] xl:gap-7">
 
             {/* BRAND */}
             <button
               type="button"
               onClick={() => navigate("/")}
-              className="flex shrink-0 items-center gap-3 text-left"
+              className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden text-left lg:flex-none lg:overflow-visible"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-[var(--ljka-gold)] bg-white text-base font-bold text-[var(--ljka-primary)] shadow-sm xl:h-12 xl:w-12 xl:text-lg">
+              <div className="flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full border-2 border-[var(--ljka-gold)] bg-white text-base font-bold text-[var(--ljka-primary)] shadow-sm xl:h-12 xl:w-12 xl:text-lg">
                 LJ
               </div>
 
-              <div className="leading-tight">
-                <h1 className="whitespace-nowrap text-[14px] font-bold tracking-[-0.01em] text-white sm:text-[15px] xl:text-[17px]">
+              <div className="min-w-0 leading-tight">
+                <h1 className="truncate text-[13px] font-bold tracking-[-0.01em] text-white sm:text-[15px] xl:text-[17px] lg:whitespace-nowrap">
                   Lakhdaatar Jeevan Kalyan Association
                 </h1>
 
-                <p className="mt-1 whitespace-nowrap text-[9px] font-medium text-white/65 sm:text-[10px] xl:text-[11px]">
+                <p className="mt-1 truncate text-[9px] font-medium text-white/65 sm:text-[10px] xl:text-[11px] lg:whitespace-nowrap">
                   लखदातार जीवन कल्याण एसोसिएशन
                 </p>
               </div>
@@ -120,12 +120,12 @@ const Navbar = () => {
               onClick={() => setMenuOpen(true)}
               aria-label="Open menu"
               aria-expanded={menuOpen}
-              className="ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-white/25 bg-white/5 transition hover:border-[var(--ljka-gold)] hover:bg-white/10 lg:hidden"
+              className="ml-auto flex h-11 w-11 min-h-11 min-w-11 shrink-0 grow-0 basis-11 items-center justify-center overflow-visible rounded-lg border border-white/25 bg-white/5 text-[var(--ljka-gold)] transition hover:border-[var(--ljka-gold)] hover:bg-white/10 lg:hidden"
             >
-              <span className="flex h-5 w-5 flex-col justify-center gap-[4px]">
-                <span className="block h-[2px] w-5 rounded-full bg-[var(--ljka-gold)]" />
-                <span className="block h-[2px] w-5 rounded-full bg-[var(--ljka-gold)]" />
-                <span className="block h-[2px] w-5 rounded-full bg-[var(--ljka-gold)]" />
+              <span className="flex h-5 w-5 shrink-0 flex-col items-center justify-center gap-[4px]">
+                <span className="block h-[2px] w-5 shrink-0 rounded-full bg-[var(--ljka-gold)]" />
+                <span className="block h-[2px] w-5 shrink-0 rounded-full bg-[var(--ljka-gold)]" />
+                <span className="block h-[2px] w-5 shrink-0 rounded-full bg-[var(--ljka-gold)]" />
               </span>
             </button>
 
@@ -140,7 +140,7 @@ const Navbar = () => {
       {menuOpen && (
         <div
           onClick={closeMenu}
-          className="fixed inset-0 z-[60] bg-[var(--ljka-text)]/45 backdrop-blur-[2px] lg:hidden"
+          className="fixed inset-0 z-[60] bg-[var(--ljka-primary-dark)]/45 backdrop-blur-[2px] lg:hidden"
         />
       )}
 
@@ -150,7 +150,9 @@ const Navbar = () => {
 
       <aside
         className={`fixed right-0 top-0 z-[70] h-full w-[84%] max-w-[380px] bg-[var(--ljka-card)] shadow-2xl transition-transform duration-300 ease-out lg:hidden ${
-          menuOpen ? "translate-x-0" : "translate-x-full"
+          menuOpen
+            ? "translate-x-0"
+            : "translate-x-full"
         }`}
       >
         <div className="flex h-full flex-col">
@@ -163,13 +165,13 @@ const Navbar = () => {
                 closeMenu();
                 navigate("/");
               }}
-              className="text-left"
+              className="min-w-0 text-left"
             >
               <p className="text-lg font-bold tracking-wide text-white">
                 LJKA
               </p>
 
-              <p className="mt-0.5 text-[10px] font-medium text-white/65">
+              <p className="mt-0.5 truncate text-[10px] font-medium text-white/65">
                 Lakhdaatar Jeevan Kalyan Association
               </p>
             </button>
