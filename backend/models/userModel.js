@@ -6,6 +6,17 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, required: true, minlength: 6 },
   emailVerified: { type: Boolean, default: false },
+ memberId: {
+  type: String,
+  unique: true,
+  sparse: true,
+  index: true,
+},
+
+kycCompletedAt: {
+  type: Date,
+  default: null,
+},
 
   // KYC
   mobile: { type: String, trim: true },

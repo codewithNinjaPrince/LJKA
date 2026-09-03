@@ -1,4 +1,5 @@
 import User from "../models/userModel.js";
+import generateMemberId from "../utils/generateMemberId.js";
 
 const submitKYC = async (req, res) => {
     try {
@@ -377,6 +378,11 @@ const submitKYC = async (req, res) => {
         // ==========================================
 
         user.kycCompleted = true;
+        user.kycCompletedAt = new Date();
+
+        if (!user.memberId) {
+            user.memberId = await generateMemberId();
+        }
 
         await user.save();
 
@@ -391,8 +397,9 @@ const submitKYC = async (req, res) => {
                 id: user._id,
                 fullName: user.fullName,
                 email: user.email,
+                memberId: user.memberId,
                 kycCompleted: user.kycCompleted,
-            },
+            }
         });
 
     } catch (error) {
