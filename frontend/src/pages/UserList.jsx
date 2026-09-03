@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useContext, useMemo, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -8,10 +8,10 @@ import {
   Search,
   X,
 } from "lucide-react";
-
-const API_URL = import.meta.env.VITE_BACKEND_URL;
+import { LJKAContext } from "../context/LJKAContext";
 
 const UserList = () => {
+  const { backendUrl } = useContext(LJKAContext);
   // ==========================================
   // STATE
   // ==========================================
@@ -70,7 +70,7 @@ const UserList = () => {
       });
 
       const response = await fetch(
-        `${API_URL}/api/members?${params.toString()}`
+        `${backendUrl}/api/members?${params.toString()}`
       );
 
       const result = await response.json();
@@ -339,8 +339,8 @@ const UserList = () => {
                 setShowFilters((previous) => !previous)
               }
               className={`flex h-11 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-medium transition ${showFilters || activeFilterCount > 0
-                  ? "border-gray-900 bg-gray-900 text-white"
-                  : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                ? "border-gray-900 bg-gray-900 text-white"
+                : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
                 }`}
             >
               <Filter size={17} />
@@ -755,9 +755,9 @@ const UserList = () => {
                           setPage(pageNumber)
                         }
                         className={`h-9 min-w-9 rounded-lg px-2 text-sm font-medium transition ${pageNumber ===
-                            pagination.currentPage
-                            ? "bg-gray-900 text-white"
-                            : "border border-gray-200 text-gray-600 hover:bg-gray-50"
+                          pagination.currentPage
+                          ? "bg-gray-900 text-white"
+                          : "border border-gray-200 text-gray-600 hover:bg-gray-50"
                           }`}
                       >
                         {pageNumber}
