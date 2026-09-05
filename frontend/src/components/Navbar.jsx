@@ -46,9 +46,11 @@ const Navbar = () => {
               onClick={() => navigate("/")}
               className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden text-left lg:flex-none lg:overflow-visible"
             >
-              <div className="flex h-11 w-11 min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full border-2 border-[var(--ljka-gold)] bg-white text-base font-bold text-[var(--ljka-primary)] shadow-sm xl:h-12 xl:w-12 xl:text-lg">
-                LJ
-              </div>
+              <img
+                src="/src/assets/Lakhdaatar_Logo.png"
+                alt="Lakhdaatar Jeevan Kalyan Association"
+                className="h-15 w-15 shrink-0 object-contain"
+              />
 
               <div className="min-w-0 leading-tight">
                 <h1 className="truncate text-[13px] font-bold tracking-[-0.01em] text-white sm:text-[15px] xl:text-[17px] lg:whitespace-nowrap">
@@ -69,10 +71,9 @@ const Navbar = () => {
                     key={path}
                     to={path}
                     className={({ isActive }) =>
-                      `relative whitespace-nowrap rounded-lg px-2.5 py-2.5 text-[12px] font-semibold transition-all xl:px-3 xl:text-[13px] ${
-                        isActive
-                          ? "bg-white/20 text-white"
-                          : "text-white/75 hover:bg-white/15 hover:text-white"
+                      `relative whitespace-nowrap rounded-lg px-2.5 py-2.5 text-[12px] font-semibold transition-all xl:px-3 xl:text-[13px] ${isActive
+                        ? "bg-white/20 text-white"
+                        : "text-white/75 hover:bg-white/15 hover:text-white"
                       }`
                     }
                   >
@@ -81,11 +82,10 @@ const Navbar = () => {
                         {name}
 
                         <span
-                          className={`absolute bottom-1 left-3 right-3 h-[2px] origin-center rounded-full bg-[var(--ljka-gold)] transition-transform duration-200 ${
-                            isActive
+                          className={`absolute bottom-1 left-3 right-3 h-[2px] origin-center rounded-full bg-[var(--ljka-gold)] transition-transform duration-200 ${isActive
                               ? "scale-x-100"
                               : "scale-x-0"
-                          }`}
+                            }`}
                         />
                       </>
                     )}
@@ -149,11 +149,10 @@ const Navbar = () => {
           ========================================================= */}
 
       <aside
-        className={`fixed right-0 top-0 z-[70] h-full w-[84%] max-w-[380px] bg-[var(--ljka-card)] shadow-2xl transition-transform duration-300 ease-out lg:hidden ${
-          menuOpen
+        className={`fixed right-0 top-0 z-[70] h-full w-[84%] max-w-[380px] bg-[var(--ljka-card)] shadow-2xl transition-transform duration-300 ease-out lg:hidden ${menuOpen
             ? "translate-x-0"
             : "translate-x-full"
-        }`}
+          }`}
       >
         <div className="flex h-full flex-col">
 
@@ -214,10 +213,9 @@ const Navbar = () => {
                   to={path}
                   onClick={closeMenu}
                   className={({ isActive }) =>
-                    `flex items-center justify-between rounded-lg px-3.5 py-3.5 text-[14px] font-semibold transition-all duration-200 ${
-                      isActive
-                        ? "bg-[var(--ljka-primary)] text-white shadow-sm"
-                        : "text-[var(--ljka-primary-light)] hover:bg-[var(--ljka-primary)] hover:text-white"
+                    `flex items-center justify-between rounded-lg px-3.5 py-3.5 text-[14px] font-semibold transition-all duration-200 ${isActive
+                      ? "bg-[var(--ljka-primary)] text-white shadow-sm"
+                      : "text-[var(--ljka-primary-light)] hover:bg-[var(--ljka-primary)] hover:text-white"
                     }`
                   }
                 >

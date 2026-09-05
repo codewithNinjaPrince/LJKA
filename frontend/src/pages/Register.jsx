@@ -288,7 +288,7 @@ const Register = () => {
           navigate("/kyc");
           return;
         }
-      } catch (autoLoginErr) {}
+      } catch (autoLoginErr) { }
 
       toastInfo("Account created 🎉 Please login to continue");
       navigate("/login");
@@ -366,9 +366,14 @@ const Register = () => {
 
           {/* MOBILE HEADING */}
           <div className="mb-6 text-center lg:hidden">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--ljka-primary)] text-lg font-bold text-[var(--ljka-gold)] shadow-sm">
-              LJKA
+            <div className="mx-auto flex h-15 w-15 items-center justify-center">
+              <img
+                src="/src/assets/Lakhdaatar_Logo.png"
+                alt="Lakhdaatar Jeevan Kalyan Association"
+                className="h-15 w-15 object-contain"
+              />
             </div>
+
             <h1 className="mt-3 text-2xl font-bold text-[var(--ljka-primary)]">Become a Member</h1>
             <p className="mt-1 text-sm text-[var(--ljka-muted)]">Create your LJKA account securely</p>
           </div>

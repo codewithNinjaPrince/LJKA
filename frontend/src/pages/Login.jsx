@@ -152,8 +152,12 @@ const Login = () => {
           {/* MOBILE HEADING */}
           <div className="mb-7 text-center lg:hidden">
 
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--ljka-primary)] text-lg font-bold text-[var(--ljka-gold)] shadow-sm">
-              LJKA
+            <div className="mx-auto flex h-15 w-15 items-center justify-center">
+              <img
+                src="/src/assets/Lakhdaatar_Logo.png"
+                alt="Lakhdaatar Jeevan Kalyan Association"
+                className="h-15 w-15 object-contain"
+              />
             </div>
 
             <h1 className="mt-3 text-2xl font-bold text-[var(--ljka-primary)]">
