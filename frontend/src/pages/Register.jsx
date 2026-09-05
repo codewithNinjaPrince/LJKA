@@ -368,7 +368,7 @@ const Register = () => {
           <div className="mb-6 text-center lg:hidden">
             <div className="mx-auto flex h-15 w-15 items-center justify-center">
               <img
-                src="/public/img/Lakhdaatar_Logo.png"
+                src="/img/Lakhdaatar_Logo.png"
                 alt="Lakhdaatar Jeevan Kalyan Association"
                 className="h-15 w-15 object-contain"
               />

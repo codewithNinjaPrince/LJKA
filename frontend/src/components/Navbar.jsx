@@ -47,7 +47,7 @@ const Navbar = () => {
               className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden text-left lg:flex-none lg:overflow-visible"
             >
               <img
-                src="/public/img/Lakhdaatar_Logo.png"
+                src="/img/Lakhdaatar_Logo.png"
                 alt="Lakhdaatar Jeevan Kalyan Association"
                 className="h-15 w-15 shrink-0 object-contain"
               />
@@ -83,8 +83,8 @@ const Navbar = () => {
 
                         <span
                           className={`absolute bottom-1 left-3 right-3 h-[2px] origin-center rounded-full bg-[var(--ljka-gold)] transition-transform duration-200 ${isActive
-                              ? "scale-x-100"
-                              : "scale-x-0"
+                            ? "scale-x-100"
+                            : "scale-x-0"
                             }`}
                         />
                       </>
@@ -150,8 +150,8 @@ const Navbar = () => {
 
       <aside
         className={`fixed right-0 top-0 z-[70] h-full w-[84%] max-w-[380px] bg-[var(--ljka-card)] shadow-2xl transition-transform duration-300 ease-out lg:hidden ${menuOpen
-            ? "translate-x-0"
-            : "translate-x-full"
+          ? "translate-x-0"
+          : "translate-x-full"
           }`}
       >
         <div className="flex h-full flex-col">
