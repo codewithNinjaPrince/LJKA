@@ -41,6 +41,7 @@ const Navbar = () => {
           <div className="flex min-h-[78px] w-full items-center gap-3 xl:min-h-[84px] xl:gap-7">
 
             {/* BRAND */}
+            {/* BRAND */}
             <button
               type="button"
               onClick={() => navigate("/")}
@@ -53,13 +54,15 @@ const Navbar = () => {
               />
 
               <div className="min-w-0 leading-tight">
-                <h1 className="truncate text-[13px] font-bold tracking-[-0.01em] text-white sm:text-[15px] xl:text-[17px] lg:whitespace-nowrap">
-                  Lakhdaatar Jeevan Kalyan Association
-                </h1>
+                <h1 className="text-[13px] font-bold tracking-[-0.01em] text-white sm:text-[15px] xl:text-[17px]">
+                  <span className="block whitespace-nowrap">
+                    Lakhdaatar Jeevan
+                  </span>
 
-                <p className="mt-1 truncate text-[9px] font-medium text-white/65 sm:text-[10px] xl:text-[11px] lg:whitespace-nowrap">
-                  लखदातार जीवन कल्याण एसोसिएशन
-                </p>
+                  <span className="block whitespace-nowrap">
+                    Kalyan Association
+                  </span>
+                </h1>
               </div>
             </button>
 

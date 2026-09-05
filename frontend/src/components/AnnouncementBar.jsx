@@ -3,6 +3,14 @@ import { FaBullhorn, FaStar } from "react-icons/fa";
 
 const AnnouncementBar = () => {
   const messages = [
+
+    <>
+      <span className="font-bold text-[var(--ljka-primary)]">
+        सेवा परमो धर्मः
+      </span>
+
+    </>,
+
     <>
       For the first{" "}
       <span className="font-bold text-[var(--ljka-gold-dark)]">
@@ -11,13 +19,6 @@ const AnnouncementBar = () => {
       , Registration is{" "}
       <span className="font-extrabold text-[var(--ljka-primary)]">
         FREE
-      </span>
-    </>,
-
-    <>
-      Help, Trust, Humanity — by{" "}
-      <span className="font-bold text-[var(--ljka-primary)]">
-        Lakhdaatar Jeevan Kalyan Association
       </span>
     </>,
 
