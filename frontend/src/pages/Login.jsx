@@ -154,7 +154,7 @@ const Login = () => {
 
             <div className="mx-auto flex h-15 w-15 items-center justify-center">
               <img
-                src="/src/assets/Lakhdaatar_Logo.png"
+                src="/public/img/Lakhdaatar_Logo.png"
                 alt="Lakhdaatar Jeevan Kalyan Association"
                 className="h-15 w-15 object-contain"
               />

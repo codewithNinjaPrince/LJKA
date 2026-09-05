@@ -47,7 +47,7 @@ const Navbar = () => {
               className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden text-left lg:flex-none lg:overflow-visible"
             >
               <img
-                src="/src/assets/Lakhdaatar_Logo.png"
+                src="/public/img/Lakhdaatar_Logo.png"
                 alt="Lakhdaatar Jeevan Kalyan Association"
                 className="h-15 w-15 shrink-0 object-contain"
               />
