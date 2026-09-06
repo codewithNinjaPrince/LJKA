@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaArrowRight,
@@ -11,12 +11,15 @@ import {
   FaHeart,
   FaLock,
   FaStar,
+  FaBell,
 } from "react-icons/fa";
 
 import HeroCarousel from "../components/HeroCarousel";
+import { LJKAContext } from "../context/LJKAContext";
 
 const Home = () => {
   const navigate = useNavigate();
+  const { sahyogAlert } = useContext(LJKAContext);
 
   return (
     <main className="w-full overflow-hidden bg-[var(--ljka-bg)] text-[var(--ljka-text)]">
@@ -28,7 +31,7 @@ const Home = () => {
           ========================================================= */}
 
       <section className="relative z-20 border-b border-[var(--ljka-border-light)] bg-white">
-        <div className="mx-auto grid max-w-[1450px] divide-y divide-[var(--ljka-border-light)] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        <div className="mx-auto grid max-w-[1450px] divide-y divide-[var(--ljka-border-light)] sm:grid-cols-2 lg:grid-cols-4 sm:divide-x sm:divide-y-0">
 
           <QuickAction
             icon={<FaUsers />}
@@ -39,19 +42,289 @@ const Home = () => {
 
           <QuickAction
             icon={<FaHandHoldingHeart />}
-            title="Explore Sahyog"
+            title="View Sahyog"
             text="Understand collective support"
             onClick={() => navigate("/sahyog-list")}
           />
 
           <QuickAction
             icon={<FaFileAlt />}
-            title="View Niyamawali"
+            title="Niyamawali"
             text="Know the rules and process"
             onClick={() => navigate("/niyamawali")}
           />
 
+          <QuickAction
+            icon={<FaHeart />}
+            title="Donation Portal"
+            text="Support the LJKA community"
+            onClick={() => navigate("/sahyog-list")}
+          />
+
         </div>
+      </section>
+
+      {/* =========================================================
+    SAHYOG ALERT
+    ========================================================= */}
+      {sahyogAlert?.isActive && (
+        <section className="relative z-20 bg-[var(--ljka-primary-bg)] border-b border-[var(--ljka-border)]">
+          <div className="mx-auto max-w-[1450px] px-4 py-5 sm:px-6 md:py-6 lg:px-8">
+
+            <div className="relative overflow-hidden rounded-[var(--ljka-radius-lg)] border border-[var(--ljka-border)] bg-white shadow-[var(--ljka-shadow-sm)]">
+
+              {/* Gold accent */}
+              <div className="absolute left-0 top-0 h-full w-1.5 bg-[var(--ljka-gold)]" />
+
+              <div className="flex flex-col gap-4 p-5 sm:p-6 md:flex-row md:items-center md:justify-between md:gap-6">
+
+                {/* Alert Content */}
+                <div className="flex min-w-0 items-start gap-4">
+
+                  {/* Icon */}
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--ljka-primary)] text-white">
+                    <FaBell className="text-lg" />
+                  </div>
+
+                  {/* Text */}
+                  <div className="min-w-0">
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--ljka-gold-dark)]">
+                      {sahyogAlert.title}
+                    </p>
+
+                    <p className="text-sm leading-6 text-[var(--ljka-text)] sm:text-base">
+                      {sahyogAlert.message}
+                    </p>
+                  </div>
+
+                </div>
+
+                {/* Action */}
+                <button
+                  type="button"
+                  onClick={() => navigate("/sahyog-list")}
+                  className="
+              shrink-0
+              self-start
+              rounded-full
+              bg-[var(--ljka-primary)]
+              px-5
+              py-2.5
+              text-sm
+              font-semibold
+              text-white
+              transition
+              duration-200
+              hover:bg-[var(--ljka-primary-dark)]
+              md:self-center
+            "
+                >
+                  View Sahyog
+                </button>
+
+              </div>
+            </div>
+
+          </div>
+        </section>
+      )}
+
+      {/* =========================================================
+    LJKA INTRODUCTION
+    ========================================================= */}
+      <section className="relative z-20 bg-[var(--ljka-bg)] py-10 sm:py-12 lg:py-16">
+        <div className="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8">
+
+          {/* Section Heading */}
+          <div className="mb-8 text-center sm:mb-10">
+
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--ljka-gold-dark)]">
+              Introduction
+            </p>
+
+            <h2 className="text-2xl font-bold text-[var(--ljka-primary)] sm:text-3xl lg:text-4xl">
+              लखदातार जीवन कल्याण एसोसिएशन
+            </h2>
+
+            <p className="mt-3 text-base font-semibold text-[var(--ljka-gold-dark)] sm:text-lg">
+              “समाज के लिए, समाज के साथ”
+            </p>
+
+            <div className="mx-auto mt-4 h-1 w-16 rounded-full bg-[var(--ljka-gold)]" />
+          </div>
+
+
+          {/* Introduction Card */}
+          <div className="overflow-hidden rounded-[var(--ljka-radius-lg)] border border-[var(--ljka-border)] bg-white shadow-[var(--ljka-shadow-sm)]">
+
+            {/* Maroon top accent */}
+            <div className="h-1.5 bg-[var(--ljka-primary)]" />
+
+            <div className="p-5 sm:p-8 md:p-10 lg:p-12">
+
+              {/* Paragraph 1 */}
+              <p className="text-justify text-sm leading-7 text-[var(--ljka-text)] sm:text-base sm:leading-8">
+                <strong className="font-semibold text-[var(--ljka-primary)]">
+                  लखदातार जीवन कल्याण एसोसिएशन
+                </strong>{" "}
+                एक सामाजिक संस्था है, जो “समाज के लिए, समाज के साथ” की भावना
+                से कार्य करने के उद्देश्य से स्थापित की गई है। हमारा प्रयास है कि
+                कठिन परिस्थितियों में कोई परिवार स्वयं को अकेला न समझे और
+                आवश्यकता के समय समाज उसके साथ खड़ा हो।
+              </p>
+
+
+              {/* Paragraph 2 */}
+              <p className="mt-5 text-justify text-sm leading-7 text-[var(--ljka-text)] sm:mt-6 sm:text-base sm:leading-8">
+                हमारी मुख्य पहल एक पारस्परिक सामाजिक सहयोग व्यवस्था है, जिसके
+                अंतर्गत संस्था से जुड़े सदस्यों के परिवार को सदस्य की आकस्मिक
+                मृत्यु की स्थिति में, निर्धारित नियमों एवं आवश्यक सत्यापन के
+                पश्चात, समुदाय के अन्य सक्रिय सदस्यों के स्वैच्छिक सहयोग के
+                माध्यम से आर्थिक सहायता पहुँचाने का प्रयास किया जाता है।
+              </p>
+
+
+              {/* Paragraph 3 */}
+              <p className="mt-5 text-justify text-sm leading-7 text-[var(--ljka-text)] sm:mt-6 sm:text-base sm:leading-8">
+                हमारा विश्वास है कि एक व्यक्ति का छोटा सहयोग, जब हजारों लोग
+                मिलकर करें, तो किसी परिवार के लिए बहुत बड़ा सहारा बन सकता है।
+              </p>
+
+
+              {/* Paragraph 4 */}
+              <p className="mt-5 text-justify text-sm leading-7 text-[var(--ljka-text)] sm:mt-6 sm:text-base sm:leading-8">
+                इसी सामाजिक भावना को आगे बढ़ाते हुए संस्था भविष्य में उपलब्ध
+                संसाधनों के अनुसार शिक्षा, स्वास्थ्य, जरूरतमंदों की सहायता,
+                पर्यावरण संरक्षण, आपदा राहत तथा अन्य जनकल्याणकारी कार्यों में
+                भी योगदान देने का प्रयास करेगी।
+              </p>
+
+
+              {/* Commitment */}
+              <div className="mt-7 rounded-r-[var(--ljka-radius-md)] border-l-4 border-[var(--ljka-gold)] bg-[var(--ljka-gold-light)] px-5 py-4 sm:mt-8 sm:px-6 sm:py-5">
+
+                <p className="text-sm font-semibold leading-7 text-[var(--ljka-primary)] sm:text-base sm:leading-8">
+                  हमारा संकल्प —
+                  <span className="font-medium text-[var(--ljka-text)]">
+                    {" "}कठिन समय में किसी परिवार को अकेला न छोड़ना और सहयोग की
+                    भावना को एक संगठित सामाजिक प्रयास में बदलना।
+                  </span>
+                </p>
+
+              </div>
+
+            </div>
+          </div>
+
+
+          {/* Read More */}
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              onClick={() => navigate("/about")}
+              className="
+          inline-flex
+          items-center
+          gap-2
+          rounded-full
+          border
+          border-[var(--ljka-primary)]
+          px-6
+          py-2.5
+          text-sm
+          font-semibold
+          text-[var(--ljka-primary)]
+          transition
+          duration-200
+          hover:bg-[var(--ljka-primary)]
+          hover:text-white
+        "
+            >
+              Know More
+              <span aria-hidden="true">→</span>
+            </button>
+          </div>
+
+        </div>
+      </section>
+
+
+        {/* =========================================================
+          11,000 MEMBERS
+          ========================================================= */}
+
+      <section className="bg-[var(--ljka-bg)] py-20 sm:py-24 lg:py-28">
+
+        <div className="mx-auto max-w-[1450px] px-5 sm:px-8 lg:px-12">
+
+          <div className="overflow-hidden rounded-[30px] border border-[var(--ljka-border)] bg-white shadow-[var(--ljka-shadow-sm)]">
+
+            <div className="grid items-center lg:grid-cols-[1.2fr_.8fr]">
+
+              {/* CONTENT */}
+
+              <div className="p-7 sm:p-10 lg:p-14">
+
+                <div className="inline-flex items-center gap-2 rounded-full bg-[var(--ljka-gold-light)]/60 px-3 py-1.5">
+                  <FaStar className="text-[10px] text-[var(--ljka-gold-dark)]" />
+
+                  <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--ljka-text)]">
+                    Founding Membership Initiative
+                  </span>
+                </div>
+
+                <h2 className="mt-6 text-4xl font-bold tracking-tight text-[var(--ljka-text)] sm:text-5xl">
+                  First
+                  <span className="text-[var(--ljka-primary)]"> 11,000 Members</span>
+                </h2>
+
+                <p className="mt-5 max-w-2xl text-sm leading-7 text-[var(--ljka-muted)] sm:text-base">
+                  Registration is currently free for the first 11,000 members
+                  as LJKA begins building its initial responsible community.
+                </p>
+
+                <button
+                  type="button"
+                  onClick={() => navigate("/register")}
+                  className="group mt-7 inline-flex items-center gap-2 rounded-lg bg-[var(--ljka-primary)] px-5 py-3 text-sm font-bold text-white transition hover:bg-[var(--ljka-primary-dark)]"
+                >
+                  Become a Member
+                  <FaArrowRight className="transition-transform group-hover:translate-x-1" />
+                </button>
+
+              </div>
+
+
+              {/* NUMBER PANEL */}
+
+              <div className="relative flex min-h-[280px] items-center justify-center border-t border-[var(--ljka-border-light)] bg-[var(--ljka-primary-bg)] p-8 lg:min-h-[400px] lg:border-l lg:border-t-0">
+
+                <div className="absolute h-52 w-52 rounded-full border border-[var(--ljka-gold)]/30" />
+
+                <div className="absolute h-72 w-72 rounded-full border border-[var(--ljka-primary)]/10" />
+
+                <div className="relative text-center">
+
+                  <p className="text-6xl font-bold tracking-tighter text-[var(--ljka-primary)] sm:text-7xl">
+                    11K
+                  </p>
+
+                  <p className="mt-3 text-xs font-bold uppercase tracking-[0.2em] text-[var(--ljka-muted)]">
+                    Founding Members
+                  </p>
+
+                  <div className="mx-auto mt-5 h-1 w-16 rounded-full bg-[var(--ljka-gold)]" />
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
       </section>
 
 
@@ -173,83 +446,7 @@ const Home = () => {
       </section>
 
 
-      {/* =========================================================
-          11,000 MEMBERS
-          ========================================================= */}
-
-      <section className="bg-[var(--ljka-bg)] py-20 sm:py-24 lg:py-28">
-
-        <div className="mx-auto max-w-[1450px] px-5 sm:px-8 lg:px-12">
-
-          <div className="overflow-hidden rounded-[30px] border border-[var(--ljka-border)] bg-white shadow-[var(--ljka-shadow-sm)]">
-
-            <div className="grid items-center lg:grid-cols-[1.2fr_.8fr]">
-
-              {/* CONTENT */}
-
-              <div className="p-7 sm:p-10 lg:p-14">
-
-                <div className="inline-flex items-center gap-2 rounded-full bg-[var(--ljka-gold-light)]/60 px-3 py-1.5">
-                  <FaStar className="text-[10px] text-[var(--ljka-gold-dark)]" />
-
-                  <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--ljka-text)]">
-                    Founding Membership Initiative
-                  </span>
-                </div>
-
-                <h2 className="mt-6 text-4xl font-bold tracking-tight text-[var(--ljka-text)] sm:text-5xl">
-                  First
-                  <span className="text-[var(--ljka-primary)]"> 11,000 Members</span>
-                </h2>
-
-                <p className="mt-5 max-w-2xl text-sm leading-7 text-[var(--ljka-muted)] sm:text-base">
-                  Registration is currently free for the first 11,000 members
-                  as LJKA begins building its initial responsible community.
-                </p>
-
-                <button
-                  type="button"
-                  onClick={() => navigate("/register")}
-                  className="group mt-7 inline-flex items-center gap-2 rounded-lg bg-[var(--ljka-primary)] px-5 py-3 text-sm font-bold text-white transition hover:bg-[var(--ljka-primary-dark)]"
-                >
-                  Become a Member
-                  <FaArrowRight className="transition-transform group-hover:translate-x-1" />
-                </button>
-
-              </div>
-
-
-              {/* NUMBER PANEL */}
-
-              <div className="relative flex min-h-[280px] items-center justify-center border-t border-[var(--ljka-border-light)] bg-[var(--ljka-primary-bg)] p-8 lg:min-h-[400px] lg:border-l lg:border-t-0">
-
-                <div className="absolute h-52 w-52 rounded-full border border-[var(--ljka-gold)]/30" />
-
-                <div className="absolute h-72 w-72 rounded-full border border-[var(--ljka-primary)]/10" />
-
-                <div className="relative text-center">
-
-                  <p className="text-6xl font-bold tracking-tighter text-[var(--ljka-primary)] sm:text-7xl">
-                    11K
-                  </p>
-
-                  <p className="mt-3 text-xs font-bold uppercase tracking-[0.2em] text-[var(--ljka-muted)]">
-                    Founding Members
-                  </p>
-
-                  <div className="mx-auto mt-5 h-1 w-16 rounded-full bg-[var(--ljka-gold)]" />
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
+    
 
 
       {/* =========================================================

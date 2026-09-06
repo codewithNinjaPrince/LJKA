@@ -41,7 +41,6 @@ const Navbar = () => {
           <div className="flex min-h-[78px] w-full items-center gap-3 xl:min-h-[84px] xl:gap-7">
 
             {/* BRAND */}
-            {/* BRAND */}
             <button
               type="button"
               onClick={() => navigate("/")}

@@ -2,11 +2,11 @@ import express from "express";
 import cors from "cors";
 import "dotenv/config";
 import connectDB from "../config/mongodb.js";
-
 import userRouter from "../routes/userRoute.js";
 import kycRouter from "../routes/kycRoute.js";
 import contactRouter from "../routes/contactRoute.js";
 import memberRouter from "../routes/memberRoute.js";
+import sahyogAlertRouter from "../routes/sahyogAlertRoute.js";
 
 const app = express();
 
@@ -23,6 +23,7 @@ app.use("/api/user", userRouter);
 app.use("/api/user/kyc", kycRouter);
 app.use("/api/contact", contactRouter);
 app.use("/api/members", memberRouter);
+app.use("/api/sahyog-alert", sahyogAlertRouter);
 
 app.get("/", (req, res) => {
   res.json({

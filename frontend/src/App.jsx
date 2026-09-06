@@ -1,5 +1,5 @@
-import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
 import PublicLayout from "./layouts/PublicLayout";
 import UserLayout from "./layouts/UserLayout";
 import Home from "./pages/Home";
@@ -16,34 +16,38 @@ import VyawasthaList from "./pages/VyawasthaList";
 import ForgotPassword from "./pages/ForgotPassword";
 import KYC from "./pages/KYC";
 import ViewProfile from "./pages/user/ViewProfile";
-import Navbar from "./components/Navbar";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
-import AnnouncementBar from "./components/AnnouncementBar";
 
-const App = () => (
-  <Routes>
-    <Route element={<PublicLayout />}>
-      <Route path="/" element={<Home />} />
-      <Route path="/about" element={<AboutUs />} />
-      <Route path="/contact" element={<Contact />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/niyamawali" element={<Niyamawali />} />
-      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-      <Route path="/sahyog-list" element={<SahyogList />} />
-      <Route path="/terms-conditions" element={<TermsConditions />} />
-      <Route path="/user-list" element={<UserList />} />
-      <Route path="/vyawastha-list" element={<VyawasthaList />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/kyc" element={<KYC />} />
-    </Route>
+const App = () => {
+  const { pathname } = useLocation();
 
-    <Route path="/user" element={<UserLayout />}>
-      <Route path="view-profile" element={<ViewProfile />} />
-    </Route>
-  </Routes>
-);
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [pathname]);
+
+  return (
+    <Routes>
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<AboutUs />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/niyamawali" element={<Niyamawali />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/sahyog-list" element={<SahyogList />} />
+        <Route path="/terms-conditions" element={<TermsConditions />} />
+        <Route path="/user-list" element={<UserList />} />
+        <Route path="/vyawastha-list" element={<VyawasthaList />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/kyc" element={<KYC />} />
+      </Route>
+
+      <Route path="/user" element={<UserLayout />}>
+        <Route path="view-profile" element={<ViewProfile />} />
+      </Route>
+    </Routes>
+  );
+};
 
 export default App;
 

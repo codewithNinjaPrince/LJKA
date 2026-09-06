@@ -47,12 +47,37 @@ const LJKAContextProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
   const [appLoading, setAppLoading] = useState(true);
+  const [sahyogAlert, setSahyogAlert] = useState(null);
 
 
   /* =====================================================
      GET USER LIST
      Existing functionality
   ===================================================== */
+const getSahyogAlert = useCallback(async () => {
+  try {
+    const { data } = await axios.get(
+      `${backendUrl}/api/sahyog-alert`
+    );
+
+    if (data?.success) {
+      setSahyogAlert(data.alert);
+    } else {
+      setSahyogAlert(null);
+    }
+  } catch (error) {
+    // 404 simply means there is currently no active alert.
+    if (error.response?.status !== 404) {
+      console.error(
+        "GET SAHYOG ALERT ERROR:",
+        error
+      );
+    }
+
+    setSahyogAlert(null);
+  }
+}, [backendUrl]);
+
 
   const getUserList = useCallback(async () => {
 
@@ -257,23 +282,28 @@ const LJKAContextProvider = ({ children }) => {
   ===================================================== */
 
   useEffect(() => {
-    const initializeApp = async () => {
-      try {
-        const savedToken = localStorage.getItem("token");
+  const initializeApp = async () => {
+    try {
+      const savedToken = localStorage.getItem("token");
 
-        if (savedToken) {
-          setToken(savedToken);
-        }
-
-      } catch (error) {
-        console.error("APP INITIALIZATION ERROR:", error);
-      } finally {
-        setAppLoading(false);
+      if (savedToken) {
+        setToken(savedToken);
       }
-    };
 
-    initializeApp();
-  }, []);
+      await getSahyogAlert();
+
+    } catch (error) {
+      console.error(
+        "APP INITIALIZATION ERROR:",
+        error
+      );
+    } finally {
+      setAppLoading(false);
+    }
+  };
+
+  initializeApp();
+}, [getSahyogAlert]);
 
 
   /* =====================================================
@@ -287,6 +317,10 @@ const LJKAContextProvider = ({ children }) => {
 
     /* App */
     appLoading,
+
+     /* Sahyog Alert */
+  sahyogAlert,
+  getSahyogAlert,
 
     /* Authentication */
     token,
