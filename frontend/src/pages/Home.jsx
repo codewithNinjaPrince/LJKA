@@ -1,5 +1,7 @@
 import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+
 import {
   FaArrowRight,
   FaUsers,
@@ -16,6 +18,28 @@ import {
 
 import HeroCarousel from "../components/HeroCarousel";
 import { LJKAContext } from "../context/LJKAContext";
+
+const MissionPoint = ({ title, text }) => (
+  <div className="group rounded-xl border border-[var(--ljka-border)] bg-white p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--ljka-gold)]/40 hover:shadow-[var(--ljka-shadow-sm)]">
+
+    <div className="flex items-start gap-3">
+
+      <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--ljka-gold)]" />
+
+      <div>
+        <h3 className="text-sm font-bold text-[var(--ljka-primary)]">
+          {title}
+        </h3>
+
+        <p className="mt-1.5 text-xs leading-5 text-[var(--ljka-muted)]">
+          {text}
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+);
 
 const Home = () => {
   const navigate = useNavigate();
@@ -249,7 +273,7 @@ const Home = () => {
       </section>
 
 
-        {/* =========================================================
+      {/* =========================================================
           11,000 MEMBERS
           ========================================================= */}
 
@@ -329,68 +353,159 @@ const Home = () => {
 
 
       {/* =========================================================
-          ABOUT LJKA
-          ========================================================= */}
+    OUR MISSION
+========================================================= */}
 
-      <section className="bg-[var(--ljka-bg)] py-20 sm:py-24 lg:py-28">
-        <div className="mx-auto grid max-w-[1450px] items-center gap-12 px-5 sm:px-8 lg:grid-cols-2 lg:px-12">
+      <section className="relative overflow-hidden bg-[var(--ljka-bg)] py-16 sm:py-20 lg:py-24">
 
-          <div>
-            <SectionLabel text="ABOUT LJKA" />
+        {/* Soft background decoration */}
+        <div className="pointer-events-none absolute -left-24 top-20 h-64 w-64 rounded-full bg-[var(--ljka-primary)]/[0.035] blur-3xl" />
 
-            <h2 className="mt-4 max-w-xl text-3xl font-bold leading-tight tracking-tight text-[var(--ljka-text)] sm:text-4xl lg:text-5xl">
-              A community built around
-              <span className="block text-[var(--ljka-primary)]">
-                people and responsibility.
-              </span>
-            </h2>
-
-            <p className="mt-6 max-w-xl text-sm leading-7 text-[var(--ljka-muted)] sm:text-base">
-              Lakhdaatar Jeevan Kalyan Association aims to bring people
-              together through a structured community where membership,
-              verification and collective support are handled responsibly.
-            </p>
-
-            <button
-              type="button"
-              onClick={() => navigate("/about")}
-              className="group mt-7 inline-flex items-center gap-2 text-sm font-bold text-[var(--ljka-primary)] transition hover:text-[var(--ljka-primary-dark)]"
-            >
-              Learn more about LJKA
-              <FaArrowRight className="text-xs transition-transform group-hover:translate-x-1" />
-            </button>
-          </div>
+        <div className="pointer-events-none absolute -right-24 bottom-0 h-72 w-72 rounded-full bg-[var(--ljka-gold)]/[0.06] blur-3xl" />
 
 
-          {/* RIGHT INFO PANEL */}
+        <div className="relative mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
 
-          <div className="rounded-[28px] border border-[var(--ljka-border)] bg-white p-6 shadow-[var(--ljka-shadow-sm)] sm:p-8">
+          <div className="grid items-center gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:gap-16">
 
-            <div className="grid gap-4">
 
-              <InfoRow
-                icon={<FaUserCheck />}
-                title="Verified Membership"
-                text="Member information is intended to be reviewed through a structured process."
-              />
+            {/* =====================================================
+          IMAGE
+      ===================================================== */}
 
-              <InfoRow
-                icon={<FaShieldAlt />}
-                title="Responsible Verification"
-                text="Required information and documents can be reviewed before important support decisions."
-              />
+            <div className="relative">
 
-              <InfoRow
-                icon={<FaHandHoldingHeart />}
-                title="Collective Support"
-                text="Eligible cases can move through a responsible community support process."
-              />
+              {/* Gold accent */}
+              <div className="absolute -left-3 -top-3 h-24 w-24 rounded-tl-3xl border-l-2 border-t-2 border-[var(--ljka-gold)] sm:-left-4 sm:-top-4" />
+
+              <div className="absolute -bottom-3 -right-3 h-24 w-24 rounded-br-3xl border-b-2 border-r-2 border-[var(--ljka-gold)] sm:-bottom-4 sm:-right-4" />
+
+
+              <div className="relative overflow-hidden rounded-2xl border border-[var(--ljka-border)] bg-white p-2 shadow-[var(--ljka-shadow-lg)]">
+
+                <img
+                  src="/img/mission.jpg"
+                  alt="LJKA community and mutual support"
+                  className="h-[280px] w-full rounded-xl object-cover sm:h-[360px] lg:h-[440px]"
+                />
+
+                {/* Image overlay */}
+                <div className="absolute bottom-5 left-5 right-5 rounded-xl border border-white/20 bg-[var(--ljka-primary)]/90 px-5 py-4 backdrop-blur-md">
+
+                  <p
+                    className="text-lg font-bold text-white"
+                    style={{
+                      fontFamily: "'Noto Serif Devanagari', serif",
+                    }}
+                  >
+                    सेवा परमो धर्मः
+                  </p>
+
+                  <p className="mt-0.5 text-xs font-medium text-white/70">
+                    Service is the Highest Duty
+                  </p>
+
+                </div>
+
+              </div>
+
+            </div>
+
+
+            {/* =====================================================
+          CONTENT
+      ===================================================== */}
+
+            <div>
+
+              {/* Eyebrow */}
+              <div className="mb-4 flex items-center gap-3">
+
+                <span className="h-[2px] w-8 rounded-full bg-[var(--ljka-gold)]" />
+
+                <span className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--ljka-gold-dark)]">
+                  Our Mission
+                </span>
+
+              </div>
+
+
+              {/* Heading */}
+              <h2 className="max-w-2xl text-3xl font-extrabold leading-tight text-[var(--ljka-primary)] sm:text-4xl lg:text-[44px]">
+                Standing Together When
+                <span className="text-[var(--ljka-gold-dark)]">
+                  {" "}Support Matters Most
+                </span>
+              </h2>
+
+
+              {/* Description */}
+              <p className="mt-5 max-w-2xl text-sm leading-7 text-[var(--ljka-muted)] sm:text-base">
+                LJKA's mission is to build a trusted community where members
+                stand together through mutual support, collective responsibility
+                and humanity. We believe that no family should have to face a
+                difficult time alone.
+              </p>
+
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-[var(--ljka-muted)] sm:text-base">
+                Through a structured community network, transparent processes and
+                a shared sense of responsibility, LJKA aims to create meaningful
+                support for members and their families when it is needed most.
+              </p>
+
+
+              {/* =================================================
+            MISSION POINTS
+        ================================================= */}
+
+              <div className="mt-7 grid gap-4 sm:grid-cols-2">
+
+                <MissionPoint
+                  title="Community First"
+                  text="Building a connected community where members stand by one another."
+                />
+
+                <MissionPoint
+                  title="Mutual Support"
+                  text="Creating a system of collective responsibility and assistance."
+                />
+
+                <MissionPoint
+                  title="Trust & Transparency"
+                  text="Following clear processes with responsibility and accountability."
+                />
+
+                <MissionPoint
+                  title="Humanity"
+                  text="Keeping compassion and service at the heart of every effort."
+                />
+
+              </div>
+
+
+              {/* =================================================
+            CTA
+        ================================================= */}
+
+              <div className="mt-8">
+
+                <Link
+                  to="/about"
+                  className="group inline-flex items-center gap-2 rounded-lg bg-[var(--ljka-primary)] px-5 py-3 text-sm font-bold text-white shadow-[var(--ljka-shadow-sm)] transition-all duration-300 hover:bg-[var(--ljka-primary-dark)] hover:shadow-[var(--ljka-shadow-md)]"
+                >
+                  Learn More About LJKA
+
+                  <FaArrowRight className="text-[11px] transition-transform duration-300 group-hover:translate-x-1" />
+                </Link>
+
+              </div>
 
             </div>
 
           </div>
 
         </div>
+
       </section>
 
 
@@ -444,10 +559,6 @@ const Home = () => {
         </div>
 
       </section>
-
-
-    
-
 
       {/* =========================================================
           TRUST & RESPONSIBILITY
