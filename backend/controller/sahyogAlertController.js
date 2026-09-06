@@ -1,4 +1,4 @@
-import SahyogAlert from "../models/SahyogAlert.js";
+import SahyogAlert from "../models/sahyogAlert.js";
 
 const getSahyogAlert = async (req, res) => {
   try {
