@@ -1,10 +1,25 @@
 import React, {
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
+import { FaCalendarAlt, FaCheckCircle, FaExclamationTriangle } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 import { LJKAContext } from "../../context/LJKAContext";
+
+const getMembershipExpiry = (profile) => {
+  if (profile?.membershipExpiresAt) return profile.membershipExpiresAt;
+
+  const startDate = profile?.kycCompletedAt || profile?.membershipStartDate;
+
+  if (!startDate) return null;
+
+  return new Date(
+    new Date(startDate).getTime() + 365 * 24 * 60 * 60 * 1000
+  ).toISOString();
+};
 
 
 const ViewProfile = () => {
@@ -13,17 +28,23 @@ const ViewProfile = () => {
     user,
     getUserProfile,
   } = useContext(LJKAContext);
+  const navigate = useNavigate();
 
 
   const [loading, setLoading] = useState(!user);
   const [errorMessage, setErrorMessage] = useState("");
+  const [remainingDays, setRemainingDays] = useState(0);
+  const profileRequestStarted = useRef(false);
 
 
   useEffect(() => {
+    if (profileRequestStarted.current) return;
+
+    profileRequestStarted.current = true;
 
     const loadProfile = async () => {
 
-      if (user) {
+      if (getMembershipExpiry(user)) {
         setLoading(false);
         return;
       }
@@ -46,7 +67,34 @@ const ViewProfile = () => {
 
     loadProfile();
 
-  }, [user, getUserProfile]);
+  }, [getUserProfile]);
+
+  useEffect(() => {
+    const membershipExpiry = getMembershipExpiry(user);
+    if (!membershipExpiry) return;
+
+    const updateRemainingDays = () => {
+      const millisecondsRemaining =
+        new Date(membershipExpiry).getTime() - Date.now();
+      setRemainingDays(Math.max(Math.ceil(millisecondsRemaining / 86400000), 0));
+    };
+
+    updateRemainingDays();
+    const timer = setInterval(updateRemainingDays, 60000);
+
+    return () => clearInterval(timer);
+  }, [user?.membershipExpiresAt, user?.kycCompletedAt, user?.membershipStartDate]);
+
+  const membershipExpiry = getMembershipExpiry(user);
+  const profileRemainingDays = membershipExpiry
+    ? Math.max(
+        Math.ceil(
+          (new Date(membershipExpiry).getTime() - Date.now()) /
+            86400000
+        ),
+        0
+      )
+    : null;
 
   /* ==========================================
      LOADING
@@ -99,7 +147,7 @@ const ViewProfile = () => {
   ========================================== */
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="mx-auto max-w-7xl">
 
       {/* PAGE HEADER */}
 
@@ -122,14 +170,14 @@ const ViewProfile = () => {
               text-2xl
               sm:text-3xl
               font-bold
-              text-gray-800
+              text-[var(--ljka-primary)]
             "
           >
             My Profile
           </h1>
 
-          <p className="text-sm text-gray-500 mt-1">
-            View your registered details
+          <p className="mt-1 text-sm text-[var(--ljka-muted)]">
+            Your verified LJKA membership information
           </p>
 
         </div>
@@ -137,9 +185,10 @@ const ViewProfile = () => {
 
         <button
           type="button"
+          onClick={() => navigate("/user/update-profile")}
           className="
-            bg-gray-900
-            hover:bg-gray-800
+            bg-[var(--ljka-primary)]
+            hover:bg-[var(--ljka-primary-dark)]
             text-white
             px-5
             py-2.5
@@ -155,12 +204,26 @@ const ViewProfile = () => {
 
       </div>
 
+      {profileRemainingDays !== null && (
+        <MembershipRenewalCard
+          user={user}
+          membershipExpiry={membershipExpiry}
+          remainingDays={profileRemainingDays}
+        />
+      )}
+
 
       {/* ==========================================
           BASIC DETAILS
       ========================================== */}
 
       <ProfileSection title="Basic Details">
+
+        <Detail
+          label="Member ID"
+          value={user.memberId}
+          emphasis
+        />
 
         <Detail
           label="Full Name"
@@ -212,18 +275,8 @@ const ViewProfile = () => {
       <ProfileSection title="Address Details">
 
         <Detail
-          label="State"
-          value={user.address?.stateName}
-        />
-
-        <Detail
-          label="District"
-          value={user.address?.districtName}
-        />
-
-        <Detail
-          label="Tehsil / Sub District"
-          value={user.address?.tehsilName}
+          label="Address Line"
+          value={user.address?.address}
         />
 
         <Detail
@@ -232,8 +285,18 @@ const ViewProfile = () => {
         />
 
         <Detail
-          label="Address Line"
-          value={user.address?.address}
+          label="Tehsil / Sub District"
+          value={user.address?.tehsilName}
+        />
+
+        <Detail
+          label="District"
+          value={user.address?.districtName}
+        />
+
+        <Detail
+          label="State"
+          value={user.address?.stateName}
         />
 
         <Detail
@@ -249,81 +312,68 @@ const ViewProfile = () => {
       ========================================== */}
 
       <ProfileSection title="Nominee Details">
-
-        <Detail
-          label="Nominee Name"
-          value={user.nominee?.name}
-        />
-
-        <Detail
-          label="Relationship"
-          value={user.nominee?.relationship}
-        />
-
-        <Detail
-          label="Mobile"
-          value={user.nominee?.mobile}
-        />
-
-        <Detail
-          label="Email"
-          value={user.nominee?.email}
-        />
-
+        <Detail label="Nominee Name" value={user.nominee?.name} />
+        <Detail label="Relationship" value={formatRelationship(user.nominee?.relationship)} />
+        <Detail label="Mobile" value={user.nominee?.mobile} />
+        <Detail label="Email" value={user.nominee?.email} />
       </ProfileSection>
 
-
-      {/* ==========================================
-          KYC / ACCOUNT DETAILS
-      ========================================== */}
-
       <ProfileSection title="KYC & Account Details">
-
-        <Detail
-          label="Aadhaar"
-          value={maskAadhaar(user.aadhaar)}
-        />
-
-        <Detail
-          label="Referral Code"
-          value={user.referralCode}
-        />
-
-        <Detail
-          label="Email Verified"
-          value={
-            user.emailVerified
-              ? "Verified"
-              : "Not Verified"
-          }
-        />
-
-        <Detail
-          label="Mobile Verified"
-          value={
-            user.mobileVerified
-              ? "Verified"
-              : "Not Verified"
-          }
-        />
-
-        <Detail
-          label="KYC Status"
-          value={
-            user.kycCompleted
-              ? "Completed"
-              : "Pending"
-          }
-        />
-
-        <Detail
-          label="Registered On"
-          value={formatDate(user.createdAt)}
-        />
-
+        <Detail label="Aadhaar" value={maskAadhaar(user.aadhaar)} />
+        <Detail label="Referral Code" value={user.referralCode} />
+        <Detail label="Email Verified" value={user.emailVerified ? "Verified" : "Not Verified"} />
+        <Detail label="Mobile Verified" value={user.mobileVerified ? "Verified" : "Not Verified"} />
+        <Detail label="Registered On" value={formatDate(user.createdAt)} />
+        <Detail label="KYC Status" value={user.kycCompleted ? "Completed" : "Pending"} />
+        <Detail label="KYC Completed On" value={formatDate(user.kycCompletedAt)} />
+        <Detail label="Membership Expires On" value={formatDate(membershipExpiry)} />
       </ProfileSection>
 
     </div>
+  );
+};
+
+
+const MembershipRenewalCard = ({ user, membershipExpiry, remainingDays }) => {
+  const renewalDue = remainingDays > 0 && remainingDays <= 30;
+  const expired = user.membershipExpired || remainingDays <= 0;
+  const needsAttention = renewalDue || expired;
+
+  return (
+    <section
+      className={`mb-6 overflow-hidden rounded-2xl border p-5 shadow-[var(--ljka-shadow-sm)] sm:p-7 ${needsAttention
+        ? "border-red-200 bg-red-50"
+        : "border-green-200 bg-green-50"
+      }`}
+    >
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-start gap-4">
+          <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-xl ${needsAttention ? "bg-red-100 text-red-600" : "bg-green-100 text-green-600"}`}>
+            {needsAttention ? <FaExclamationTriangle /> : <FaCalendarAlt />}
+          </div>
+          <div>
+            <p className={`text-xs font-bold uppercase tracking-[0.16em] ${needsAttention ? "text-red-600" : "text-green-700"}`}>
+              {expired ? "Membership expired" : renewalDue ? "Renewal required soon" : "Active membership"}
+            </p>
+            <h2 className={`mt-2 text-xl font-bold sm:text-2xl ${needsAttention ? "text-red-800" : "text-green-800"}`}>
+              {expired ? "Please renew your LJKA membership" : `${remainingDays} days remaining`}
+            </h2>
+            <p className={`mt-2 max-w-2xl text-sm leading-6 ${needsAttention ? "text-red-700" : "text-green-700"}`}>
+              {expired
+                ? `Membership expired on ${formatDate(membershipExpiry)}. Please activate your membership and pay the required annual fee.`
+                : renewalDue
+                  ? `Membership expires on ${formatDate(membershipExpiry)}. Please arrange the required annual fee renewal.`
+                  : `Continue your active LJKA membership. It expires on ${formatDate(membershipExpiry)}.`}
+            </p>
+          </div>
+        </div>
+
+        <div className={`flex shrink-0 items-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold ${needsAttention ? "bg-white text-red-700" : "bg-white text-green-700"}`}>
+          {needsAttention ? <FaExclamationTriangle /> : <FaCheckCircle />}
+          {expired ? "Membership expired" : renewalDue ? "Renewal pending" : "Membership active"}
+        </div>
+      </div>
+    </section>
   );
 };
 
@@ -340,11 +390,10 @@ const ProfileSection = ({
   return (
     <section
       className="
-        bg-white
-        border
-        border-gray-200
-        rounded-xl
-        shadow-sm
+        bg-[var(--ljka-card)]
+        border border-[var(--ljka-border-light)]
+        rounded-2xl
+        shadow-[var(--ljka-shadow-sm)]
         mb-6
         overflow-hidden
       "
@@ -355,8 +404,8 @@ const ProfileSection = ({
           px-5
           sm:px-7
           py-4
-          border-b
-          border-gray-200
+          border-b border-[var(--ljka-border-light)]
+          bg-[var(--ljka-primary-bg)]
         "
       >
 
@@ -365,7 +414,7 @@ const ProfileSection = ({
             text-lg
             sm:text-xl
             font-semibold
-            text-gray-800
+            text-[var(--ljka-primary)]
           "
         >
           {title}
@@ -401,6 +450,7 @@ const ProfileSection = ({
 const Detail = ({
   label,
   value,
+  emphasis = false,
 }) => {
 
   return (
@@ -410,7 +460,7 @@ const Detail = ({
         className="
           text-xs
           font-medium
-          text-gray-500
+          text-[var(--ljka-muted)]
           mb-1
         "
       >
@@ -418,12 +468,10 @@ const Detail = ({
       </p>
 
       <p
-        className="
-          text-sm
-          font-medium
-          text-gray-800
-          break-words
-        "
+        className={`text-sm break-words ${emphasis
+          ? "font-bold text-[var(--ljka-primary)]"
+          : "font-medium text-[var(--ljka-text)]"
+        }`}
       >
         {value || "Not provided"}
       </p>
@@ -477,6 +525,15 @@ const formatEmployment = (status) => {
         word.charAt(0).toUpperCase() +
         word.slice(1)
     )
+    .join(" ");
+};
+
+const formatRelationship = (relationship) => {
+  if (!relationship) return "Not provided";
+
+  return String(relationship)
+    .split(/[-_\s]+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(" ");
 };
 

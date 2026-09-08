@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useNavigate, NavLink } from "react-router-dom";
 import {
   FaTimes,
   FaArrowRight,
   FaUserCircle,
+  FaSignOutAlt,
 } from "react-icons/fa";
+import { LJKAContext } from "../context/LJKAContext";
 
 const NAV_LINKS = [
   ["/", "Home"],
@@ -14,11 +16,29 @@ const NAV_LINKS = [
   ["/vyawastha-list", "Vyawastha"],
   ["/niyamawali", "Niyamawali"],
   ["/contact", "Contact"],
+  ["/privacy-policy", "Privacy Policy"],
+  ["/terms-conditions", "Terms & Conditions"],
 ];
 
-const Navbar = () => {
+const MEMBER_NAV_LINKS = [
+  ["/user/view-profile", "View Profile"],
+  ["/user/id-card", "Download ID Card"],
+  ["/user/upload-sahyog", "Upload Sahyog"],
+  ["/user/sahyog-list", "View All Sahyog"],
+  ["/user/upload-kanyadan", "Upload Kanyadan"],
+  ["/user/kanyadan-list", "View Kanyadan Sahyog"],
+  ["/user/raise-claim", "Raise Claim"],
+  ["/user/update-password", "Update Password"],
+  ["/contact", "Contact LJKA"],
+];
+
+const Navbar = ({ memberPortal = false }) => {
   const navigate = useNavigate();
+  const { logout } = useContext(LJKAContext);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const links = memberPortal ? MEMBER_NAV_LINKS : NAV_LINKS;
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
@@ -43,7 +63,7 @@ const Navbar = () => {
             {/* BRAND */}
             <button
               type="button"
-              onClick={() => navigate("/")}
+              onClick={() => navigate(memberPortal ? "/user/view-profile" : "/")}
               className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden text-left lg:flex-none lg:overflow-visible"
             >
               <img
@@ -68,7 +88,9 @@ const Navbar = () => {
             {/* DESKTOP NAVIGATION */}
             <nav className="hidden min-w-0 flex-1 items-center justify-center lg:flex">
               <div className="flex items-center gap-0.5 xl:gap-1">
-                {NAV_LINKS.map(([path, name]) => (
+                {links.filter(([path]) =>
+                  memberPortal || !["/privacy-policy", "/terms-conditions"].includes(path)
+                ).map(([path, name]) => (
                   <NavLink
                     key={path}
                     to={path}
@@ -98,22 +120,36 @@ const Navbar = () => {
 
             {/* DESKTOP ACTIONS */}
             <div className="hidden shrink-0 items-center gap-2 lg:flex">
-              <button
-                type="button"
-                onClick={() => navigate("/login")}
-                className="flex items-center gap-1.5 rounded-lg border border-white/25 bg-white/5 px-3 py-2.5 text-[12px] font-semibold text-white transition hover:border-[var(--ljka-gold)] hover:bg-white/10 xl:px-3.5 xl:text-[13px]"
-              >
-                <FaUserCircle className="text-sm text-[var(--ljka-gold)]" />
-                Login
-              </button>
-
-              <button
-                type="button"
-                onClick={() => navigate("/register")}
-                className="whitespace-nowrap rounded-lg bg-[var(--ljka-gold)] px-3.5 py-2.5 text-[12px] font-bold text-[var(--ljka-primary)] shadow-sm transition hover:bg-[var(--ljka-gold-light)] hover:shadow-md xl:px-4 xl:text-[13px]"
-              >
-                Become a Member
-              </button>
+              {memberPortal ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setShowLogoutConfirm(true)}
+                    className="flex items-center gap-1.5 rounded-lg bg-[var(--ljka-gold)] px-3.5 py-2.5 text-[12px] font-bold text-[var(--ljka-primary)] shadow-sm transition hover:bg-[var(--ljka-gold-light)] hover:shadow-md xl:px-4 xl:text-[13px]"
+                  >
+                    <FaSignOutAlt />
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/login")}
+                    className="flex items-center gap-1.5 rounded-lg border border-white/25 bg-white/5 px-3 py-2.5 text-[12px] font-semibold text-white transition hover:border-[var(--ljka-gold)] hover:bg-white/10 xl:px-3.5 xl:text-[13px]"
+                  >
+                    <FaUserCircle className="text-sm text-[var(--ljka-gold)]" />
+                    Login
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/register")}
+                    className="whitespace-nowrap rounded-lg bg-[var(--ljka-gold)] px-3.5 py-2.5 text-[12px] font-bold text-[var(--ljka-primary)] shadow-sm transition hover:bg-[var(--ljka-gold-light)] hover:shadow-md xl:px-4 xl:text-[13px]"
+                  >
+                    Become a Member
+                  </button>
+                </>
+              )}
             </div>
 
             {/* MOBILE / TABLET MENU BUTTON */}
@@ -164,16 +200,19 @@ const Navbar = () => {
               type="button"
               onClick={() => {
                 closeMenu();
-                navigate("/");
+                navigate(memberPortal ? "/user/view-profile" : "/");
               }}
-              className="min-w-0 text-left"
+              className="flex min-w-0 items-center gap-3 text-left"
             >
-              <p className="text-lg font-bold tracking-wide text-white">
-                LJKA
-              </p>
+              <img
+                src="/img/Lakhdaatar_Logo.png"
+                alt="Lakhdaatar Jeevan Kalyan Association"
+                className="h-11 w-11 shrink-0 object-contain"
+              />
 
-              <p className="mt-0.5 truncate text-[10px] font-medium text-white/65">
-                Lakhdaatar Jeevan Kalyan Association
+              <p className="min-w-0 text-[12px] font-bold leading-4 text-white">
+                <span className="block">Lakhdaatar Jeevan</span>
+                <span className="block">Kalyan Association</span>
               </p>
             </button>
 
@@ -194,30 +233,33 @@ const Navbar = () => {
             </p>
 
             <p className="mt-1 text-sm font-bold text-[var(--ljka-primary)]">
-              First 11,000 Members
+              {memberPortal ? "Your LJKA Member Portal" : "First 11,000 Members"}
             </p>
 
             <p className="mt-0.5 text-xs font-bold text-[var(--ljka-primary)]">
-              Registration is FREE
+              {memberPortal ? "Manage your membership" : "Registration is FREE"}
             </p>
           </div>
 
           {/* NAVIGATION */}
           <div className="flex-1 overflow-y-auto px-4 py-5">
-            <p className="mb-3 px-2 text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--ljka-gold-dark)]">
-              Navigation
-            </p>
+            <div className="mb-4 flex items-center gap-3 px-2">
+              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--ljka-gold-dark)]">
+                Navigation
+              </p>
+              <span className="h-px flex-1 bg-gradient-to-r from-[var(--ljka-gold)]/60 to-transparent" />
+            </div>
 
-            <div className="space-y-1">
-              {NAV_LINKS.map(([path, name]) => (
+            <div className="divide-y divide-[var(--ljka-border-light)]">
+              {links.map(([path, name]) => (
                 <NavLink
                   key={path}
                   to={path}
                   onClick={closeMenu}
                   className={({ isActive }) =>
-                    `flex items-center justify-between rounded-lg px-3.5 py-3.5 text-[14px] font-semibold transition-all duration-200 ${isActive
-                      ? "bg-[var(--ljka-primary)] text-white shadow-sm"
-                      : "text-[var(--ljka-primary-light)] hover:bg-[var(--ljka-primary)] hover:text-white"
+                    `flex items-center justify-between px-3.5 py-3.5 text-[14px] font-semibold transition-all duration-200 hover:rounded-lg ${isActive
+                      ? "rounded-lg bg-[var(--ljka-primary)] text-white shadow-sm"
+                      : "text-black hover:bg-[var(--ljka-primary)] hover:text-white"
                     }`
                   }
                 >
@@ -236,27 +278,43 @@ const Navbar = () => {
           </div>
 
           {/* MOBILE ACTIONS */}
-          <div className="space-y-2 border-t border-[var(--ljka-border)] bg-[var(--ljka-bg)] p-4">
-            <NavLink
-              to="/login"
-              onClick={closeMenu}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--ljka-primary)]/25 bg-[var(--ljka-card)] py-3 text-sm font-semibold text-[var(--ljka-primary)] transition hover:border-[var(--ljka-primary)] hover:bg-[var(--ljka-primary)] hover:text-white"
-            >
-              <FaUserCircle />
-              Login
-            </NavLink>
-
-            <NavLink
-              to="/register"
-              onClick={closeMenu}
-              className="flex w-full items-center justify-center rounded-lg bg-[var(--ljka-primary)] py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--ljka-primary-dark)]"
-            >
-              Become a Member
-            </NavLink>
+          <div className="space-y-2 border-t border-[var(--ljka-border)] bg-[var(--ljka-primary-bg)] p-4">
+            {memberPortal ? (
+              <>
+                <button type="button" onClick={() => setShowLogoutConfirm(true)} className="flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--ljka-gold)] py-3 text-sm font-bold text-[var(--ljka-primary)] shadow-sm transition hover:bg-[var(--ljka-gold-light)] hover:shadow-md">
+                  <FaSignOutAlt />
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <NavLink to="/login" onClick={closeMenu} className={({ isActive }) => `flex w-full items-center justify-center gap-2 rounded-lg border py-3 text-sm font-semibold transition ${isActive ? "border-[var(--ljka-primary)] bg-[var(--ljka-primary)] text-white ring-2 ring-[var(--ljka-gold)] ring-offset-2" : "border-[var(--ljka-primary)]/25 bg-[var(--ljka-card)] text-[var(--ljka-primary)] hover:border-[var(--ljka-primary)] hover:bg-[var(--ljka-primary)] hover:text-white"}`}>
+                  <FaUserCircle className="text-[var(--ljka-gold-dark)]" />
+                  Login
+                </NavLink>
+                <NavLink to="/register" onClick={closeMenu} className={({ isActive }) => `flex w-full items-center justify-center rounded-lg py-3 text-sm font-bold text-[var(--ljka-primary)] shadow-sm transition ${isActive ? "bg-[var(--ljka-gold-light)] ring-2 ring-[var(--ljka-primary)] ring-offset-2" : "bg-[var(--ljka-gold)] hover:bg-[var(--ljka-gold-light)] hover:shadow-md"}`}>
+                  Become a Member
+                </NavLink>
+              </>
+            )}
           </div>
 
         </div>
       </aside>
+
+      {memberPortal && showLogoutConfirm && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/45 px-5 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-[var(--ljka-border)] bg-white p-6 shadow-2xl">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--ljka-gold-dark)]">Member Portal</p>
+            <h2 className="mt-2 text-xl font-bold text-[var(--ljka-primary)]">Log out of LJKA?</h2>
+            <p className="mt-2 text-sm leading-6 text-[var(--ljka-muted)]">Your current member session will be closed.</p>
+            <div className="mt-6 flex justify-end gap-2">
+              <button type="button" onClick={() => setShowLogoutConfirm(false)} className="rounded-lg border border-[var(--ljka-border)] px-4 py-2.5 text-sm font-semibold text-[var(--ljka-primary)]">Cancel</button>
+              <button type="button" onClick={logout} className="rounded-lg bg-[var(--ljka-primary)] px-4 py-2.5 text-sm font-bold text-white hover:bg-[var(--ljka-primary-dark)]">Confirm Logout</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

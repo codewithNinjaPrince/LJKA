@@ -26,7 +26,7 @@ const hashOtp = (otp) => {
 
 const sendOtp = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, mobile } = req.body;
 
     // 1. Validate email
 
@@ -46,6 +46,15 @@ const sendOtp = async (req, res) => {
       });
     }
 
+    const normalizedMobile = String(mobile || "").trim();
+
+    if (!/^[6-9]\d{9}$/.test(normalizedMobile)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid 10 digit mobile number",
+      });
+    }
+
     // 2. CHECK IF EMAIL IS ALREADY REGISTERED
 
     const existingUser = await userModel.findOne({
@@ -57,6 +66,20 @@ const sendOtp = async (req, res) => {
         success: false,
         code: "EMAIL_EXISTS",
         message: "This email is already registered. Please login.",
+      });
+    }
+
+    // Check mobile before generating or sending the email OTP.
+    const existingMobile = await userModel.findOne({
+      mobile: normalizedMobile,
+    });
+
+    if (existingMobile) {
+      return res.status(409).json({
+        success: false,
+        code: "MOBILE_EXISTS",
+        message:
+          "This mobile number has already been registered. Please use a different number or contact LJKA.",
       });
     }
 

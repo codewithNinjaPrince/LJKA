@@ -8,7 +8,6 @@ const submitKYC = async (req, res) => {
 
         const {
             referralCode,
-            mobile,
             fatherHusbandName,
             aadhaar,
             dob,
@@ -20,25 +19,20 @@ const submitKYC = async (req, res) => {
             occupation,
 
             nominee,
+            kycConsent,
         } = req.body;
+
+        if (kycConsent !== true) {
+            return res.status(400).json({
+                success: false,
+                message:
+                    "You must accept the Terms & Conditions and Privacy Policy before submitting KYC",
+            });
+        }
 
         // ==========================================
         // BASIC VALIDATION
         // ==========================================
-
-        if (!mobile) {
-            return res.status(400).json({
-                success: false,
-                message: "Mobile number is required",
-            });
-        }
-
-        if (!/^[6-9]\d{9}$/.test(mobile)) {
-            return res.status(400).json({
-                success: false,
-                message: "Please enter a valid mobile number",
-            });
-        }
 
         if (!fatherHusbandName?.trim()) {
             return res.status(400).json({
@@ -341,7 +335,6 @@ const submitKYC = async (req, res) => {
         // ==========================================
         user.referralCode = finalReferralCode;
 
-        user.mobile = mobile.trim();
         user.fatherHusbandName = fatherHusbandName.trim();
         user.aadhaar = aadhaar.trim();
         user.dob = dobDate;
@@ -380,8 +373,21 @@ const submitKYC = async (req, res) => {
         user.kycCompleted = true;
         user.kycCompletedAt = new Date();
 
+        user.membershipStartDate = user.kycCompletedAt;
+        user.membershipExpiresAt = new Date(
+            user.kycCompletedAt.getTime() + 365 * 24 * 60 * 60 * 1000
+        );
+        user.membershipRenewalReminderSentAt = null;
+
+        user.kycConsentAcceptedAt = new Date();
+        user.kycConsentTermsVersion = "1.0";
+        user.kycConsentPrivacyVersion = "1.0";
+
         if (!user.memberId) {
-            user.memberId = await generateMemberId();
+            user.memberId = await generateMemberId({
+                stateName: user.address.stateName,
+                employmentStatus: user.employmentStatus,
+            });
         }
 
         await user.save();

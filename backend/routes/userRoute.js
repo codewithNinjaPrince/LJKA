@@ -1,5 +1,5 @@
 import express from "express";
-import { loginUser, registerUser, resetPassword } from "../controller/userController.js";
+import { loginUser, registerUser, updateUserProfile, resetPassword } from "../controller/userController.js";
 import { getUserProfile} from "../controller/userProfileController.js";
 import { sendOtp, verifyOtp, sendForgotPasswordOtp, verifyForgotPasswordOtp} from "../controller/otpController.js";
 
@@ -17,5 +17,6 @@ userRouter.post('/register', registerUser)
 userRouter.post('/login', loginUser)
 userRouter.post("/reset-password", resetPassword);
 userRouter.get("/profile", authUser, getUserProfile);
+userRouter.put("/update-profile", authUser, updateUserProfile);
 
 export default userRouter;

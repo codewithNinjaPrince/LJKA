@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 
 import User from "../models/userModel.js";
 import MemberCounter from "../models/memberCounterModel.js";
+import generateMemberId from "../utils/generateMemberId.js";
 
 dotenv.config();
 
@@ -17,59 +18,46 @@ const assignExistingMemberIds = async () => {
     console.log("MongoDB connected");
 
     // ==========================================
-    // FIND EXISTING KYC-COMPLETED USERS
-    // WITHOUT MEMBER ID
+    // FIND ALL KYC-COMPLETED USERS IN JOINING ORDER.
+    // Their IDs are intentionally regenerated so old IDs follow the new format.
     // ==========================================
 
     const users = await User.find({
       kycCompleted: true,
-      $or: [
-        { memberId: { $exists: false } },
-        { memberId: null },
-        { memberId: "" },
-      ],
     })
       .sort({ createdAt: 1, _id: 1 })
-      .select("_id fullName createdAt memberId");
+      .select("_id fullName createdAt memberId address employmentStatus");
 
-    console.log(`Users requiring Member ID: ${users.length}`);
+    console.log(`Users receiving new Member IDs: ${users.length}`);
 
     // ==========================================
     // NOTHING TO MIGRATE
     // ==========================================
 
     if (users.length === 0) {
-      console.log("No users require Member ID assignment.");
+      console.log("No KYC-completed users found.");
       return;
     }
 
-    // ==========================================
-    // GET CURRENT COUNTER
-    // ==========================================
-
-    const existingCounter = await MemberCounter.findById("memberId");
-
-    let sequence = existingCounter?.sequence || 0;
+    // Reset the global serial so joining order starts at 1.
+    await MemberCounter.findOneAndUpdate(
+      { _id: "memberId" },
+      { $set: { sequence: 0 } },
+      { upsert: true, new: true }
+    );
 
     // ==========================================
     // ASSIGN MEMBER IDS
     // ==========================================
 
     for (const user of users) {
-      sequence++;
-
-      const memberId =
-        `LJKA-${new Date().getFullYear()}-${String(sequence).padStart(6, "0")}`;
+      const memberId = await generateMemberId({
+        stateName: user.address?.stateName,
+        employmentStatus: user.employmentStatus,
+      });
 
       await User.updateOne(
-        {
-          _id: user._id,
-          $or: [
-            { memberId: { $exists: false } },
-            { memberId: null },
-            { memberId: "" },
-          ],
-        },
+        { _id: user._id },
         {
           $set: {
             memberId,
@@ -82,26 +70,11 @@ const assignExistingMemberIds = async () => {
       );
     }
 
-    // ==========================================
-    // UPDATE COUNTER
-    // ==========================================
-
-    await MemberCounter.findOneAndUpdate(
-      { _id: "memberId" },
-      {
-        $set: {
-          sequence,
-        },
-      },
-      {
-        upsert: true,
-        new: true,
-      }
-    );
+    const finalCounter = await MemberCounter.findById("memberId");
 
     console.log("--------------------------------");
     console.log("Migration completed successfully");
-    console.log(`Final Member ID sequence: ${sequence}`);
+    console.log(`Final Member ID sequence: ${finalCounter?.sequence || 0}`);
     console.log("--------------------------------");
 
   } catch (error) {

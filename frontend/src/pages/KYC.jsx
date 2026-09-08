@@ -1,4 +1,5 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { LJKAContext } from "../context/LJKAContext";
 import axios from "axios";
 import { toastError, toastSuccess, toastInfo } from "../utils/toast";
@@ -59,12 +60,18 @@ const EMPLOYMENT_OPTIONS = [
 
 /* ---------------- COMPONENT ---------------- */
 const KYC = () => {
-  const { token, navigate, backendUrl } = useContext(LJKAContext);
+  const { token, navigate, backendUrl, user, getUserProfile } = useContext(LJKAContext);
+  const location = useLocation();
+  const isUpdateMode = location.pathname === "/user/update-profile";
   const dobBounds = useMemo(getDobBounds, []);
 
   const [loading, setLoading] = useState(false);
+  const [kycConsent, setKycConsent] = useState(false);
+  const [profileReady, setProfileReady] = useState(!isUpdateMode);
+  const profileLoadStarted = useRef(false);
 
   const [formData, setFormData] = useState({
+    fullName: "",
     mobile: "",
     fatherHusbandName: "",
     aadhaar: "",
@@ -117,36 +124,90 @@ const KYC = () => {
       return;
     }
 
-    if (localStorage.getItem("kycCompleted") === "true") {
+    if (!isUpdateMode && localStorage.getItem("kycCompleted") === "true") {
       toastInfo("Your KYC is already completed");
       navigate("/user/view-profile");
     }
-  }, [token, navigate]);
+  }, [token, navigate, isUpdateMode]);
 
-  if (!token) return null;
+  useEffect(() => {
+    if (!isUpdateMode || !token) return;
+    if (profileLoadStarted.current) return;
 
-  /* ---------------- HANDLERS ---------------- */
- const handleChange = (name, value) => {
-  setFormData((prev) => {
-    const next = {
-      ...prev,
-      [name]: value,
+    profileLoadStarted.current = true;
+
+    const loadProfileForEditing = async () => {
+      const result = user?.address ? { user } : await getUserProfile();
+      const profile = result?.user;
+
+      if (!profile) {
+        toastError(result?.message || "Unable to load profile for editing");
+        setProfileReady(true);
+        return;
+      }
+
+      const profileState = locationData.states.find(
+        (item) => item.name === profile.address?.stateName
+      );
+      const profileDistrict = profileState?.districts.find(
+        (item) => item.name === profile.address?.districtName
+      );
+      const profileTehsil = profileDistrict?.tehsils.find(
+        (item) => item.name === profile.address?.tehsilName
+      );
+
+      setFormData({
+        fullName: profile.fullName || "",
+        mobile: profile.mobile || "",
+        fatherHusbandName: profile.fatherHusbandName || "",
+        aadhaar: profile.aadhaar || "",
+        dob: profile.dob ? new Date(profile.dob).toISOString().slice(0, 10) : "",
+        gender: profile.gender || "",
+        state: profileState?.code ? String(profileState.code) : "",
+        district: profileDistrict?.code ? String(profileDistrict.code) : "",
+        tehsil: profileTehsil?.code ? String(profileTehsil.code) : "",
+        townVillage: profile.address?.townVillage || "",
+        addressLine: profile.address?.address || "",
+        pincode: profile.address?.pincode || "",
+        employmentStatus: profile.employmentStatus || "",
+        occupation: profile.occupation || "",
+        referralCode: profile.referralCode || "",
+        nomineeName: profile.nominee?.name || "",
+        nomineeMobile: profile.nominee?.mobile || "",
+        nomineeEmail: profile.nominee?.email || "",
+        nomineeRelationship: profile.nominee?.relationship || "",
+      });
+      setKycConsent(true);
+      setProfileReady(true);
     };
 
-    // When state changes, reset district and tehsil
-    if (name === "state") {
-      next.district = "";
-      next.tehsil = "";
-    }
+    loadProfileForEditing();
+  }, [getUserProfile, isUpdateMode, token, user, location.pathname]);
 
-    // When district changes, reset tehsil
-    if (name === "district") {
-      next.tehsil = "";
-    }
+  if (!token || (isUpdateMode && !profileReady)) return null;
 
-    return next;
-  });
-};
+  /* ---------------- HANDLERS ---------------- */
+  const handleChange = (name, value) => {
+    setFormData((prev) => {
+      const next = {
+        ...prev,
+        [name]: value,
+      };
+
+      // When state changes, reset district and tehsil
+      if (name === "state") {
+        next.district = "";
+        next.tehsil = "";
+      }
+
+      // When district changes, reset tehsil
+      if (name === "district") {
+        next.tehsil = "";
+      }
+
+      return next;
+    });
+  };
 
   const handleDigitsOnly = (name, max) => (e) => {
     const value = e.target.value.replace(/\D/g, "").slice(0, max);
@@ -156,11 +217,21 @@ const KYC = () => {
   /* ---------------- SUBMIT ---------------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!kycConsent) {
+      toastError(
+        "Please accept the Terms & Conditions and Privacy Policy before submitting KYC."
+      );
+      return;
+    }
     if (loading) return;
 
-    // Mirrors submitKYC controller validation order, each surfaced via toast
-    if (!isValidMobile(formData.mobile)) {
-      toastError("Please enter a valid 10 digit mobile number");
+    if (isUpdateMode && !formData.fullName.trim()) {
+      toastError("Full Name is required");
+      return;
+    }
+
+    if (isUpdateMode && !isValidMobile(formData.mobile)) {
+      toastError("Please enter a valid mobile number");
       return;
     }
 
@@ -258,12 +329,18 @@ const KYC = () => {
 
     // Shape exactly matches what submitKYC destructures from req.body
     const payload = {
+      ...(isUpdateMode
+        ? {
+            fullName: formData.fullName.trim(),
+            mobile: formData.mobile,
+          }
+        : {}),
       referralCode: formData.referralCode.trim(),
-      mobile: formData.mobile,
       fatherHusbandName: formData.fatherHusbandName.trim(),
       aadhaar: formData.aadhaar,
       dob: formData.dob,
       gender: formData.gender,
+
       address: {
         stateCode: selectedState?.code,
         stateName: selectedState?.name,
@@ -279,14 +356,18 @@ const KYC = () => {
         address: formData.addressLine,
         pincode: formData.pincode,
       },
+
       employmentStatus: formData.employmentStatus,
       occupation: formData.occupation.trim(),
+
       nominee: {
         name: formData.nomineeName.trim(),
         mobile: formData.nomineeMobile,
         email: formData.nomineeEmail.trim(),
         relationship: formData.nomineeRelationship,
       },
+
+      kycConsent: kycConsent,
     };
 
     try {
@@ -294,11 +375,12 @@ const KYC = () => {
 
       // authUser middleware — adjust header if your middleware expects
       // "Authorization: Bearer <token>" instead of a raw "token" header.
-      const res = await axios.post(
-        `${backendUrl}/api/user/kyc/submit`,
-        payload,
-        { headers: { token } }
-      );
+      const res = await axios({
+        method: isUpdateMode ? "put" : "post",
+        url: `${backendUrl}/api/user/${isUpdateMode ? "update-profile" : "kyc/submit"}`,
+        data: payload,
+        headers: { token },
+      });
 
       if (!res.data?.success) {
         toastError(res.data?.message || "Unable to submit KYC details");
@@ -306,12 +388,12 @@ const KYC = () => {
       }
 
       localStorage.setItem("kycCompleted", "true");
-      toastSuccess("KYC completed successfully 🎉");
+      toastSuccess(isUpdateMode ? "Profile updated successfully 🎉" : "KYC completed successfully 🎉");
       navigate("/user/view-profile");
     } catch (err) {
       const response = err?.response;
 
-      if (response?.data?.message === "KYC has already been completed") {
+      if (!isUpdateMode && response?.data?.message === "KYC has already been completed") {
         localStorage.setItem("kycCompleted", "true");
         toastInfo("Your KYC is already completed");
         navigate("/user/view-profile");
@@ -339,7 +421,7 @@ const KYC = () => {
             </span>
 
             <h1 className="mt-6 text-4xl font-bold leading-tight text-[var(--ljka-primary)] xl:text-5xl">
-              Complete your
+              {isUpdateMode ? "Update your" : "Complete your"}
               <span className="block text-[var(--ljka-gold)]">
                 KYC details
               </span>
@@ -393,11 +475,11 @@ const KYC = () => {
             </div>
 
             <h1 className="mt-3 text-2xl font-bold text-[var(--ljka-primary)]">
-              Complete Your KYC
+                {isUpdateMode ? "Update Your Profile" : "Complete Your KYC"}
             </h1>
 
             <p className="mt-1 text-sm text-[var(--ljka-muted)]">
-              A few more details to activate your LJKA account
+              {isUpdateMode ? "Edit your registered LJKA details" : "A few more details to activate your LJKA account"}
             </p>
           </div>
 
@@ -408,11 +490,11 @@ const KYC = () => {
             </p>
 
             <h2 className="mt-2 text-3xl font-bold text-[var(--ljka-primary)]">
-              Complete Your KYC
+              {isUpdateMode ? "Update Your Profile" : "Complete Your KYC"}
             </h2>
 
             <p className="mt-1 text-sm text-[var(--ljka-muted)]">
-              Please provide accurate information to complete your membership.
+              {isUpdateMode ? "Update your details while keeping your information accurate." : "Please provide accurate information to complete your membership."}
             </p>
           </div>
 
@@ -431,20 +513,29 @@ const KYC = () => {
               </div>
 
               <div className="grid gap-5 md:grid-cols-2">
-                <div>
-                  <label className="ljka-login-label">
-                    Mobile Number
-                  </label>
+                {isUpdateMode && (
+                  <>
+                    <div>
+                      <label className="ljka-login-label">Full Name</label>
+                      <input
+                        value={formData.fullName}
+                        onChange={(e) => handleChange("fullName", e.target.value)}
+                        className="ljka-login-input"
+                      />
+                    </div>
 
-                  <input
-                    name="mobile"
-                    value={formData.mobile}
-                    onChange={handleDigitsOnly("mobile", 10)}
-                    placeholder="Enter mobile number"
-                    inputMode="numeric"
-                    className="ljka-login-input"
-                  />
-                </div>
+                    <div>
+                      <label className="ljka-login-label">Mobile Number</label>
+                      <input
+                        value={formData.mobile}
+                        onChange={handleDigitsOnly("mobile", 10)}
+                        inputMode="numeric"
+                        maxLength={10}
+                        className="ljka-login-input"
+                      />
+                    </div>
+                  </>
+                )}
 
                 <div>
                   <label className="ljka-login-label">
@@ -528,25 +619,25 @@ const KYC = () => {
                 </p>
               </div>
 
-                <div className="grid gap-5 md:grid-cols-3">
-                  <div>
-                    <label className="ljka-login-label">State</label>
+              <div className="grid gap-5 md:grid-cols-3">
+                <div>
+                  <label className="ljka-login-label">State</label>
 
-                    <select
-                      name="state"
-                      value={formData.state}
-                      onChange={(e) => handleChange("state", e.target.value)}
-                      className="ljka-login-input"
-                    >
-                      <option value="">Select State</option>
+                  <select
+                    name="state"
+                    value={formData.state}
+                    onChange={(e) => handleChange("state", e.target.value)}
+                    className="ljka-login-input"
+                  >
+                    <option value="">Select State</option>
 
-                      {stateOptions.map((state) => (
-                        <option key={state.code} value={state.code}>
-                          {state.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                    {stateOptions.map((state) => (
+                      <option key={state.code} value={state.code}>
+                        {state.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
                 <div>
                   <label className="ljka-login-label">District</label>
@@ -554,7 +645,7 @@ const KYC = () => {
                   <select
                     name="district"
                     value={formData.district}
-                     onChange={(e) => handleChange("district", e.target.value)}
+                    onChange={(e) => handleChange("district", e.target.value)}
                     disabled={!formData.state}
                     className="ljka-login-input"
                   >
@@ -787,6 +878,50 @@ const KYC = () => {
               </div>
             </section>
 
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={kycConsent}
+                onChange={(e) => setKycConsent(e.target.checked)}
+                className="mt-1"
+              />
+
+              <span>
+                I confirm that the information and documents provided by me are accurate
+                and belong to me. I understand that the information submitted by me will
+                be processed for KYC verification, membership administration and related
+                LJKA services, as described in the{" "}
+
+                <span
+                  onClick={(e) => {
+                    e.preventDefault();
+
+                    navigate("/privacy-policy", {
+                      state: { from: "/kyc" },
+                    });
+                  }}
+                  className="font-semibold text-[var(--ljka-primary)] underline cursor-pointer"
+                >
+                  Privacy Policy
+                </span>
+                . I have read and agree to the{" "}
+
+                <span
+                  onClick={(e) => {
+                    e.preventDefault();
+
+                    navigate("/terms-conditions", {
+                      state: { from: "/kyc" },
+                    });
+                  }}
+                  className="font-semibold text-[var(--ljka-primary)] underline cursor-pointer"
+                >
+                  Terms & Conditions
+                </span>
+                .
+              </span>
+            </label>
+
             {/* SUBMIT */}
             <div className="border-t border-gray-100 pt-7">
               <button
@@ -796,11 +931,11 @@ const KYC = () => {
                 {loading ? (
                   <>
                     <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    <span>Submitting KYC...</span>
+                    <span>{isUpdateMode ? "Updating profile..." : "Submitting KYC..."}</span>
                   </>
                 ) : (
                   <>
-                    Complete KYC
+                    {isUpdateMode ? "Update Profile" : "Complete KYC"}
                     <span className="text-[var(--ljka-gold)]">→</span>
                   </>
                 )}

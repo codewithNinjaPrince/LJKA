@@ -44,6 +44,7 @@ const App = () => {
 
       <Route path="/user" element={<UserLayout />}>
         <Route path="view-profile" element={<ViewProfile />} />
+        <Route path="update-profile" element={<KYC />} />
       </Route>
     </Routes>
   );

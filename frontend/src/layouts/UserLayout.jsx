@@ -1,154 +1,31 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Outlet } from "react-router-dom";
 
-import UserSidebar from "../components/user/UserSidebar";
-import UserTopbar from "../components/user/UserTopbar";
+import Navbar from "../components/Navbar";
 
 const UserLayout = () => {
 
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-
-  const [isMobile, setIsMobile] = useState(
-    window.innerWidth < 768
-  );
-
-  /* ------------------------------------------
-     DETECT MOBILE SCREEN
-  ------------------------------------------ */
-
-  useEffect(() => {
-
-    const handleResize = () => {
-
-      const mobile = window.innerWidth < 768;
-
-      setIsMobile(mobile);
-
-      if (mobile) {
-        setSidebarOpen(false);
-      } else {
-        setSidebarOpen(true);
-      }
-    };
-
-    handleResize();
-
-    window.addEventListener(
-      "resize",
-      handleResize
-    );
-
-    return () => {
-      window.removeEventListener(
-        "resize",
-        handleResize
-      );
-    };
-
-  }, []);
-
-
-  /* ------------------------------------------
-     TOGGLE SIDEBAR
-  ------------------------------------------ */
-
-  const toggleSidebar = () => {
-    setSidebarOpen((prev) => !prev);
-  };
-
-
-  /* ------------------------------------------
-     CLOSE MOBILE SIDEBAR
-  ------------------------------------------ */
-
-  const closeMobileSidebar = () => {
-
-    if (isMobile) {
-      setSidebarOpen(false);
-    }
-
-  };
-
-
   return (
-    <div className="min-h-screen bg-gray-100 text-gray-900">
-
-      {/* ==========================================
-          SIDEBAR
-      ========================================== */}
-
-      <UserSidebar
-        open={sidebarOpen}
-        isMobile={isMobile}
-        closeMobileSidebar={closeMobileSidebar}
-      />
-
-
-      {/* ==========================================
-          MOBILE OVERLAY
-      ========================================== */}
-
-      {isMobile && sidebarOpen && (
-
-        <div
-          onClick={closeMobileSidebar}
-          className="
-            fixed
-            inset-0
-            z-40
-            bg-black/50
-            backdrop-blur-[1px]
-          "
-        />
-
-      )}
-
-
-      {/* ==========================================
-          MAIN CONTENT
-      ========================================== */}
+    <div className="relative min-h-screen overflow-x-hidden bg-[var(--ljka-bg)] text-[var(--ljka-text)]">
 
       <div
-        className={`
-          min-h-screen
-          transition-all
-          duration-300
-
-          ${
-            isMobile
-              ? "ml-0"
-              : sidebarOpen
-                ? "ml-64"
-                : "ml-20"
-          }
-        `}
+        className="pointer-events-none fixed left-1/2 top-[58%] z-0 w-[92vw] max-w-[420px] -translate-x-1/2 -translate-y-1/2 sm:w-[75vw] sm:max-w-[520px] md:w-[55vw] md:max-w-[620px] lg:w-[45vw] lg:max-w-[700px]"
+        aria-hidden="true"
       >
-
-        {/* ======================================
-            TOPBAR
-        ====================================== */}
-
-        <UserTopbar
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={toggleSidebar}
+        <img
+          src="/img/Lakhdaatar_Logo.png"
+          alt=""
+          className="block h-auto w-full object-contain opacity-[0.07]"
         />
-
-
-        {/* ======================================
-            PAGE CONTENT
-        ====================================== */}
-
-        <main
-          className="
-            p-4
-            sm:p-6
-            lg:p-8
-          "
-        >
-          <Outlet />
-        </main>
-
       </div>
+
+      <div className="fixed inset-x-0 top-0 z-[100]">
+        <Navbar memberPortal />
+      </div>
+
+      <main className="relative z-10 px-4 pb-12 pt-[132px] sm:px-8 sm:pb-16 sm:pt-[140px] lg:px-12 xl:px-16">
+        <Outlet />
+      </main>
 
     </div>
   );

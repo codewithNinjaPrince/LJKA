@@ -18,8 +18,29 @@ kycCompletedAt: {
   default: null,
 },
 
+membershipStartDate: {
+  type: Date,
+  default: null,
+},
+
+membershipExpiresAt: {
+  type: Date,
+  default: null,
+},
+
+membershipRenewalReminderSentAt: {
+  type: Date,
+  default: null,
+},
+
   // KYC
-  mobile: { type: String, trim: true },
+  mobile: {
+    type: String,
+    trim: true,
+    unique: true,
+    sparse: true,
+    index: true,
+  },
   mobileVerified: { type: Boolean, default: false },
   fatherHusbandName: { type: String, trim: true },
   aadhaar: { type: String, trim: true, unique: true, sparse: true, minlength: 12, maxlength: 12 },
@@ -56,7 +77,32 @@ kycCompletedAt: {
 
   // KYC STATUS
   kycCompleted: { type: Boolean, default: false },
+
+  // KYC CONSENT
+  kycConsentAcceptedAt: {
+    type: Date,
+    default: null,
+  },
+
+  kycConsentTermsVersion: {
+    type: String,
+    default: "1.0",
+  },
+
+  kycConsentPrivacyVersion: {
+    type: String,
+    default: "1.0",
+  },
+
+
 }, { timestamps: true });
+
+// Member listing is always restricted to completed members and sorted newest first.
+userSchema.index({ kycCompleted: 1, createdAt: -1, _id: -1 });
+userSchema.index({ kycCompleted: 1, "address.stateName": 1, createdAt: -1, _id: -1 });
+userSchema.index({ kycCompleted: 1, "address.districtName": 1, createdAt: -1, _id: -1 });
+userSchema.index({ kycCompleted: 1, "address.tehsilName": 1, createdAt: -1, _id: -1 });
+userSchema.index({ kycCompleted: 1, employmentStatus: 1, createdAt: -1, _id: -1 });
 
 const User = mongoose.model("User", userSchema);
 

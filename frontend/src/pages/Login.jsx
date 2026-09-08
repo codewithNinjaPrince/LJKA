@@ -1,10 +1,11 @@
-import React, { useContext, useLayoutEffect, useState } from "react";
+import React, { useContext, useLayoutEffect, useState, useEffect } from "react";
 import { LJKAContext } from "../context/LJKAContext";
 import axios from "axios";
 import { FaEye, FaEyeSlash, FaShieldAlt, FaArrowRight } from "react-icons/fa";
 import { toastError, toastSuccess, toastInfo } from "../utils/toast";
 
 const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+const isValidMobile = (value) => /^[6-9]\d{9}$/.test(value);
 
 const normalizeEmail = (value) => {
   if (!value) return "";
@@ -20,7 +21,10 @@ const Login = () => {
 
   const { setToken, navigate, backendUrl } = useContext(LJKAContext);
 
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState(
+    () => sessionStorage.getItem("loginIdentifier") || sessionStorage.getItem("loginEmail") || ""
+  );
+
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -29,15 +33,15 @@ const Login = () => {
     e.preventDefault();
     if (loading) return;
 
-    const normalized = normalizeEmail(email);
+    const normalized = identifier.trim();
 
     if (!normalized) {
-      toastError("Email is required");
+      toastError("Email or mobile number is required");
       return;
     }
 
-    if (!isValidEmail(normalized)) {
-      toastError("Please enter a valid email address");
+    if (!isValidEmail(normalized) && !isValidMobile(normalized)) {
+      toastError("Please enter a valid email address or mobile number");
       return;
     }
 
@@ -50,7 +54,9 @@ const Login = () => {
       setLoading(true);
 
       const res = await axios.post(`${backendUrl}/api/user/login`, {
-        email: normalized,
+        identifier: isValidEmail(normalized)
+          ? normalizeEmail(normalized)
+          : normalized,
         password,
       });
 
@@ -85,6 +91,11 @@ const Login = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    sessionStorage.setItem("loginIdentifier", identifier);
+  }, [identifier]);
+
 
   return (
     <div className="min-h-[calc(100vh-130px)] bg-[var(--ljka-bg)] px-4 py-10 sm:px-6 sm:py-14 lg:py-16">
@@ -190,18 +201,18 @@ const Login = () => {
           {/* FORM */}
           <div className="space-y-5">
 
-            {/* EMAIL */}
+            {/* EMAIL OR MOBILE */}
             <div>
               <label className="ljka-login-label">
-                Email Address
+                Email or Mobile Number
               </label>
 
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(normalizeEmail(e.target.value))}
-                placeholder="you@example.com"
-                autoComplete="email"
+                type="text"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value.trimStart())}
+                placeholder="you@example.com or 10 digit mobile"
+                autoComplete="username"
                 className="ljka-login-input"
               />
             </div>

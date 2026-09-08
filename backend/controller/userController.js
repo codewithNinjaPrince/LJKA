@@ -10,23 +10,26 @@ const createToken = (id) => {
 
 const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { identifier, email, password } = req.body;
+    const loginIdentifier = String(identifier || email || "").trim();
 
     // 1. EMAIL VALIDATION
 
-    if (!email || !email.trim()) {
+    if (!loginIdentifier) {
       return res.status(400).json({
         success: false,
-        message: "Email is required",
+        message: "Email or mobile number is required",
       });
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail = loginIdentifier.toLowerCase();
+    const isEmail = validator.isEmail(normalizedEmail);
+    const isMobile = /^[6-9]\d{9}$/.test(loginIdentifier);
 
-    if (!validator.isEmail(normalizedEmail)) {
+    if (!isEmail && !isMobile) {
       return res.status(400).json({
         success: false,
-        message: "Please enter a valid email address",
+        message: "Please enter a valid email address or mobile number",
       });
     }
 
@@ -41,9 +44,9 @@ const loginUser = async (req, res) => {
 
     // 3. FIND USER
 
-    const user = await userModel.findOne({
-      email: normalizedEmail,
-    });
+    const user = await userModel.findOne(
+      isEmail ? { email: normalizedEmail } : { mobile: loginIdentifier }
+    );
 
     if (!user) {
       return res.status(401).json({
@@ -91,7 +94,7 @@ const loginUser = async (req, res) => {
 
 const registerUser = async (req, res) => {
   try {
-    const { fullName, email, password, confirmPassword, agreeTerms, } = req.body;
+    const { fullName, email, mobile, password, confirmPassword, agreeTerms, } = req.body;
 
     // Full Name Validation
 
@@ -141,6 +144,32 @@ const registerUser = async (req, res) => {
         success: false,
         code: "EMAIL_EXISTS",
         message: "Email is already registered. Please login.",
+      });
+    }
+
+    const normalizedMobile = String(mobile || "").trim();
+
+    if (!normalizedMobile) {
+      return res.status(400).json({
+        success: false,
+        message: "Mobile number is required",
+      });
+    }
+
+    if (!/^[6-9]\d{9}$/.test(normalizedMobile)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid mobile number",
+      });
+    }
+
+    const existingMobile = await userModel.findOne({ mobile: normalizedMobile });
+
+    if (existingMobile) {
+      return res.status(409).json({
+        success: false,
+        code: "MOBILE_EXISTS",
+        message: "This mobile number has already been registered. Please use a different number or contact LJKA.",
       });
     }
 
@@ -226,6 +255,7 @@ const registerUser = async (req, res) => {
     const newUser = new userModel({
       fullName: normalizedFullName,
       email: normalizedEmail,
+      mobile: normalizedMobile,
       password: hashedPassword,
       emailVerified: true,
       kycCompleted: false,
@@ -253,6 +283,14 @@ const registerUser = async (req, res) => {
 
     // MongoDB duplicate-key protection
     if (error.code === 11000) {
+      if (error.keyPattern?.mobile) {
+        return res.status(409).json({
+          success: false,
+          code: "MOBILE_EXISTS",
+          message: "This mobile number has already been registered. Please use a different number or contact LJKA.",
+        });
+      }
+
       return res.status(409).json({
         success: false,
         message: "Email is already registered. Please login.",
@@ -263,6 +301,111 @@ const registerUser = async (req, res) => {
       success: false,
       message: "Unable to register user. Please try again.",
     });
+  }
+};
+
+const updateUserProfile = async (req, res) => {
+  try {
+    const user = await userModel.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User account not found" });
+    }
+
+    const {
+      fullName,
+      mobile,
+      fatherHusbandName,
+      aadhaar,
+      dob,
+      gender,
+      address,
+      employmentStatus,
+      occupation,
+      referralCode,
+      nominee,
+      kycConsent,
+    } = req.body;
+
+    if (kycConsent !== true) {
+      return res.status(400).json({
+        success: false,
+        message: "Please confirm that your profile information is accurate",
+      });
+    }
+
+    if (fullName !== undefined && fullName.trim().length < 3) {
+      return res.status(400).json({ success: false, message: "Please enter a valid full name" });
+    }
+
+    if (mobile !== undefined && !/^[6-9]\d{9}$/.test(String(mobile).trim())) {
+      return res.status(400).json({ success: false, message: "Please enter a valid mobile number" });
+    }
+
+    if (!fatherHusbandName?.trim() || !/^\d{12}$/.test(aadhaar || "") || !dob || !gender) {
+      return res.status(400).json({ success: false, message: "Please complete all required personal details" });
+    }
+
+    if (!address?.stateName?.trim() || !address?.districtName?.trim() || !address?.tehsilName?.trim() || !address?.townVillage?.trim() || !address?.address?.trim() || !/^\d{6}$/.test(address.pincode || "")) {
+      return res.status(400).json({ success: false, message: "Please complete all required address details" });
+    }
+
+    if (!employmentStatus || !occupation?.trim() || !nominee?.name?.trim() || !/^[6-9]\d{9}$/.test(nominee.mobile || "") || !nominee.relationship?.trim()) {
+      return res.status(400).json({ success: false, message: "Please complete all required membership details" });
+    }
+
+    const duplicateMobile = mobile && await userModel.findOne({ mobile: String(mobile).trim(), _id: { $ne: user._id } });
+    if (duplicateMobile) {
+      return res.status(409).json({ success: false, message: "This mobile number has already been registered. Please use a different number or contact LJKA." });
+    }
+
+    const duplicateAadhaar = await userModel.findOne({ aadhaar: String(aadhaar).trim(), _id: { $ne: user._id } });
+    if (duplicateAadhaar) {
+      return res.status(409).json({ success: false, message: "This Aadhaar number is already registered" });
+    }
+
+    user.fullName = fullName?.trim() || user.fullName;
+    user.mobile = String(mobile || user.mobile).trim();
+    user.fatherHusbandName = fatherHusbandName.trim();
+    user.aadhaar = String(aadhaar).trim();
+    user.dob = new Date(dob);
+    user.gender = gender;
+    user.address = {
+      stateCode: Number(address.stateCode),
+      stateName: address.stateName.trim(),
+      districtCode: Number(address.districtCode),
+      districtName: address.districtName.trim(),
+      tehsilCode: Number(address.tehsilCode),
+      tehsilName: address.tehsilName.trim(),
+      townVillage: address.townVillage.trim(),
+      address: address.address.trim(),
+      pincode: address.pincode.trim(),
+    };
+    user.employmentStatus = employmentStatus;
+    user.occupation = occupation.trim();
+    user.referralCode = referralCode?.trim() || "";
+    user.nominee = {
+      name: nominee.name.trim(),
+      mobile: nominee.mobile.trim(),
+      email: nominee.email?.trim().toLowerCase() || "",
+      relationship: nominee.relationship.trim(),
+    };
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user: user.toObject(),
+    });
+  } catch (error) {
+    console.error("UPDATE PROFILE ERROR:", error);
+
+    if (error.code === 11000) {
+      return res.status(409).json({ success: false, message: "This profile detail is already registered" });
+    }
+
+    return res.status(500).json({ success: false, message: "Unable to update profile" });
   }
 };
 
@@ -384,4 +527,4 @@ const resetPassword = async (req, res) => {
   }
 };
 
-export { loginUser, registerUser, resetPassword };
+export { loginUser, registerUser, updateUserProfile, resetPassword };
