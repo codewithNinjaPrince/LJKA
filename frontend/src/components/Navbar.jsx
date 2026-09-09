@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { useNavigate, NavLink } from "react-router-dom";
+import { useNavigate, NavLink, useLocation } from "react-router-dom";
 import {
   FaTimes,
   FaArrowRight,
@@ -34,9 +34,14 @@ const MEMBER_NAV_LINKS = [
 
 const Navbar = ({ memberPortal = false }) => {
   const navigate = useNavigate();
-  const { logout } = useContext(LJKAContext);
+  const location = useLocation();
+  const { token, logout } = useContext(LJKAContext);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const isKYCPage = location.pathname === "/kyc";
+
+  const showLogout =
+    memberPortal || (isKYCPage && Boolean(token));
 
   const links = memberPortal ? MEMBER_NAV_LINKS : NAV_LINKS;
 
@@ -120,7 +125,7 @@ const Navbar = ({ memberPortal = false }) => {
 
             {/* DESKTOP ACTIONS */}
             <div className="hidden shrink-0 items-center gap-2 lg:flex">
-              {memberPortal ? (
+              {showLogout ? (
                 <>
                   <button
                     type="button"
@@ -279,7 +284,7 @@ const Navbar = ({ memberPortal = false }) => {
 
           {/* MOBILE ACTIONS */}
           <div className="space-y-2 border-t border-[var(--ljka-border)] bg-[var(--ljka-primary-bg)] p-4">
-            {memberPortal ? (
+            {showLogout ? (
               <>
                 <button type="button" onClick={() => setShowLogoutConfirm(true)} className="flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--ljka-gold)] py-3 text-sm font-bold text-[var(--ljka-primary)] shadow-sm transition hover:bg-[var(--ljka-gold-light)] hover:shadow-md">
                   <FaSignOutAlt />
@@ -302,12 +307,12 @@ const Navbar = ({ memberPortal = false }) => {
         </div>
       </aside>
 
-      {memberPortal && showLogoutConfirm && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/45 px-5 backdrop-blur-sm">
+{showLogout && showLogoutConfirm && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/45 px-5 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-2xl border border-[var(--ljka-border)] bg-white p-6 shadow-2xl">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--ljka-gold-dark)]">Member Portal</p>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--ljka-gold-dark)]"> LJKA Account</p>
             <h2 className="mt-2 text-xl font-bold text-[var(--ljka-primary)]">Log out of LJKA?</h2>
-            <p className="mt-2 text-sm leading-6 text-[var(--ljka-muted)]">Your current member session will be closed.</p>
+            <p className="mt-2 text-sm leading-6 text-[var(--ljka-muted)]"> Your current session will be closed. Your unfinished KYC information will also be cleared.</p>
             <div className="mt-6 flex justify-end gap-2">
               <button type="button" onClick={() => setShowLogoutConfirm(false)} className="rounded-lg border border-[var(--ljka-border)] px-4 py-2.5 text-sm font-semibold text-[var(--ljka-primary)]">Cancel</button>
               <button type="button" onClick={logout} className="rounded-lg bg-[var(--ljka-primary)] px-4 py-2.5 text-sm font-bold text-white hover:bg-[var(--ljka-primary-dark)]">Confirm Logout</button>

@@ -63,6 +63,9 @@ const KYC = () => {
   const { token, navigate, backendUrl, user, getUserProfile } = useContext(LJKAContext);
   const location = useLocation();
   const isUpdateMode = location.pathname === "/user/update-profile";
+  const KYC_DRAFT_KEY = isUpdateMode
+    ? "ljka_kyc_update_draft"
+    : "ljka_kyc_draft";
   const dobBounds = useMemo(getDobBounds, []);
 
   const [loading, setLoading] = useState(false);
@@ -70,30 +73,58 @@ const KYC = () => {
   const [profileReady, setProfileReady] = useState(!isUpdateMode);
   const profileLoadStarted = useRef(false);
 
-  const [formData, setFormData] = useState({
-    fullName: "",
-    mobile: "",
-    fatherHusbandName: "",
-    aadhaar: "",
-    dob: "",
-    gender: "",
+  const INITIAL_FORM_DATA = {
+  fullName: "",
+  mobile: "",
+  fatherHusbandName: "",
+  aadhaar: "",
+  dob: "",
+  gender: "",
 
-    state: "",
-    district: "",
-    tehsil: "",
-    townVillage: "",
-    addressLine: "",
-    pincode: "",
+  state: "",
+  district: "",
+  tehsil: "",
+  townVillage: "",
+  addressLine: "",
+  pincode: "",
 
-    employmentStatus: "",
-    occupation: "",
-    referralCode: "",
+  employmentStatus: "",
+  occupation: "",
+  referralCode: "",
 
-    nomineeName: "",
-    nomineeMobile: "",
-    nomineeEmail: "",
-    nomineeRelationship: "",
-  });
+  nomineeName: "",
+  nomineeMobile: "",
+  nomineeEmail: "",
+  nomineeRelationship: "",
+};
+
+const [formData, setFormData] = useState(() => {
+  try {
+    const saved = sessionStorage.getItem(KYC_DRAFT_KEY);
+
+    if (saved) {
+      return {
+        ...INITIAL_FORM_DATA,
+        ...JSON.parse(saved),
+      };
+    }
+  } catch (error) {
+    console.error("Failed to restore KYC draft:", error);
+  }
+
+  return INITIAL_FORM_DATA;
+});
+
+useEffect(() => {
+  try {
+    sessionStorage.setItem(
+      KYC_DRAFT_KEY,
+      JSON.stringify(formData)
+    );
+  } catch (error) {
+    console.error("Failed to save KYC draft:", error);
+  }
+}, [formData, KYC_DRAFT_KEY]);
 
   const stateOptions = [...locationData.states].sort((a, b) =>
     a.name.localeCompare(b.name)
@@ -331,9 +362,9 @@ const KYC = () => {
     const payload = {
       ...(isUpdateMode
         ? {
-            fullName: formData.fullName.trim(),
-            mobile: formData.mobile,
-          }
+          fullName: formData.fullName.trim(),
+          mobile: formData.mobile,
+        }
         : {}),
       referralCode: formData.referralCode.trim(),
       fatherHusbandName: formData.fatherHusbandName.trim(),
@@ -475,7 +506,7 @@ const KYC = () => {
             </div>
 
             <h1 className="mt-3 text-2xl font-bold text-[var(--ljka-primary)]">
-                {isUpdateMode ? "Update Your Profile" : "Complete Your KYC"}
+              {isUpdateMode ? "Update Your Profile" : "Complete Your KYC"}
             </h1>
 
             <p className="mt-1 text-sm text-[var(--ljka-muted)]">

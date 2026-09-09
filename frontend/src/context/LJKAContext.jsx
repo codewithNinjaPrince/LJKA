@@ -22,11 +22,11 @@ const LJKAContextProvider = ({ children }) => {
   };
 
   const contactInfo = {
-  email: "",
-  whatsapp: "",
-  phone: "",
-  officeAddress: "",
-};
+    email: "",
+    whatsapp: "",
+    phone: "",
+    officeAddress: "",
+  };
 
   const backendUrl =
     import.meta.env.VITE_BACKEND_URL;
@@ -54,29 +54,29 @@ const LJKAContextProvider = ({ children }) => {
      GET USER LIST
      Existing functionality
   ===================================================== */
-const getSahyogAlert = useCallback(async () => {
-  try {
-    const { data } = await axios.get(
-      `${backendUrl}/api/sahyog-alert`
-    );
+  const getSahyogAlert = useCallback(async () => {
+    try {
+      const { data } = await axios.get(
+        `${backendUrl}/api/sahyog-alert`
+      );
 
-    if (data?.success) {
-      setSahyogAlert(data.alert);
-    } else {
+      if (data?.success) {
+        setSahyogAlert(data.alert);
+      } else {
+        setSahyogAlert(null);
+      }
+    } catch (error) {
+      // 404 simply means there is currently no active alert.
+      if (error.response?.status !== 404) {
+        console.error(
+          "GET SAHYOG ALERT ERROR:",
+          error
+        );
+      }
+
       setSahyogAlert(null);
     }
-  } catch (error) {
-    // 404 simply means there is currently no active alert.
-    if (error.response?.status !== 404) {
-      console.error(
-        "GET SAHYOG ALERT ERROR:",
-        error
-      );
-    }
-
-    setSahyogAlert(null);
-  }
-}, [backendUrl]);
+  }, [backendUrl]);
 
 
   const getUserList = useCallback(async () => {
@@ -251,23 +251,19 @@ const getSahyogAlert = useCallback(async () => {
   const logout = () => {
 
     localStorage.removeItem("token");
-
     localStorage.removeItem("userName");
-
     localStorage.removeItem(
       "kycCompleted"
     );
-
+    sessionStorage.removeItem("ljka_kyc_draft");
+    sessionStorage.removeItem("ljka_kyc_draft_consent");
+    sessionStorage.removeItem("ljka_kyc_update_draft");
+    sessionStorage.removeItem("ljka_kyc_update_draft_consent");
 
     setToken("");
-
     setUser(null);
-
     setSearch("");
-
     setShowSearch(false);
-
-
     navigate("/");
 
 
@@ -281,31 +277,31 @@ const getSahyogAlert = useCallback(async () => {
      APP INITIALIZATION
   ===================================================== */
 
- useEffect(() => {
-  const initializeApp = async () => {
-    try {
-      const savedToken = localStorage.getItem("token");
+  useEffect(() => {
+    const initializeApp = async () => {
+      try {
+        const savedToken = localStorage.getItem("token");
 
-      if (savedToken) {
-        setToken(savedToken);
+        if (savedToken) {
+          setToken(savedToken);
 
-        await getUserProfile();
+          await getUserProfile();
+        }
+
+        await getSahyogAlert();
+
+      } catch (error) {
+        console.error(
+          "APP INITIALIZATION ERROR:",
+          error
+        );
+      } finally {
+        setAppLoading(false);
       }
+    };
 
-      await getSahyogAlert();
-
-    } catch (error) {
-      console.error(
-        "APP INITIALIZATION ERROR:",
-        error
-      );
-    } finally {
-      setAppLoading(false);
-    }
-  };
-
-  initializeApp();
-}, [getUserProfile, getSahyogAlert]);
+    initializeApp();
+  }, [getUserProfile, getSahyogAlert]);
 
 
   /* =====================================================
@@ -320,9 +316,9 @@ const getSahyogAlert = useCallback(async () => {
     /* App */
     appLoading,
 
-     /* Sahyog Alert */
-  sahyogAlert,
-  getSahyogAlert,
+    /* Sahyog Alert */
+    sahyogAlert,
+    getSahyogAlert,
 
     /* Authentication */
     token,
