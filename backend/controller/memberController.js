@@ -137,25 +137,36 @@ const getMembers = async (req, res) => {
     // STATE FILTER
     // ========================================================
 
-    if (state.trim()) {
-      filter["address.stateName"] = state.trim();
-    }
+   if (state.trim()) {
+  const stateCode = Number(state);
+
+  if (!Number.isNaN(stateCode)) {
+    filter["address.stateCode"] = stateCode;
+  }
+}
 
     // ========================================================
     // DISTRICT FILTER
     // ========================================================
 
     if (district.trim()) {
-      filter["address.districtName"] = district.trim();
-    }
+  const districtCode = Number(district);
 
+  if (!Number.isNaN(districtCode)) {
+    filter["address.districtCode"] = districtCode;
+  }
+}
     // ========================================================
     // TEHSIL FILTER
     // ========================================================
 
     if (tehsil.trim()) {
-      filter["address.tehsilName"] = tehsil.trim();
-    }
+  const tehsilCode = Number(tehsil);
+
+  if (!Number.isNaN(tehsilCode)) {
+    filter["address.tehsilCode"] = tehsilCode;
+  }
+}
 
     // ========================================================
     // EMPLOYMENT STATUS FILTER

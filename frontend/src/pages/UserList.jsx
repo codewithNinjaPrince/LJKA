@@ -2,6 +2,7 @@ import React, {
   useEffect,
   useContext,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -51,6 +52,7 @@ const UserList = () => {
   const [showFilters, setShowFilters] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  const requestIdRef = useRef(0);
   const [error, setError] = useState("");
 
   const formatEmploymentStatus = (value) =>
@@ -140,6 +142,8 @@ const UserList = () => {
   // ==========================================
 
   const fetchMembers = async (signal) => {
+    const requestId = ++requestIdRef.current;
+
     try {
       setLoading(true);
       setError("");
@@ -174,7 +178,7 @@ const UserList = () => {
       if (!response.ok || !result.success) {
         throw new Error(
           result.message ||
-            "Unable to fetch members"
+          "Unable to fetch members"
         );
       }
 
@@ -204,10 +208,12 @@ const UserList = () => {
 
       setError(
         err.message ||
-          "Unable to load members. Please try again."
+        "Unable to load members. Please try again."
       );
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -526,12 +532,11 @@ const UserList = () => {
                   (previous) => !previous
                 )
               }
-              className={`flex h-11 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-medium transition ${
-                showFilters ||
-                activeFilterCount > 0
+              className={`flex h-11 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-medium transition ${showFilters ||
+                  activeFilterCount > 0
                   ? "border-gray-900 bg-gray-900 text-white"
                   : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-              }`}
+                }`}
             >
               <Filter size={17} />
 
@@ -789,19 +794,47 @@ const UserList = () => {
             TABLE
         ===================================== */}
 
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-
+        <div className="relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
           {loading && (
-            <div className="flex items-center gap-3 border-b border-[var(--ljka-gold)]/20 bg-[var(--ljka-primary-bg)] px-5 py-3">
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--ljka-gold)] border-t-transparent" />
-              <span className="text-sm font-medium text-[var(--ljka-primary)]">
-                Updating member information
-              </span>
-              <span className="flex gap-1">
-                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--ljka-gold)]" />
-                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--ljka-gold)] [animation-delay:120ms]" />
-                <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[var(--ljka-gold)] [animation-delay:240ms]" />
-              </span>
+            <div
+              className="absolute inset-0 z-30 flex items-center justify-center bg-white/95 backdrop-blur-[2px]"
+              aria-live="polite"
+              aria-label="Loading members"
+            >
+              <div className="flex w-full max-w-sm flex-col items-center px-6 text-center">
+
+                {/* LJKA Logo */}
+                <div className="relative flex h-20 w-20 items-center justify-center">
+                  <span className="absolute inset-0 rounded-full border border-[var(--ljka-gold)]/30 animate-ping" />
+
+                  <span className="absolute inset-2 rounded-full border-2 border-[var(--ljka-primary)]/15 border-t-[var(--ljka-gold)] animate-spin" />
+
+                  <img
+                    src="/img/Lakhdaatar_Logo.png"
+                    alt="LJKA"
+                    className="h-11 w-11 object-contain animate-pulse"
+                  />
+                </div>
+
+                {/* Loading Text */}
+                <p className="mt-5 text-sm font-semibold text-[var(--ljka-primary)]">
+                  Loading members
+                  <span className="inline-flex w-8 justify-start text-left">
+                    <span className="animate-bounce [animation-delay:0ms]">.</span>
+                    <span className="animate-bounce [animation-delay:150ms]">.</span>
+                    <span className="animate-bounce [animation-delay:300ms]">.</span>
+                  </span>
+                </p>
+
+                {/* Progress Bar */}
+                <div className="mt-3 h-1 w-48 max-w-full overflow-hidden rounded-full bg-[var(--ljka-primary-bg)]">
+                  <div className="h-full w-1/2 animate-[loading-slide_1.4s_ease-in-out_infinite] rounded-full bg-[var(--ljka-gold)]" />
+                </div>
+
+                <p className="mt-3 text-xs text-gray-500">
+                  Bringing the latest member information into view
+                </p>
+              </div>
             </div>
           )}
 
@@ -848,47 +881,6 @@ const UserList = () => {
               </thead>
 
               <tbody className="divide-y divide-gray-100">
-
-                {/* Animated loading state */}
-
-                {loading && (
-                  <tr>
-                    <td colSpan="9" className="px-6 py-20">
-                      <div
-                        className="mx-auto flex max-w-sm flex-col items-center text-center"
-                        aria-live="polite"
-                        aria-label="Loading members"
-                      >
-                        <div className="relative flex h-20 w-20 items-center justify-center">
-                          <span className="absolute inset-0 rounded-full border border-[var(--ljka-gold)]/30 animate-ping" />
-                          <span className="absolute inset-2 rounded-full border-2 border-[var(--ljka-primary)]/15 border-t-[var(--ljka-gold)] animate-spin" />
-                          <img
-                            src="/img/Lakhdaatar_Logo.png"
-                            alt=""
-                            className="h-11 w-11 object-contain animate-pulse"
-                          />
-                        </div>
-
-                        <p className="mt-5 text-sm font-semibold text-[var(--ljka-primary)]">
-                          Loading members
-                          <span className="inline-flex w-8 justify-start text-left">
-                            <span className="animate-bounce [animation-delay:0ms]">.</span>
-                            <span className="animate-bounce [animation-delay:150ms]">.</span>
-                            <span className="animate-bounce [animation-delay:300ms]">.</span>
-                          </span>
-                        </p>
-
-                        <div className="mt-3 h-1 w-48 overflow-hidden rounded-full bg-[var(--ljka-primary-bg)]">
-                          <div className="h-full w-1/2 animate-[loading-slide_1.4s_ease-in-out_infinite] rounded-full bg-[var(--ljka-gold)]" />
-                        </div>
-
-                        <p className="mt-3 text-xs text-gray-500">
-                          Bringing the latest member information into view
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                )}
 
                 {/* Data */}
 
@@ -996,9 +988,9 @@ const UserList = () => {
                   <span className="font-medium text-gray-900">
                     {members.length
                       ? (pagination.currentPage -
-                          1) *
-                          pagination.perPage +
-                        1
+                        1) *
+                      pagination.perPage +
+                      1
                       : 0}
                   </span>
 
@@ -1007,7 +999,7 @@ const UserList = () => {
                   <span className="font-medium text-gray-900">
                     {Math.min(
                       pagination.currentPage *
-                        pagination.perPage,
+                      pagination.perPage,
                       pagination.totalMembers
                     )}
                   </span>
@@ -1069,7 +1061,7 @@ const UserList = () => {
                       index
                     ) =>
                       pageNumber ===
-                      "..." ? (
+                        "..." ? (
                         <span
                           key={`ellipsis-${index}`}
                           className="flex h-9 w-9 items-center justify-center text-sm text-gray-400"
@@ -1085,12 +1077,11 @@ const UserList = () => {
                               pageNumber
                             )
                           }
-                          className={`h-9 min-w-9 rounded-lg px-2 text-sm font-medium transition ${
-                            pageNumber ===
-                            pagination.currentPage
+                          className={`h-9 min-w-9 rounded-lg px-2 text-sm font-medium transition ${pageNumber ===
+                              pagination.currentPage
                               ? "bg-gray-900 text-white"
                               : "border border-gray-200 text-gray-600 hover:bg-gray-50"
-                          }`}
+                            }`}
                         >
                           {pageNumber}
                         </button>
