@@ -1,5 +1,11 @@
-import { useEffect } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { useContext, useEffect } from "react";
+import {
+  Routes,
+  Route,
+  useLocation,
+  Navigate,
+} from "react-router-dom";
+import { LJKAContext } from "./context/LJKAContext";
 import PublicLayout from "./layouts/PublicLayout";
 import UserLayout from "./layouts/UserLayout";
 import Home from "./pages/Home";
@@ -17,6 +23,70 @@ import ForgotPassword from "./pages/ForgotPassword";
 import KYC from "./pages/KYC";
 import ViewProfile from "./pages/user/ViewProfile";
 
+const AuthRoute = ({ children }) => {
+  const { token, user, appLoading } = useContext(LJKAContext);
+
+  if (appLoading) {
+    return null;
+  }
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!user.kycCompleted) {
+    return <Navigate to="/kyc" replace />;
+  }
+
+  return children;
+};
+
+
+const KYCGuard = ({ children }) => {
+  const { token, user, appLoading } = useContext(LJKAContext);
+
+  if (appLoading) {
+    return null;
+  }
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user.kycCompleted) {
+    return <Navigate to="/user/view-profile" replace />;
+  }
+
+  return children;
+};
+
+
+const AuthPageGuard = ({ children }) => {
+  const { token, user, appLoading } = useContext(LJKAContext);
+
+  if (appLoading) {
+    return null;
+  }
+
+  if (!token || !user) {
+    return children;
+  }
+
+  if (!user.kycCompleted) {
+    return <Navigate to="/kyc" replace />;
+  }
+
+  return <Navigate to="/user/view-profile" replace />;
+};
+
 const App = () => {
   const { pathname } = useLocation();
 
@@ -30,8 +100,22 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<AboutUs />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route
+  path="/login"
+  element={
+    <AuthPageGuard>
+      <Login />
+    </AuthPageGuard>
+  }
+/>
+        <Route
+  path="/register"
+  element={
+    <AuthPageGuard>
+      <Register />
+    </AuthPageGuard>
+  }
+/>
         <Route path="/niyamawali" element={<Niyamawali />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/sahyog-list" element={<SahyogList />} />
@@ -39,13 +123,27 @@ const App = () => {
         <Route path="/user-list" element={<UserList />} />
         <Route path="/vyawastha-list" element={<VyawasthaList />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/kyc" element={<KYC />} />
+        <Route
+  path="/kyc"
+  element={
+    <KYCGuard>
+      <KYC />
+    </KYCGuard>
+  }
+/>
       </Route>
 
-      <Route path="/user" element={<UserLayout />}>
-        <Route path="view-profile" element={<ViewProfile />} />
-        <Route path="update-profile" element={<KYC />} />
-      </Route>
+     <Route
+  path="/user"
+  element={
+    <AuthRoute>
+      <UserLayout />
+    </AuthRoute>
+  }
+>
+  <Route path="view-profile" element={<ViewProfile />} />
+  <Route path="update-profile" element={<KYC />} />
+</Route>
     </Routes>
   );
 };

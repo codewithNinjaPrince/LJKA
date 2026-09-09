@@ -281,13 +281,15 @@ const getSahyogAlert = useCallback(async () => {
      APP INITIALIZATION
   ===================================================== */
 
-  useEffect(() => {
+ useEffect(() => {
   const initializeApp = async () => {
     try {
       const savedToken = localStorage.getItem("token");
 
       if (savedToken) {
         setToken(savedToken);
+
+        await getUserProfile();
       }
 
       await getSahyogAlert();
@@ -303,7 +305,7 @@ const getSahyogAlert = useCallback(async () => {
   };
 
   initializeApp();
-}, [getSahyogAlert]);
+}, [getUserProfile, getSahyogAlert]);
 
 
   /* =====================================================
