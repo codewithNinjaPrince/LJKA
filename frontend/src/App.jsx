@@ -101,21 +101,21 @@ const App = () => {
         <Route path="/about" element={<AboutUs />} />
         <Route path="/contact" element={<Contact />} />
         <Route
-  path="/login"
-  element={
-    <AuthPageGuard>
-      <Login />
-    </AuthPageGuard>
-  }
-/>
+          path="/login"
+          element={
+            <AuthPageGuard>
+              <Login />
+            </AuthPageGuard>
+          }
+        />
         <Route
-  path="/register"
-  element={
-    <AuthPageGuard>
-      <Register />
-    </AuthPageGuard>
-  }
-/>
+          path="/register"
+          element={
+            <AuthPageGuard>
+              <Register />
+            </AuthPageGuard>
+          }
+        />
         <Route path="/niyamawali" element={<Niyamawali />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/sahyog-list" element={<SahyogList />} />
@@ -124,26 +124,26 @@ const App = () => {
         <Route path="/vyawastha-list" element={<VyawasthaList />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route
-  path="/kyc"
-  element={
-    <KYCGuard>
-      <KYC />
-    </KYCGuard>
-  }
-/>
+          path="/kyc"
+          element={
+            <KYCGuard>
+              <KYC />
+            </KYCGuard>
+          }
+        />
       </Route>
 
-     <Route
-  path="/user"
-  element={
-    <AuthRoute>
-      <UserLayout />
-    </AuthRoute>
-  }
->
-  <Route path="view-profile" element={<ViewProfile />} />
-  <Route path="update-profile" element={<KYC />} />
-</Route>
+      <Route
+        path="/user"
+        element={
+          <AuthRoute>
+            <UserLayout />
+          </AuthRoute>
+        }
+      >
+        <Route path="view-profile" element={<ViewProfile />} />
+        <Route path="update-profile" element={<KYC />} />
+      </Route>
     </Routes>
   );
 };

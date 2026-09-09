@@ -322,7 +322,6 @@ const updateUserProfile = async (req, res) => {
       address,
       employmentStatus,
       occupation,
-      referralCode,
       nominee,
       kycConsent,
     } = req.body;
@@ -383,7 +382,6 @@ const updateUserProfile = async (req, res) => {
     };
     user.employmentStatus = employmentStatus;
     user.occupation = occupation.trim();
-    user.referralCode = referralCode?.trim() || "";
     user.nominee = {
       name: nominee.name.trim(),
       mobile: nominee.mobile.trim(),

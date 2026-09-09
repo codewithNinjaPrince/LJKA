@@ -259,6 +259,9 @@ const LJKAContextProvider = ({ children }) => {
     sessionStorage.removeItem("ljka_kyc_draft_consent");
     sessionStorage.removeItem("ljka_kyc_update_draft");
     sessionStorage.removeItem("ljka_kyc_update_draft_consent");
+    sessionStorage.removeItem(
+      "ljka_kyc_in_progress"
+    );
 
     setToken("");
     setUser(null);
