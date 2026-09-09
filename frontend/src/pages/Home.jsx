@@ -65,13 +65,6 @@ const Home = () => {
           />
 
           <QuickAction
-            icon={<FaHandHoldingHeart />}
-            title="View Sahyog"
-            text="Understand collective support"
-            onClick={() => navigate("/sahyog-list")}
-          />
-
-          <QuickAction
             icon={<FaFileAlt />}
             title="Niyamawali"
             text="Know the rules and process"
@@ -84,6 +77,14 @@ const Home = () => {
             text="Support the LJKA community"
             onClick={() => navigate("/sahyog-list")}
           />
+
+          <QuickAction
+            icon={<FaHeart />}
+            title="Member's List"
+            text="View all LJKA members"
+            onClick={() => navigate("/member-list")}
+          />
+
 
         </div>
       </section>
