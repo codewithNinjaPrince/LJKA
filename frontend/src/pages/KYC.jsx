@@ -74,57 +74,57 @@ const KYC = () => {
   const profileLoadStarted = useRef(false);
 
   const INITIAL_FORM_DATA = {
-  fullName: "",
-  mobile: "",
-  fatherHusbandName: "",
-  aadhaar: "",
-  dob: "",
-  gender: "",
+    fullName: "",
+    mobile: "",
+    fatherHusbandName: "",
+    aadhaar: "",
+    dob: "",
+    gender: "",
 
-  state: "",
-  district: "",
-  tehsil: "",
-  townVillage: "",
-  addressLine: "",
-  pincode: "",
+    state: "",
+    district: "",
+    tehsil: "",
+    townVillage: "",
+    addressLine: "",
+    pincode: "",
 
-  employmentStatus: "",
-  occupation: "",
-  referralCode: "",
+    employmentStatus: "",
+    occupation: "",
+    referralCode: "",
 
-  nomineeName: "",
-  nomineeMobile: "",
-  nomineeEmail: "",
-  nomineeRelationship: "",
-};
+    nomineeName: "",
+    nomineeMobile: "",
+    nomineeEmail: "",
+    nomineeRelationship: "",
+  };
 
-const [formData, setFormData] = useState(() => {
-  try {
-    const saved = sessionStorage.getItem(KYC_DRAFT_KEY);
+  const [formData, setFormData] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem(KYC_DRAFT_KEY);
 
-    if (saved) {
-      return {
-        ...INITIAL_FORM_DATA,
-        ...JSON.parse(saved),
-      };
+      if (saved) {
+        return {
+          ...INITIAL_FORM_DATA,
+          ...JSON.parse(saved),
+        };
+      }
+    } catch (error) {
+      console.error("Failed to restore KYC draft:", error);
     }
-  } catch (error) {
-    console.error("Failed to restore KYC draft:", error);
-  }
 
-  return INITIAL_FORM_DATA;
-});
+    return INITIAL_FORM_DATA;
+  });
 
-useEffect(() => {
-  try {
-    sessionStorage.setItem(
-      KYC_DRAFT_KEY,
-      JSON.stringify(formData)
-    );
-  } catch (error) {
-    console.error("Failed to save KYC draft:", error);
-  }
-}, [formData, KYC_DRAFT_KEY]);
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        KYC_DRAFT_KEY,
+        JSON.stringify(formData)
+      );
+    } catch (error) {
+      console.error("Failed to save KYC draft:", error);
+    }
+  }, [formData, KYC_DRAFT_KEY]);
 
   const stateOptions = [...locationData.states].sort((a, b) =>
     a.name.localeCompare(b.name)
@@ -148,6 +148,8 @@ useEffect(() => {
 
   /* ---------------- ACCESS GUARD ---------------- */
   // KYC can only be opened while logged in, and only if it isn't done already.
+  /* ---------------- ACCESS GUARD ---------------- */
+
   useEffect(() => {
     if (!token) {
       toastError("Please login to complete your KYC");
@@ -155,7 +157,27 @@ useEffect(() => {
       return;
     }
 
-    if (!isUpdateMode && localStorage.getItem("kycCompleted") === "true") {
+    // -------------------------------------------------
+    // Mark initial KYC as an active session
+    // -------------------------------------------------
+    if (!isUpdateMode) {
+      sessionStorage.setItem(
+        "ljka_kyc_in_progress",
+        "true"
+      );
+    }
+
+    // -------------------------------------------------
+    // Already completed KYC
+    // -------------------------------------------------
+    if (
+      !isUpdateMode &&
+      localStorage.getItem("kycCompleted") === "true"
+    ) {
+      sessionStorage.removeItem(
+        "ljka_kyc_in_progress"
+      );
+
       toastInfo("Your KYC is already completed");
       navigate("/user/view-profile");
     }
@@ -168,52 +190,155 @@ useEffect(() => {
     profileLoadStarted.current = true;
 
     const loadProfileForEditing = async () => {
-      const result = user?.address ? { user } : await getUserProfile();
+      // =====================================================
+      // FIRST PRIORITY: RESTORE UNFINISHED UPDATE DRAFT
+      // =====================================================
+
+      const savedDraft = sessionStorage.getItem(KYC_DRAFT_KEY);
+
+      if (savedDraft) {
+        try {
+          const parsedDraft = JSON.parse(savedDraft);
+
+          if (
+            parsedDraft &&
+            typeof parsedDraft === "object"
+          ) {
+            setFormData({
+              ...INITIAL_FORM_DATA,
+              ...parsedDraft,
+            });
+
+            setKycConsent(true);
+            setProfileReady(true);
+
+            return;
+          }
+        } catch (error) {
+          console.error(
+            "FAILED TO RESTORE UPDATE PROFILE DRAFT:",
+            error
+          );
+
+          sessionStorage.removeItem(KYC_DRAFT_KEY);
+        }
+      }
+
+      // =====================================================
+      // SECOND PRIORITY: LOAD PROFILE FROM DATABASE
+      // Only happens when there is NO saved draft.
+      // =====================================================
+
+      const result = user?.address
+        ? { user }
+        : await getUserProfile();
+
       const profile = result?.user;
 
       if (!profile) {
-        toastError(result?.message || "Unable to load profile for editing");
+        toastError(
+          result?.message ||
+          "Unable to load profile for editing"
+        );
+
         setProfileReady(true);
         return;
       }
 
-      const profileState = locationData.states.find(
-        (item) => item.name === profile.address?.stateName
-      );
-      const profileDistrict = profileState?.districts.find(
-        (item) => item.name === profile.address?.districtName
-      );
-      const profileTehsil = profileDistrict?.tehsils.find(
-        (item) => item.name === profile.address?.tehsilName
-      );
+      const profileState =
+        locationData.states.find(
+          (item) =>
+            item.name ===
+            profile.address?.stateName
+        );
+
+      const profileDistrict =
+        profileState?.districts.find(
+          (item) =>
+            item.name ===
+            profile.address?.districtName
+        );
+
+      const profileTehsil =
+        profileDistrict?.tehsils.find(
+          (item) =>
+            item.name ===
+            profile.address?.tehsilName
+        );
 
       setFormData({
         fullName: profile.fullName || "",
         mobile: profile.mobile || "",
-        fatherHusbandName: profile.fatherHusbandName || "",
+
+        fatherHusbandName:
+          profile.fatherHusbandName || "",
+
         aadhaar: profile.aadhaar || "",
-        dob: profile.dob ? new Date(profile.dob).toISOString().slice(0, 10) : "",
+
+        dob: profile.dob
+          ? new Date(profile.dob)
+            .toISOString()
+            .slice(0, 10)
+          : "",
+
         gender: profile.gender || "",
-        state: profileState?.code ? String(profileState.code) : "",
-        district: profileDistrict?.code ? String(profileDistrict.code) : "",
-        tehsil: profileTehsil?.code ? String(profileTehsil.code) : "",
-        townVillage: profile.address?.townVillage || "",
-        addressLine: profile.address?.address || "",
-        pincode: profile.address?.pincode || "",
-        employmentStatus: profile.employmentStatus || "",
-        occupation: profile.occupation || "",
-        referralCode: profile.referralCode || "",
-        nomineeName: profile.nominee?.name || "",
-        nomineeMobile: profile.nominee?.mobile || "",
-        nomineeEmail: profile.nominee?.email || "",
-        nomineeRelationship: profile.nominee?.relationship || "",
+
+        state: profileState?.code
+          ? String(profileState.code)
+          : "",
+
+        district: profileDistrict?.code
+          ? String(profileDistrict.code)
+          : "",
+
+        tehsil: profileTehsil?.code
+          ? String(profileTehsil.code)
+          : "",
+
+        townVillage:
+          profile.address?.townVillage || "",
+
+        addressLine:
+          profile.address?.address || "",
+
+        pincode:
+          profile.address?.pincode || "",
+
+        employmentStatus:
+          profile.employmentStatus || "",
+
+        occupation:
+          profile.occupation || "",
+
+        referralCode:
+          profile.referralCode || "",
+
+        nomineeName:
+          profile.nominee?.name || "",
+
+        nomineeMobile:
+          profile.nominee?.mobile || "",
+
+        nomineeEmail:
+          profile.nominee?.email || "",
+
+        nomineeRelationship:
+          profile.nominee?.relationship || "",
       });
+
       setKycConsent(true);
       setProfileReady(true);
     };
 
     loadProfileForEditing();
-  }, [getUserProfile, isUpdateMode, token, user, location.pathname]);
+  }, [
+    getUserProfile,
+    isUpdateMode,
+    token,
+    user,
+    location.pathname,
+    KYC_DRAFT_KEY,
+  ]);
 
   if (!token || (isUpdateMode && !profileReady)) return null;
 
@@ -365,8 +490,10 @@ useEffect(() => {
           fullName: formData.fullName.trim(),
           mobile: formData.mobile,
         }
-        : {}),
-      referralCode: formData.referralCode.trim(),
+        : {
+          referralCode: formData.referralCode.trim(),
+        }),
+
       fatherHusbandName: formData.fatherHusbandName.trim(),
       aadhaar: formData.aadhaar,
       dob: formData.dob,
@@ -807,20 +934,21 @@ useEffect(() => {
                   />
                 </div>
 
-               
-                <div className="md:col-span-2">
-                  <label className="ljka-login-label">
-                    Referral Code
-                  </label>
+                {!isUpdateMode && (
+                  <div className="md:col-span-2">
+                    <label className="ljka-login-label">
+                      Referral Code
+                    </label>
 
-                  <input
-                    name="referralCode"
-                    value={formData.referralCode}
-                    onChange={(e) => handleChange("referralCode", e.target.value)}
-                    placeholder="e.g. AY92"
-                    className="ljka-login-input"
-                  />
-                </div>
+                    <input
+                      name="referralCode"
+                      value={formData.referralCode}
+                      onChange={(e) => handleChange("referralCode", e.target.value)}
+                      placeholder="e.g. AY92"
+                      className="ljka-login-input"
+                    />
+                  </div>
+                )}
               </div>
             </section>
 
