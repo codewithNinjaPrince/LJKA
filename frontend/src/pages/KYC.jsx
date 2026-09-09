@@ -183,52 +183,22 @@ const KYC = () => {
     }
   }, [token, navigate, isUpdateMode]);
 
-  useEffect(() => {
-    if (!isUpdateMode || !token) return;
-    if (profileLoadStarted.current) return;
+ useEffect(() => {
+  if (!isUpdateMode || !token) return;
+  if (profileLoadStarted.current) return;
 
-    profileLoadStarted.current = true;
+  profileLoadStarted.current = true;
 
-    const loadProfileForEditing = async () => {
-      // =====================================================
-      // FIRST PRIORITY: RESTORE UNFINISHED UPDATE DRAFT
-      // =====================================================
-
-      const savedDraft = sessionStorage.getItem(KYC_DRAFT_KEY);
-
-      if (savedDraft) {
-        try {
-          const parsedDraft = JSON.parse(savedDraft);
-
-          if (
-            parsedDraft &&
-            typeof parsedDraft === "object"
-          ) {
-            setFormData({
-              ...INITIAL_FORM_DATA,
-              ...parsedDraft,
-            });
-
-            setKycConsent(true);
-            setProfileReady(true);
-
-            return;
-          }
-        } catch (error) {
-          console.error(
-            "FAILED TO RESTORE UPDATE PROFILE DRAFT:",
-            error
-          );
-
-          sessionStorage.removeItem(KYC_DRAFT_KEY);
-        }
-      }
-
-      // =====================================================
-      // SECOND PRIORITY: LOAD PROFILE FROM DATABASE
-      // Only happens when there is NO saved draft.
-      // =====================================================
-
+  const loadProfileForEditing = async () => {
+    try {
+      /*
+       * =====================================================
+       * FIRST: LOAD THE SAVED PROFILE FROM DATABASE
+       * =====================================================
+       *
+       * This must happen before restoring any draft.
+       * The database is the source of truth for Update Profile.
+       */
       const result = user?.address
         ? { user }
         : await getUserProfile();
@@ -245,40 +215,48 @@ const KYC = () => {
         return;
       }
 
+      /*
+       * =====================================================
+       * MAP PROFILE LOCATION DATA
+       * =====================================================
+       */
       const profileState =
         locationData.states.find(
           (item) =>
-            item.name ===
-            profile.address?.stateName
+            item.name === profile.address?.stateName
         );
 
       const profileDistrict =
         profileState?.districts.find(
           (item) =>
-            item.name ===
-            profile.address?.districtName
+            item.name === profile.address?.districtName
         );
 
       const profileTehsil =
         profileDistrict?.tehsils.find(
           (item) =>
-            item.name ===
-            profile.address?.tehsilName
+            item.name === profile.address?.tehsilName
         );
 
-      setFormData({
+      /*
+       * =====================================================
+       * DATABASE PROFILE → FORM
+       * =====================================================
+       */
+      const profileFormData = {
         fullName: profile.fullName || "",
         mobile: profile.mobile || "",
 
         fatherHusbandName:
           profile.fatherHusbandName || "",
 
-        aadhaar: profile.aadhaar || "",
+        aadhaar:
+          profile.aadhaar || "",
 
         dob: profile.dob
           ? new Date(profile.dob)
-            .toISOString()
-            .slice(0, 10)
+              .toISOString()
+              .slice(0, 10)
           : "",
 
         gender: profile.gender || "",
@@ -324,21 +302,121 @@ const KYC = () => {
 
         nomineeRelationship:
           profile.nominee?.relationship || "",
-      });
+      };
 
+      /*
+       * =====================================================
+       * SECOND: CHECK FOR AN UNFINISHED UPDATE DRAFT
+       * =====================================================
+       *
+       * Only use the draft if it actually contains meaningful
+       * user-entered data.
+       *
+       * This prevents an old/empty draft from replacing
+       * the real database profile.
+       */
+      let finalFormData = profileFormData;
+
+      const savedDraft =
+        sessionStorage.getItem(KYC_DRAFT_KEY);
+
+      if (savedDraft) {
+        try {
+          const parsedDraft = JSON.parse(savedDraft);
+
+          if (
+            parsedDraft &&
+            typeof parsedDraft === "object"
+          ) {
+            /*
+             * Determine whether the draft actually contains
+             * something useful.
+             */
+            const hasMeaningfulDraft =
+              Object.entries(parsedDraft).some(
+                ([key, value]) => {
+                  if (!(key in INITIAL_FORM_DATA)) {
+                    return false;
+                  }
+
+                  if (
+                    typeof value === "string"
+                  ) {
+                    return value.trim() !== "";
+                  }
+
+                  return (
+                    value !== null &&
+                    value !== undefined
+                  );
+                }
+              );
+
+            if (hasMeaningfulDraft) {
+              finalFormData = {
+                ...profileFormData,
+                ...parsedDraft,
+              };
+            } else {
+              /*
+               * Empty/stale draft — remove it so it cannot
+               * interfere with the next Update Profile load.
+               */
+              sessionStorage.removeItem(
+                KYC_DRAFT_KEY
+              );
+            }
+          }
+        } catch (error) {
+          console.error(
+            "FAILED TO RESTORE UPDATE PROFILE DRAFT:",
+            error
+          );
+
+          sessionStorage.removeItem(
+            KYC_DRAFT_KEY
+          );
+        }
+      }
+
+      /*
+       * =====================================================
+       * FINAL FORM DATA
+       * =====================================================
+       */
+      setFormData(finalFormData);
+
+      /*
+       * Update Profile doesn't need the user to newly
+       * accept KYC. Existing profile is already completed.
+       */
       setKycConsent(true);
       setProfileReady(true);
-    };
 
-    loadProfileForEditing();
-  }, [
-    getUserProfile,
-    isUpdateMode,
-    token,
-    user,
-    location.pathname,
-    KYC_DRAFT_KEY,
-  ]);
+    } catch (error) {
+      console.error(
+        "FAILED TO LOAD PROFILE FOR EDITING:",
+        error
+      );
+
+      toastError(
+        error?.response?.data?.message ||
+        "Unable to load profile for editing"
+      );
+
+      setProfileReady(true);
+    }
+  };
+
+  loadProfileForEditing();
+}, [
+  getUserProfile,
+  isUpdateMode,
+  token,
+  user,
+  location.pathname,
+  KYC_DRAFT_KEY,
+]);
 
   if (!token || (isUpdateMode && !profileReady)) return null;
 
