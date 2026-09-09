@@ -82,7 +82,7 @@ const Home = () => {
             icon={<FaHeart />}
             title="Member's List"
             text="View all LJKA members"
-            onClick={() => navigate("/member-list")}
+            onClick={() => navigate("/user-list")}
           />
 
 

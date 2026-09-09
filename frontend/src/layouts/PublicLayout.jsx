@@ -30,20 +30,12 @@ const PublicLayout = () => {
     pointer-events-none
     fixed
     left-1/2
-    top-[58%]
+    top-[calc(50%+54px)]
     z-[50]
     -translate-x-1/2
     -translate-y-1/2
-    w-[92vw]
-    max-w-[420px]
-    sm:w-[75vw]
-    sm:max-w-[520px]
-    md:w-[55vw]
-    md:max-w-[620px]
-    lg:w-[45vw]
-    lg:max-w-[700px]
-    xl:w-[40vw]
-    xl:max-w-[760px]
+    w-[min(92vw,calc(100vh-140px))]
+    max-w-none
   "
   aria-hidden="true"
 >
