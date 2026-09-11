@@ -5,33 +5,44 @@ const userSchema = new mongoose.Schema({
   fullName: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, required: true, minlength: 6 },
+  password: { type: String, required: true, minlength: 6 },
+
+  passwordChangeVerifiedAt: {
+    type: Date,
+    default: null,
+  },
+
+  passwordChangeTokenHash: {
+    type: String,
+    default: null,
+  },
   emailVerified: { type: Boolean, default: false },
- memberId: {
-  type: String,
-  unique: true,
-  sparse: true,
-  index: true,
-},
+  memberId: {
+    type: String,
+    unique: true,
+    sparse: true,
+    index: true,
+  },
 
-kycCompletedAt: {
-  type: Date,
-  default: null,
-},
+  kycCompletedAt: {
+    type: Date,
+    default: null,
+  },
 
-membershipStartDate: {
-  type: Date,
-  default: null,
-},
+  membershipStartDate: {
+    type: Date,
+    default: null,
+  },
 
-membershipExpiresAt: {
-  type: Date,
-  default: null,
-},
+  membershipExpiresAt: {
+    type: Date,
+    default: null,
+  },
 
-membershipRenewalReminderSentAt: {
-  type: Date,
-  default: null,
-},
+  membershipRenewalReminderSentAt: {
+    type: Date,
+    default: null,
+  },
 
   // KYC
   mobile: {
@@ -77,6 +88,12 @@ membershipRenewalReminderSentAt: {
 
   // KYC STATUS
   kycCompleted: { type: Boolean, default: false },
+
+  membershipPaymentStatus: {
+    type: String,
+    enum: ["pending", "paid", "failed"],
+    default: "pending",
+  },
 
   // KYC CONSENT
   kycConsentAcceptedAt: {

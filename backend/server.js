@@ -7,6 +7,9 @@ import kycRouter from "./routes/kycRoute.js";
 import contactRouter from "./routes/contactRoute.js";
 import memberRouter from "./routes/memberRoute.js";
 import sahyogAlertRouter from "./routes/sahyogAlertRoute.js";
+import memberUpdateRequestRouter from "./routes/memberUpdateRequestRoute.js";
+import adminMemberUpdateRouter from "./routes/adminMemberUpdateRoute.js";
+
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -26,6 +29,14 @@ app.use("/api/user/kyc", kycRouter);
 app.use("/api/contact", contactRouter);
 app.use("/api/members", memberRouter);
 app.use("/api/sahyog-alert", sahyogAlertRouter);
+app.use(
+  "/api/member-update-request",
+  memberUpdateRequestRouter
+);
+app.use(
+  "/api/admin/member-update-requests",
+  adminMemberUpdateRouter
+);
 
 // Root
 app.get("/", (req, res) => {

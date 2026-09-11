@@ -385,7 +385,7 @@ const submitKYC = async (req, res) => {
 
         if (!user.memberId) {
             user.memberId = await generateMemberId({
-                stateName: user.address.stateName,
+                address: user.address,
                 employmentStatus: user.employmentStatus,
             });
         }

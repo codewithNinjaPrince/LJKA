@@ -72,6 +72,10 @@ const KYC = () => {
   const [kycConsent, setKycConsent] = useState(false);
   const [profileReady, setProfileReady] = useState(!isUpdateMode);
   const profileLoadStarted = useRef(false);
+  const submitInProgressRef = useRef(false);
+  const justSubmittedRef = useRef(false);
+
+
 
   const INITIAL_FORM_DATA = {
     fullName: "",
@@ -183,240 +187,240 @@ const KYC = () => {
     }
   }, [token, navigate, isUpdateMode]);
 
- useEffect(() => {
-  if (!isUpdateMode || !token) return;
-  if (profileLoadStarted.current) return;
+  useEffect(() => {
+    if (!isUpdateMode || !token) return;
+    if (profileLoadStarted.current) return;
 
-  profileLoadStarted.current = true;
+    profileLoadStarted.current = true;
 
-  const loadProfileForEditing = async () => {
-    try {
-      /*
-       * =====================================================
-       * FIRST: LOAD THE SAVED PROFILE FROM DATABASE
-       * =====================================================
-       *
-       * This must happen before restoring any draft.
-       * The database is the source of truth for Update Profile.
-       */
-      const result = user?.address
-        ? { user }
-        : await getUserProfile();
+    const loadProfileForEditing = async () => {
+      try {
+        /*
+         * =====================================================
+         * FIRST: LOAD THE SAVED PROFILE FROM DATABASE
+         * =====================================================
+         *
+         * This must happen before restoring any draft.
+         * The database is the source of truth for Update Profile.
+         */
+        const result = user?.address
+          ? { user }
+          : await getUserProfile();
 
-      const profile = result?.user;
+        const profile = result?.user;
 
-      if (!profile) {
+        if (!profile) {
+          toastError(
+            result?.message ||
+            "Unable to load profile for editing"
+          );
+
+          setProfileReady(true);
+          return;
+        }
+
+        /*
+         * =====================================================
+         * MAP PROFILE LOCATION DATA
+         * =====================================================
+         */
+        const profileState =
+          locationData.states.find(
+            (item) =>
+              item.name === profile.address?.stateName
+          );
+
+        const profileDistrict =
+          profileState?.districts.find(
+            (item) =>
+              item.name === profile.address?.districtName
+          );
+
+        const profileTehsil =
+          profileDistrict?.tehsils.find(
+            (item) =>
+              item.name === profile.address?.tehsilName
+          );
+
+        /*
+         * =====================================================
+         * DATABASE PROFILE → FORM
+         * =====================================================
+         */
+        const profileFormData = {
+          fullName: profile.fullName || "",
+          mobile: profile.mobile || "",
+
+          fatherHusbandName:
+            profile.fatherHusbandName || "",
+
+          aadhaar:
+            profile.aadhaar || "",
+
+          dob: profile.dob
+            ? new Date(profile.dob)
+              .toISOString()
+              .slice(0, 10)
+            : "",
+
+          gender: profile.gender || "",
+
+          state: profileState?.code
+            ? String(profileState.code)
+            : "",
+
+          district: profileDistrict?.code
+            ? String(profileDistrict.code)
+            : "",
+
+          tehsil: profileTehsil?.code
+            ? String(profileTehsil.code)
+            : "",
+
+          townVillage:
+            profile.address?.townVillage || "",
+
+          addressLine:
+            profile.address?.address || "",
+
+          pincode:
+            profile.address?.pincode || "",
+
+          employmentStatus:
+            profile.employmentStatus || "",
+
+          occupation:
+            profile.occupation || "",
+
+          referralCode:
+            profile.referralCode || "",
+
+          nomineeName:
+            profile.nominee?.name || "",
+
+          nomineeMobile:
+            profile.nominee?.mobile || "",
+
+          nomineeEmail:
+            profile.nominee?.email || "",
+
+          nomineeRelationship:
+            profile.nominee?.relationship || "",
+        };
+
+        /*
+         * =====================================================
+         * SECOND: CHECK FOR AN UNFINISHED UPDATE DRAFT
+         * =====================================================
+         *
+         * Only use the draft if it actually contains meaningful
+         * user-entered data.
+         *
+         * This prevents an old/empty draft from replacing
+         * the real database profile.
+         */
+        let finalFormData = profileFormData;
+
+        const savedDraft =
+          sessionStorage.getItem(KYC_DRAFT_KEY);
+
+        if (savedDraft) {
+          try {
+            const parsedDraft = JSON.parse(savedDraft);
+
+            if (
+              parsedDraft &&
+              typeof parsedDraft === "object"
+            ) {
+              /*
+               * Determine whether the draft actually contains
+               * something useful.
+               */
+              const hasMeaningfulDraft =
+                Object.entries(parsedDraft).some(
+                  ([key, value]) => {
+                    if (!(key in INITIAL_FORM_DATA)) {
+                      return false;
+                    }
+
+                    if (
+                      typeof value === "string"
+                    ) {
+                      return value.trim() !== "";
+                    }
+
+                    return (
+                      value !== null &&
+                      value !== undefined
+                    );
+                  }
+                );
+
+              if (hasMeaningfulDraft) {
+                finalFormData = {
+                  ...profileFormData,
+                  ...parsedDraft,
+                };
+              } else {
+                /*
+                 * Empty/stale draft — remove it so it cannot
+                 * interfere with the next Update Profile load.
+                 */
+                sessionStorage.removeItem(
+                  KYC_DRAFT_KEY
+                );
+              }
+            }
+          } catch (error) {
+            console.error(
+              "FAILED TO RESTORE UPDATE PROFILE DRAFT:",
+              error
+            );
+
+            sessionStorage.removeItem(
+              KYC_DRAFT_KEY
+            );
+          }
+        }
+
+        /*
+         * =====================================================
+         * FINAL FORM DATA
+         * =====================================================
+         */
+        setFormData(finalFormData);
+
+        /*
+         * Update Profile doesn't need the user to newly
+         * accept KYC. Existing profile is already completed.
+         */
+        setKycConsent(true);
+        setProfileReady(true);
+
+      } catch (error) {
+        console.error(
+          "FAILED TO LOAD PROFILE FOR EDITING:",
+          error
+        );
+
         toastError(
-          result?.message ||
+          error?.response?.data?.message ||
           "Unable to load profile for editing"
         );
 
         setProfileReady(true);
-        return;
       }
+    };
 
-      /*
-       * =====================================================
-       * MAP PROFILE LOCATION DATA
-       * =====================================================
-       */
-      const profileState =
-        locationData.states.find(
-          (item) =>
-            item.name === profile.address?.stateName
-        );
-
-      const profileDistrict =
-        profileState?.districts.find(
-          (item) =>
-            item.name === profile.address?.districtName
-        );
-
-      const profileTehsil =
-        profileDistrict?.tehsils.find(
-          (item) =>
-            item.name === profile.address?.tehsilName
-        );
-
-      /*
-       * =====================================================
-       * DATABASE PROFILE → FORM
-       * =====================================================
-       */
-      const profileFormData = {
-        fullName: profile.fullName || "",
-        mobile: profile.mobile || "",
-
-        fatherHusbandName:
-          profile.fatherHusbandName || "",
-
-        aadhaar:
-          profile.aadhaar || "",
-
-        dob: profile.dob
-          ? new Date(profile.dob)
-              .toISOString()
-              .slice(0, 10)
-          : "",
-
-        gender: profile.gender || "",
-
-        state: profileState?.code
-          ? String(profileState.code)
-          : "",
-
-        district: profileDistrict?.code
-          ? String(profileDistrict.code)
-          : "",
-
-        tehsil: profileTehsil?.code
-          ? String(profileTehsil.code)
-          : "",
-
-        townVillage:
-          profile.address?.townVillage || "",
-
-        addressLine:
-          profile.address?.address || "",
-
-        pincode:
-          profile.address?.pincode || "",
-
-        employmentStatus:
-          profile.employmentStatus || "",
-
-        occupation:
-          profile.occupation || "",
-
-        referralCode:
-          profile.referralCode || "",
-
-        nomineeName:
-          profile.nominee?.name || "",
-
-        nomineeMobile:
-          profile.nominee?.mobile || "",
-
-        nomineeEmail:
-          profile.nominee?.email || "",
-
-        nomineeRelationship:
-          profile.nominee?.relationship || "",
-      };
-
-      /*
-       * =====================================================
-       * SECOND: CHECK FOR AN UNFINISHED UPDATE DRAFT
-       * =====================================================
-       *
-       * Only use the draft if it actually contains meaningful
-       * user-entered data.
-       *
-       * This prevents an old/empty draft from replacing
-       * the real database profile.
-       */
-      let finalFormData = profileFormData;
-
-      const savedDraft =
-        sessionStorage.getItem(KYC_DRAFT_KEY);
-
-      if (savedDraft) {
-        try {
-          const parsedDraft = JSON.parse(savedDraft);
-
-          if (
-            parsedDraft &&
-            typeof parsedDraft === "object"
-          ) {
-            /*
-             * Determine whether the draft actually contains
-             * something useful.
-             */
-            const hasMeaningfulDraft =
-              Object.entries(parsedDraft).some(
-                ([key, value]) => {
-                  if (!(key in INITIAL_FORM_DATA)) {
-                    return false;
-                  }
-
-                  if (
-                    typeof value === "string"
-                  ) {
-                    return value.trim() !== "";
-                  }
-
-                  return (
-                    value !== null &&
-                    value !== undefined
-                  );
-                }
-              );
-
-            if (hasMeaningfulDraft) {
-              finalFormData = {
-                ...profileFormData,
-                ...parsedDraft,
-              };
-            } else {
-              /*
-               * Empty/stale draft — remove it so it cannot
-               * interfere with the next Update Profile load.
-               */
-              sessionStorage.removeItem(
-                KYC_DRAFT_KEY
-              );
-            }
-          }
-        } catch (error) {
-          console.error(
-            "FAILED TO RESTORE UPDATE PROFILE DRAFT:",
-            error
-          );
-
-          sessionStorage.removeItem(
-            KYC_DRAFT_KEY
-          );
-        }
-      }
-
-      /*
-       * =====================================================
-       * FINAL FORM DATA
-       * =====================================================
-       */
-      setFormData(finalFormData);
-
-      /*
-       * Update Profile doesn't need the user to newly
-       * accept KYC. Existing profile is already completed.
-       */
-      setKycConsent(true);
-      setProfileReady(true);
-
-    } catch (error) {
-      console.error(
-        "FAILED TO LOAD PROFILE FOR EDITING:",
-        error
-      );
-
-      toastError(
-        error?.response?.data?.message ||
-        "Unable to load profile for editing"
-      );
-
-      setProfileReady(true);
-    }
-  };
-
-  loadProfileForEditing();
-}, [
-  getUserProfile,
-  isUpdateMode,
-  token,
-  user,
-  location.pathname,
-  KYC_DRAFT_KEY,
-]);
+    loadProfileForEditing();
+  }, [
+    getUserProfile,
+    isUpdateMode,
+    token,
+    user,
+    location.pathname,
+    KYC_DRAFT_KEY,
+  ]);
 
   if (!token || (isUpdateMode && !profileReady)) return null;
 
@@ -457,9 +461,17 @@ const KYC = () => {
       );
       return;
     }
-    if (loading) return;
+
+    // Prevent duplicate submissions immediately.
+    // useRef is synchronous, unlike React state.
+    if (submitInProgressRef.current) return;
+
+    submitInProgressRef.current = true;
+    setLoading(true);
 
     if (isUpdateMode && !formData.fullName.trim()) {
+      submitInProgressRef.current = false;
+      setLoading(false);
       toastError("Full Name is required");
       return;
     }
@@ -612,8 +624,10 @@ const KYC = () => {
       // authUser middleware — adjust header if your middleware expects
       // "Authorization: Bearer <token>" instead of a raw "token" header.
       const res = await axios({
-        method: isUpdateMode ? "put" : "post",
-        url: `${backendUrl}/api/user/${isUpdateMode ? "update-profile" : "kyc/submit"}`,
+        method: "post",
+        url: isUpdateMode
+          ? `${backendUrl}/api/member-update-request/submit`
+          : `${backendUrl}/api/user/kyc/submit`,
         data: payload,
         headers: { token },
       });
@@ -623,9 +637,27 @@ const KYC = () => {
         return;
       }
 
-      localStorage.setItem("kycCompleted", "true");
-      toastSuccess(isUpdateMode ? "Profile updated successfully 🎉" : "KYC completed successfully 🎉");
-      navigate("/user/view-profile");
+      if (isUpdateMode) {
+        sessionStorage.removeItem(KYC_DRAFT_KEY);
+
+        toastSuccess(
+          "Your update request has been submitted for admin verification."
+        );
+
+        navigate("/user/view-profile", { replace: true });
+
+        return;
+      }
+
+      if (
+        !isUpdateMode &&
+        localStorage.getItem("kycCompleted") === "true"
+      ) {
+        sessionStorage.removeItem("ljka_kyc_in_progress");
+
+        navigate("/user/view-profile", { replace: true });
+        return;
+      }
     } catch (err) {
       const response = err?.response;
 
@@ -638,6 +670,7 @@ const KYC = () => {
 
       toastError(response?.data?.message || "Something went wrong");
     } finally {
+      submitInProgressRef.current = false;
       setLoading(false);
     }
   };
@@ -664,8 +697,9 @@ const KYC = () => {
             </h1>
 
             <p className="mt-5 text-base leading-7 text-[var(--ljka-muted)]">
-              Complete your personal, address, employment and nominee details
-              to activate your LJKA membership.
+              {isUpdateMode
+                ? "Request changes to your registered LJKA details. All requested changes will be reviewed by the LJKA administration team before they are applied."
+                : "Complete your personal, address, employment and nominee details to activate your LJKA membership."}
             </p>
 
             <div className="mt-8 rounded-2xl border border-[var(--ljka-gold)]/30 bg-white p-5 shadow-sm">
@@ -730,7 +764,7 @@ const KYC = () => {
             </h2>
 
             <p className="mt-1 text-sm text-[var(--ljka-muted)]">
-              {isUpdateMode ? "Update your details while keeping your information accurate." : "Please provide accurate information to complete your membership."}
+              {isUpdateMode ? "Submit your requested changes for LJKA admin verification. Your existing profile will remain unchanged until approval." : "Please provide accurate information to complete your membership."}
             </p>
           </div>
 
@@ -1169,11 +1203,11 @@ const KYC = () => {
                 {loading ? (
                   <>
                     <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    <span>{isUpdateMode ? "Updating profile..." : "Submitting KYC..."}</span>
+                    <span>{isUpdateMode ? "Submitting Update Request" : "Submitting KYC..."}</span>
                   </>
                 ) : (
                   <>
-                    {isUpdateMode ? "Update Profile" : "Complete KYC"}
+                    {isUpdateMode ? "Submit Update Request" : "Complete KYC"}
                     <span className="text-[var(--ljka-gold)]">→</span>
                   </>
                 )}

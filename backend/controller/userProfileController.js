@@ -34,16 +34,26 @@ const getUserProfile = async (req, res) => {
       });
     }
 
-    const membershipStartDate =
-      user.kycCompletedAt || user.membershipStartDate || user.createdAt;
-    const membershipExpiresAt = user.kycCompletedAt
-      ? new Date(new Date(user.kycCompletedAt).getTime() + MEMBERSHIP_DAYS * DAY_MS)
-      : user.membershipExpiresAt ||
-        new Date(new Date(membershipStartDate).getTime() + MEMBERSHIP_DAYS * DAY_MS);
-    const remainingDays = Math.ceil(
-      (new Date(membershipExpiresAt).getTime() - Date.now()) / DAY_MS
-    );
-    const renewalDue = remainingDays > 0 && remainingDays <= 30;
+    const membershipPaid = user.membershipPaymentStatus === "paid";
+
+    const membershipStartDate = membershipPaid
+      ? user.membershipStartDate
+      : null;
+
+    const membershipExpiresAt = membershipPaid
+      ? user.membershipExpiresAt
+      : null;
+
+    const remainingDays = membershipExpiresAt
+      ? Math.ceil(
+        (new Date(membershipExpiresAt).getTime() - Date.now()) / DAY_MS
+      )
+      : 0;
+
+    const renewalDue =
+      membershipPaid &&
+      remainingDays > 0 &&
+      remainingDays <= 30;
 
     if (
       renewalDue &&
@@ -94,12 +104,21 @@ const getUserProfile = async (req, res) => {
       message: "Profile fetched successfully",
       user: {
         ...user.toObject(),
+        membershipPaymentStatus: user.membershipPaymentStatus,
+
         membershipStartDate,
         membershipExpiresAt,
+
         membershipDaysTotal: MEMBERSHIP_DAYS,
         membershipDaysRemaining: Math.max(remainingDays, 0),
-        membershipExpired: remainingDays < 0,
+
+        membershipExpired:
+          membershipPaid && remainingDays < 0,
+
         membershipRenewalDue: renewalDue,
+
+        membershipActive:
+          membershipPaid && remainingDays > 0,
       },
     });
 

@@ -9,7 +9,7 @@ const UserLayout = () => {
     <div className="relative min-h-screen overflow-x-hidden bg-[var(--ljka-bg)] text-[var(--ljka-text)]">
 
       <div
-        className="pointer-events-none fixed left-1/2 top-[58%] z-0 w-[92vw] max-w-[420px] -translate-x-1/2 -translate-y-1/2 sm:w-[75vw] sm:max-w-[520px] md:w-[55vw] md:max-w-[620px] lg:w-[45vw] lg:max-w-[700px]"
+        className="pointer-events-none fixed left-1/2 top-[58%] z-40 w-[92vw] max-w-[420px] -translate-x-1/2 -translate-y-1/2 sm:w-[75vw] sm:max-w-[520px] md:w-[55vw] md:max-w-[620px] lg:w-[45vw] lg:max-w-[700px]"
         aria-hidden="true"
       >
         <img

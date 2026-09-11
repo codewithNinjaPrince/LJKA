@@ -10,15 +10,16 @@ import { useNavigate } from "react-router-dom";
 import { LJKAContext } from "../../context/LJKAContext";
 
 const getMembershipExpiry = (profile) => {
-  if (profile?.membershipExpiresAt) return profile.membershipExpiresAt;
+  // Membership is not active until payment is completed.
+  if (profile?.membershipPaymentStatus !== "paid") {
+    return null;
+  }
 
-  const startDate = profile?.kycCompletedAt || profile?.membershipStartDate;
+  if (profile?.membershipExpiresAt) {
+    return profile.membershipExpiresAt;
+  }
 
-  if (!startDate) return null;
-
-  return new Date(
-    new Date(startDate).getTime() + 365 * 24 * 60 * 60 * 1000
-  ).toISOString();
+  return null;
 };
 
 
@@ -88,12 +89,12 @@ const ViewProfile = () => {
   const membershipExpiry = getMembershipExpiry(user);
   const profileRemainingDays = membershipExpiry
     ? Math.max(
-        Math.ceil(
-          (new Date(membershipExpiry).getTime() - Date.now()) /
-            86400000
-        ),
-        0
-      )
+      Math.ceil(
+        (new Date(membershipExpiry).getTime() - Date.now()) /
+        86400000
+      ),
+      0
+    )
     : null;
 
   /* ==========================================
@@ -326,7 +327,23 @@ const ViewProfile = () => {
         <Detail label="Registered On" value={formatDate(user.createdAt)} />
         <Detail label="KYC Status" value={user.kycCompleted ? "Completed" : "Pending"} />
         <Detail label="KYC Completed On" value={formatDate(user.kycCompletedAt)} />
-        <Detail label="Membership Expires On" value={formatDate(membershipExpiry)} />
+        <Detail
+          label="Membership Status"
+          value={
+            user.membershipPaymentStatus === "paid"
+              ? "Active"
+              : "Inactive - Payment Pending"
+          }
+        />
+
+        <Detail
+          label="Membership Expires On"
+          value={
+            user.membershipPaymentStatus === "paid"
+              ? formatDate(membershipExpiry)
+              : "Not active"
+              }
+        />
       </ProfileSection>
 
     </div>
@@ -334,44 +351,123 @@ const ViewProfile = () => {
 };
 
 
-const MembershipRenewalCard = ({ user, membershipExpiry, remainingDays }) => {
-  const renewalDue = remainingDays > 0 && remainingDays <= 30;
-  const expired = user.membershipExpired || remainingDays <= 0;
-  const needsAttention = renewalDue || expired;
+const MembershipRenewalCard = ({
+  user,
+  membershipExpiry,
+  remainingDays,
+}) => {
+  const paymentPending = user?.membershipPaymentStatus !== "paid";
+
+  const renewalDue =
+    !paymentPending &&
+    remainingDays > 0 &&
+    remainingDays <= 30;
+
+  const expired =
+    !paymentPending &&
+    (user?.membershipExpired || remainingDays <= 0);
+
+  const needsAttention =
+    paymentPending || renewalDue || expired;
 
   return (
     <section
       className={`mb-6 overflow-hidden rounded-2xl border p-5 shadow-[var(--ljka-shadow-sm)] sm:p-7 ${needsAttention
-        ? "border-red-200 bg-red-50"
-        : "border-green-200 bg-green-50"
-      }`}
+          ? "border-red-200 bg-red-50"
+          : "border-green-200 bg-green-50"
+        }`}
     >
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-start gap-4">
-          <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-xl ${needsAttention ? "bg-red-100 text-red-600" : "bg-green-100 text-green-600"}`}>
-            {needsAttention ? <FaExclamationTriangle /> : <FaCalendarAlt />}
+
+          <div
+            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-xl ${needsAttention
+                ? "bg-red-100 text-red-600"
+                : "bg-green-100 text-green-600"
+              }`}
+          >
+            {needsAttention ? (
+              <FaExclamationTriangle />
+            ) : (
+              <FaCalendarAlt />
+            )}
           </div>
+
           <div>
-            <p className={`text-xs font-bold uppercase tracking-[0.16em] ${needsAttention ? "text-red-600" : "text-green-700"}`}>
-              {expired ? "Membership expired" : renewalDue ? "Renewal required soon" : "Active membership"}
+
+            <p
+              className={`text-xs font-bold uppercase tracking-[0.16em] ${needsAttention
+                  ? "text-red-600"
+                  : "text-green-700"
+                }`}
+            >
+              {paymentPending
+                ? "Membership inactive"
+                : expired
+                  ? "Membership expired"
+                  : renewalDue
+                    ? "Renewal required soon"
+                    : "Active membership"}
             </p>
-            <h2 className={`mt-2 text-xl font-bold sm:text-2xl ${needsAttention ? "text-red-800" : "text-green-800"}`}>
-              {expired ? "Please renew your LJKA membership" : `${remainingDays} days remaining`}
+
+            <h2
+              className={`mt-2 text-xl font-bold sm:text-2xl ${needsAttention
+                  ? "text-red-800"
+                  : "text-green-800"
+                }`}
+            >
+              {paymentPending
+                ? "Complete your membership payment"
+                : expired
+                  ? "Please renew your LJKA membership"
+                  : `${remainingDays} days remaining`}
             </h2>
-            <p className={`mt-2 max-w-2xl text-sm leading-6 ${needsAttention ? "text-red-700" : "text-green-700"}`}>
-              {expired
-                ? `Membership expired on ${formatDate(membershipExpiry)}. Please activate your membership and pay the required annual fee.`
-                : renewalDue
-                  ? `Membership expires on ${formatDate(membershipExpiry)}. Please arrange the required annual fee renewal.`
-                  : `Continue your active LJKA membership. It expires on ${formatDate(membershipExpiry)}.`}
+
+            <p
+              className={`mt-2 max-w-2xl text-sm leading-6 ${needsAttention
+                  ? "text-red-700"
+                  : "text-green-700"
+                }`}
+            >
+              {paymentPending
+                ? "Your KYC has been completed, but your LJKA membership is not active yet. Please complete the required membership payment to activate your membership."
+                : expired
+                  ? `Membership expired on ${formatDate(
+                    membershipExpiry
+                  )}. Please renew your membership and pay the required annual fee.`
+                  : renewalDue
+                    ? `Membership expires on ${formatDate(
+                      membershipExpiry
+                    )}. Please arrange the required annual fee renewal.`
+                    : `Your LJKA membership is active. It expires on ${formatDate(
+                      membershipExpiry
+                    )}.`}
             </p>
+
           </div>
         </div>
 
-        <div className={`flex shrink-0 items-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold ${needsAttention ? "bg-white text-red-700" : "bg-white text-green-700"}`}>
-          {needsAttention ? <FaExclamationTriangle /> : <FaCheckCircle />}
-          {expired ? "Membership expired" : renewalDue ? "Renewal pending" : "Membership active"}
+        <div
+          className={`flex shrink-0 items-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold ${needsAttention
+              ? "bg-white text-red-700"
+              : "bg-white text-green-700"
+            }`}
+        >
+          {needsAttention ? (
+            <FaExclamationTriangle />
+          ) : (
+            <FaCheckCircle />
+          )}
+
+          {paymentPending
+            ? "Payment pending"
+            : expired
+              ? "Membership expired"
+              : renewalDue
+                ? "Renewal pending"
+                : "Membership active"}
         </div>
+
       </div>
     </section>
   );
@@ -471,7 +567,7 @@ const Detail = ({
         className={`text-sm break-words ${emphasis
           ? "font-bold text-[var(--ljka-primary)]"
           : "font-medium text-[var(--ljka-text)]"
-        }`}
+          }`}
       >
         {value || "Not provided"}
       </p>

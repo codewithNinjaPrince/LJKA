@@ -24,12 +24,11 @@ const MEMBER_NAV_LINKS = [
   ["/user/view-profile", "View Profile"],
   ["/user/id-card", "Download ID Card"],
   ["/user/upload-sahyog", "Upload Sahyog"],
-  ["/user/sahyog-list", "View All Sahyog"],
+  ["/user/all-sahyog", "View All Sahyog"],
   ["/user/upload-kanyadan", "Upload Kanyadan"],
   ["/user/kanyadan-list", "View Kanyadan Sahyog"],
   ["/user/raise-claim", "Raise Claim"],
   ["/user/update-password", "Update Password"],
-  ["/contact", "Contact LJKA"],
 ];
 
 const Navbar = ({ memberPortal = false }) => {
@@ -110,6 +109,8 @@ const Navbar = ({ memberPortal = false }) => {
                   <NavLink
                     key={path}
                     to={path}
+                    target={path === "/user/id-card" ? "_blank" : undefined}
+                    rel={path === "/user/id-card" ? "noopener noreferrer" : undefined}
                     className={({ isActive }) =>
                       `relative whitespace-nowrap rounded-lg px-2.5 py-2.5 text-[12px] font-semibold transition-all xl:px-3 xl:text-[13px] ${isActive
                         ? "bg-white/20 text-white"
@@ -271,6 +272,8 @@ const Navbar = ({ memberPortal = false }) => {
                 <NavLink
                   key={path}
                   to={path}
+                  target={path === "/user/id-card" ? "_blank" : undefined}
+                  rel={path === "/user/id-card" ? "noopener noreferrer" : undefined}
                   onClick={closeMenu}
                   className={({ isActive }) =>
                     `flex items-center justify-between px-3.5 py-3.5 text-[14px] font-semibold transition-all duration-200 hover:rounded-lg ${isActive

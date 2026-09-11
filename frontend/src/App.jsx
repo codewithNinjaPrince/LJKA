@@ -22,6 +22,13 @@ import VyawasthaList from "./pages/VyawasthaList";
 import ForgotPassword from "./pages/ForgotPassword";
 import KYC from "./pages/KYC";
 import ViewProfile from "./pages/user/ViewProfile";
+import DownloadIdCard from "./pages/user/DownloadIdCard";
+import UpdatePassword from "./pages/user/UpdatePassword";
+import ViewKanyadanSahyog from "./pages/user/ViewKanyadanSahyog";
+import UploadKanyadan from "./pages/user/UploadKanyadan";
+import ViewAllSahyog from "./pages/user/ViewAllSahyog";
+import UploadSahyog from "./pages/user/UploadSahyog";
+import RaiseClaim from "./pages/user/RaiseClaim";
 
 const AuthRoute = ({ children }) => {
   const { token, user, appLoading } = useContext(LJKAContext);
@@ -141,47 +148,21 @@ const App = () => {
           </AuthRoute>
         }
       >
+        <Route
+          path="/user/id-card"
+          element={<DownloadIdCard />}
+        />
         <Route path="view-profile" element={<ViewProfile />} />
         <Route path="update-profile" element={<KYC />} />
+        <Route path="update-password" element={<UpdatePassword />} />
+        <Route path="kanyadan-list" element={<ViewKanyadanSahyog />} />
+        <Route path="upload-kanyadan" element={<UploadKanyadan />} />
+        <Route path="all-sahyog" element={<ViewAllSahyog />} />
+        <Route path="upload-sahyog" element={<UploadSahyog />} />
+        <Route path="raise-claim" element={<RaiseClaim />} />
       </Route>
     </Routes>
   );
 };
 
 export default App;
-
-
-
-// const App = () => {
-//   return (
-//     <div className="w-full min-h-screen bg-black text-white relative overflow-x-hidden"> 
-//       <div className="fixed top-0 left-0 z-50 w-full bg-white">
-//         <AnnouncementBar />
-//         <Header />
-//         <Navbar />
-//       </div>
-
-//       <main className="pt-[120px] sm:pt-[130px] md:pt-[135px] lg:pt-[140px]">
-//         <Routes>
-//           <Route path="/" element={<Home />} />
-//           <Route path="/about" element={<AboutUs />} />
-//           <Route path="/contact" element={<Contact />} />
-//           <Route path="/login" element={<Login />} />
-//           <Route path="/niyamawali" element={<Niyamawali />} />
-//           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-//           <Route path="/register" element={<Register />} />
-//           <Route path="/sahyog-list" element={<SahyogList />} />
-//           <Route path="/terms-condition" element={<TermsConditions />} />
-//           <Route path="/user-list" element={<UserList />} />
-//           <Route path="/vyawastha-list" element={<VyawasthaList />} />
-//           <Route path="/forgot-password" element={<ForgotPassword />} />
-//           <Route path="/kyc" element={<KYC />} />
-//         </Routes>
-//       </main>
-
-//       <Footer />
-//     </div>
-//   )
-// }
-
-// export default App

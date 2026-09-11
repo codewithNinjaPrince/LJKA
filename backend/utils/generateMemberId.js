@@ -62,7 +62,9 @@ const getStateCode = (stateName) => {
   );
 };
 
-const generateMemberId = async ({ stateName, employmentStatus }) => {
+const generateMemberId = async ({ address, employmentStatus }) => {
+  const stateName = address?.stateName;
+
   const stateCode = getStateCode(stateName);
   const employmentCode = EMPLOYMENT_CODES[normalize(employmentStatus)];
 

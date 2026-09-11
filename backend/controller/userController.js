@@ -1,6 +1,7 @@
 import validator from "validator";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import userModel from "../models/userModel.js";
 import EmailOtp from "../models/emailOtpModel.js";
 
@@ -304,6 +305,289 @@ const registerUser = async (req, res) => {
   }
 };
 
+const PASSWORD_CHANGE_TOKEN_MINUTES = 10;
+
+const isValidPassword = (password) => {
+  if (!password || typeof password !== "string") {
+    return false;
+  }
+
+  if (password.length < 6) {
+    return false;
+  }
+
+  if (!/[A-Za-z]/.test(password)) {
+    return false;
+  }
+
+  if (!/[0-9]/.test(password)) {
+    return false;
+  }
+
+  return true;
+};
+
+/* =========================================================
+   VERIFY CURRENT PASSWORD
+   POST /api/user/verify-current-password
+========================================================= */
+
+const verifyCurrentPassword = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { currentPassword } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Not authorized",
+      });
+    }
+
+    if (!currentPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password is required",
+      });
+    }
+
+    const user = await userModel.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User account not found",
+      });
+    }
+
+    const passwordMatches = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
+
+    if (!passwordMatches) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password is incorrect",
+      });
+    }
+
+    /*
+     * Generate a random one-time verification token.
+     * We only store its SHA-256 hash in MongoDB.
+     */
+    const rawToken = crypto.randomBytes(32).toString("hex");
+
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(rawToken)
+      .digest("hex");
+
+    const verifiedAt = new Date();
+
+    await userModel.findByIdAndUpdate(userId, {
+      $set: {
+        passwordChangeVerifiedAt: verifiedAt,
+        passwordChangeTokenHash: tokenHash,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Current password verified successfully",
+      passwordChangeToken: rawToken,
+      expiresInMinutes: PASSWORD_CHANGE_TOKEN_MINUTES,
+    });
+  } catch (error) {
+    console.error(
+      "VERIFY CURRENT PASSWORD ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to verify current password",
+    });
+  }
+};
+
+
+/* =========================================================
+   UPDATE PASSWORD
+   POST /api/user/update-password
+========================================================= */
+
+const updatePassword = async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    const {
+      passwordChangeToken,
+      newPassword,
+      confirmPassword,
+    } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Not authorized",
+      });
+    }
+
+    if (!passwordChangeToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Password verification expired. Please verify your current password again.",
+      });
+    }
+
+    const user = await userModel.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User account not found",
+      });
+    }
+
+    if (
+      !user.passwordChangeVerifiedAt ||
+      !user.passwordChangeTokenHash
+    ) {
+      return res.status(401).json({
+        success: false,
+        message: "Please verify your current password first",
+      });
+    }
+
+    /*
+     * Verification expires after 10 minutes.
+     */
+    const verificationAge =
+      Date.now() -
+      new Date(user.passwordChangeVerifiedAt).getTime();
+
+    if (
+      verificationAge >
+      PASSWORD_CHANGE_TOKEN_MINUTES * 60 * 1000
+    ) {
+      await userModel.findByIdAndUpdate(userId, {
+        $unset: {
+          passwordChangeVerifiedAt: 1,
+          passwordChangeTokenHash: 1,
+        },
+      });
+
+      return res.status(401).json({
+        success: false,
+        code: "PASSWORD_CHANGE_VERIFICATION_EXPIRED",
+        message:
+          "Password verification expired. Please verify your current password again.",
+      });
+    }
+
+    const receivedTokenHash = crypto
+      .createHash("sha256")
+      .update(passwordChangeToken)
+      .digest("hex");
+
+    if (
+      receivedTokenHash !== user.passwordChangeTokenHash
+    ) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid password verification",
+      });
+    }
+
+    /*
+     * New password validation
+     */
+
+    if (!newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "New password is required",
+      });
+    }
+
+    if (!isValidPassword(newPassword)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Password must be at least 6 characters and include a letter and a number",
+      });
+    }
+
+    if (!confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Please confirm your password",
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Passwords do not match",
+      });
+    }
+
+    /*
+     * Prevent using the same password.
+     */
+
+    const samePassword = await bcrypt.compare(
+      newPassword,
+      user.password
+    );
+
+    if (samePassword) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "New password must be different from your current password",
+      });
+    }
+
+    /*
+     * Hash new password.
+     */
+
+    const hashedPassword = await bcrypt.hash(
+      newPassword,
+      10
+    );
+
+    user.password = hashedPassword;
+
+    /*
+     * Verification token is one-time use.
+     */
+
+    user.passwordChangeVerifiedAt = null;
+    user.passwordChangeTokenHash = null;
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Password updated successfully",
+    });
+  } catch (error) {
+    console.error(
+      "UPDATE PASSWORD ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to update password",
+    });
+  }
+};
+
+
 const updateUserProfile = async (req, res) => {
   try {
     const user = await userModel.findById(req.userId);
@@ -525,4 +809,4 @@ const resetPassword = async (req, res) => {
   }
 };
 
-export { loginUser, registerUser, updateUserProfile, resetPassword };
+export { loginUser, registerUser, updateUserProfile, resetPassword, updatePassword, verifyCurrentPassword };
