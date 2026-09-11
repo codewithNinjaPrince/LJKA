@@ -7,8 +7,8 @@ import kycRouter from "../routes/kycRoute.js";
 import contactRouter from "../routes/contactRoute.js";
 import memberRouter from "../routes/memberRoute.js";
 import sahyogAlertRouter from "../routes/sahyogAlertRoute.js";
-import memberUpdateRequestRouter from "./routes/memberUpdateRequestRoute.js";
-import adminMemberUpdateRouter from "./routes/adminMemberUpdateRoute.js";
+import memberUpdateRequestRouter from "../routes/memberUpdateRequestRoute.js";
+import adminMemberUpdateRouter from "../routes/adminMemberUpdateRoute.js";
 
 
 const app = express();
