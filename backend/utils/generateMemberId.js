@@ -43,8 +43,7 @@ const EMPLOYMENT_CODES = {
   government: "G",
   private: "P",
   business: "B",
-  "self-employed": "S",
-  student: "ST",
+  others: "O",
 };
 
 const normalize = (value) => String(value || "").trim().toLowerCase();

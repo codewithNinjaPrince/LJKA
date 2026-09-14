@@ -54,8 +54,7 @@ const EMPLOYMENT_OPTIONS = [
   { value: "government", label: "Government" },
   { value: "private", label: "Private" },
   { value: "business", label: "Business" },
-  { value: "self-employed", label: "Self Employed" },
-  { value: "student", label: "Student" },
+  { value: "others", label: "Others" },
 ];
 
 /* ---------------- COMPONENT ---------------- */
@@ -466,12 +465,7 @@ const KYC = () => {
     // useRef is synchronous, unlike React state.
     if (submitInProgressRef.current) return;
 
-    submitInProgressRef.current = true;
-    setLoading(true);
-
     if (isUpdateMode && !formData.fullName.trim()) {
-      submitInProgressRef.current = false;
-      setLoading(false);
       toastError("Full Name is required");
       return;
     }
@@ -619,6 +613,7 @@ const KYC = () => {
     };
 
     try {
+      submitInProgressRef.current = true;
       setLoading(true);
 
       // authUser middleware — adjust header if your middleware expects

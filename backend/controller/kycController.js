@@ -237,8 +237,7 @@ const submitKYC = async (req, res) => {
             "government",
             "private",
             "business",
-            "self-employed",
-            "student",
+            "others",
         ];
 
         if (!allowedEmployment.includes(employmentStatus)) {

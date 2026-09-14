@@ -74,7 +74,7 @@ const userSchema = new mongoose.Schema({
     pincode: { type: String, trim: true },
   },
 
-  employmentStatus: { type: String, enum: ["government", "private", "business", "self-employed", "student"] },
+  employmentStatus: { type: String, enum: ["government", "private", "business", "others"] },
   occupation: { type: String, trim: true },
 
   nominee: {

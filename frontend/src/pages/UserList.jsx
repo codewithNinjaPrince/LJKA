@@ -337,6 +337,16 @@ const UserList = () => {
   const hasActiveSearchOrFilters =
     hasSearch || activeFilterCount > 0;
 
+  const registeredStatesCount = useMemo(() => {
+    const states = new Set(
+      members
+        .map((member) => member.state)
+        .filter(Boolean)
+    );
+
+    return states.size;
+  }, [members]);
+
   // ==========================================
   // PAGINATION NUMBERS
   // ==========================================
@@ -446,27 +456,29 @@ const UserList = () => {
         ===================================== */}
 
         <div className="mb-6">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-                Our Members
-              </h1>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+                  Our Members
+                </h1>
 
-              <p className="mt-1 text-sm text-gray-500">
-                Registered LJKA members
-              </p>
-            </div>
-
-            {!loading && (
-              <div className="text-sm text-gray-500">
-                Total Members:{" "}
-                <span className="font-semibold text-gray-900">
-                  {pagination.totalMembers.toLocaleString(
-                    "en-IN"
-                  )}
-                </span>
+                <p className="mt-1 text-sm text-gray-500">
+                  Registered LJKA members
+                </p>
               </div>
-            )}
+
+              {!loading && (
+                <div className="text-sm text-gray-500">
+                  Total Members:{" "}
+                  <span className="font-semibold text-gray-900">
+                    {pagination.totalMembers.toLocaleString(
+                      "en-IN"
+                    )}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -752,12 +764,8 @@ const UserList = () => {
                         Business
                       </option>
 
-                      <option value="self-employed">
-                        Self-employed
-                      </option>
-
-                      <option value="student">
-                        Student
+                      <option value="others">
+                        Others
                       </option>
                     </select>
                   </div>
@@ -863,10 +871,6 @@ const UserList = () => {
                   </th>
 
                   <th className="whitespace-nowrap px-4 py-4 text-xs font-semibold uppercase tracking-wide text-gray-600">
-                    State
-                  </th>
-
-                  <th className="whitespace-nowrap px-4 py-4 text-xs font-semibold uppercase tracking-wide text-gray-600">
                     District
                   </th>
 
@@ -906,10 +910,6 @@ const UserList = () => {
 
                       <td className="whitespace-nowrap px-4 py-4 text-sm font-medium text-gray-900">
                         {member.fullName || "-"}
-                      </td>
-
-                      <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-600">
-                        {member.state || "-"}
                       </td>
 
                       <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-600">

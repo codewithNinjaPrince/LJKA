@@ -7,6 +7,38 @@ import generateMemberId from "../utils/generateMemberId.js";
 
 dotenv.config();
 
+const VALID_EMPLOYMENT_STATUSES = [
+  "government",
+  "private",
+  "business",
+  "others",
+];
+
+const normalizeEmploymentStatus = (value) => {
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-");
+
+  const legacyMap = {
+    "government-job": "government",
+    "private-job": "private",
+    "private-business": "private",
+    "private-businesses": "private",
+    "self-employed": "business",
+    "self-employed-person": "business",
+    "student": "others",
+    "students": "others",
+    "other": "others",
+    "others": "others",
+    "government": "government",
+    "private": "private",
+    "business": "business",
+  };
+
+  return legacyMap[normalized] || (VALID_EMPLOYMENT_STATUSES.includes(normalized) ? normalized : "others");
+};
+
 const assignExistingMemberIds = async () => {
   try {
     // ==========================================
@@ -28,7 +60,7 @@ const assignExistingMemberIds = async () => {
       .sort({ createdAt: 1, _id: 1 })
       .select("_id fullName createdAt memberId address employmentStatus");
 
-    console.log(`Users receiving new Member IDs: ${users.length}`);
+    console.log(`Users receiving member ID and status updates: ${users.length}`);
 
     // ==========================================
     // NOTHING TO MIGRATE
@@ -51,22 +83,24 @@ const assignExistingMemberIds = async () => {
     // ==========================================
 
     for (const user of users) {
+      const normalizedEmploymentStatus = normalizeEmploymentStatus(user.employmentStatus);
       const memberId = await generateMemberId({
-        stateName: user.address?.stateName,
-        employmentStatus: user.employmentStatus,
+        address: user.address,
+        employmentStatus: normalizedEmploymentStatus,
       });
 
       await User.updateOne(
         { _id: user._id },
         {
           $set: {
+            employmentStatus: normalizedEmploymentStatus,
             memberId,
           },
         }
       );
 
       console.log(
-        `${user.fullName} → ${memberId}`
+        `${user.fullName} → ${normalizedEmploymentStatus} → ${memberId}`
       );
     }
 
