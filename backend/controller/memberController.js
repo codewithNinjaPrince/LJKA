@@ -1,5 +1,9 @@
 import User from "../models/userModel.js";
 
+const MEMBER_CACHE_TTL_MS = 30_000;
+const MAX_CACHED_MEMBER_QUERIES = 100;
+const memberResponseCache = new Map();
+
 // ============================================================
 // NORMALIZE SEARCH VALUE
 // ============================================================
@@ -11,11 +15,57 @@ const normalizeSearch = (value = "") => {
 };
 
 // ============================================================
-// ESCAPE REGEX SPECIAL CHARACTERS
+// A small in-process cache makes repeated page views and pagination instant on
+// a warm serverless instance. CDN/browser caching adds another layer below.
 // ============================================================
 
-const escapeRegex = (value = "") => {
-  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const getCachedResponse = (key) => {
+  const cached = memberResponseCache.get(key);
+
+  if (!cached || Date.now() - cached.createdAt > MEMBER_CACHE_TTL_MS) {
+    memberResponseCache.delete(key);
+    return null;
+  }
+
+  return cached.payload;
+};
+
+const escapeRegex = (value = "") =>
+  String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const legacySearchExpression = (normalizedSearch) => {
+  const regex = escapeRegex(normalizedSearch);
+
+  return {
+    $or: [
+      {
+        $regexMatch: {
+          input: { $replaceAll: { input: { $toLower: { $ifNull: ["$fullName", ""] } }, find: " ", replacement: "" } },
+          regex,
+        },
+      },
+      {
+        $regexMatch: {
+          input: { $replaceAll: { input: { $toLower: { $ifNull: ["$memberId", ""] } }, find: " ", replacement: "" } },
+          regex,
+        },
+      },
+      {
+        $regexMatch: {
+          input: { $replaceAll: { input: { $ifNull: ["$mobile", ""] }, find: " ", replacement: "" } },
+          regex,
+        },
+      },
+    ],
+  };
+};
+
+const cacheResponse = (key, payload) => {
+  if (memberResponseCache.size >= MAX_CACHED_MEMBER_QUERIES) {
+    memberResponseCache.delete(memberResponseCache.keys().next().value);
+  }
+
+  memberResponseCache.set(key, { createdAt: Date.now(), payload });
 };
 
 // ============================================================
@@ -49,6 +99,21 @@ const getMembers = async (req, res) => {
     );
 
     const skip = (currentPage - 1) * perPage;
+    const cacheKey = JSON.stringify({
+      currentPage,
+      perPage,
+      search: normalizeSearch(search),
+      state: String(state).trim(),
+      district: String(district).trim(),
+      tehsil: String(tehsil).trim(),
+      employmentStatus: String(employmentStatus).trim(),
+    });
+
+    const cached = getCachedResponse(cacheKey);
+    if (cached) {
+      res.set("Cache-Control", "public, max-age=30, s-maxage=30, stale-while-revalidate=60");
+      return res.status(200).json(cached);
+    }
 
     // ========================================================
     // BASE FILTER
@@ -77,60 +142,16 @@ const getMembers = async (req, res) => {
     const normalizedSearch = normalizeSearch(search);
 
     if (normalizedSearch) {
-      const safeSearch = escapeRegex(normalizedSearch);
-
-      filter.$expr = {
-        $or: [
-          {
-            $regexMatch: {
-              input: {
-                $replaceAll: {
-                  input: {
-                    $toLower: {
-                      $ifNull: ["$fullName", ""],
-                    },
-                  },
-                  find: " ",
-                  replacement: "",
-                },
-              },
-              regex: safeSearch,
-            },
-          },
-
-          {
-            $regexMatch: {
-              input: {
-                $replaceAll: {
-                  input: {
-                    $toLower: {
-                      $ifNull: ["$memberId", ""],
-                    },
-                  },
-                  find: " ",
-                  replacement: "",
-                },
-              },
-              regex: safeSearch,
-            },
-          },
-
-          {
-            $regexMatch: {
-              input: {
-                $replaceAll: {
-                  input: {
-                    $ifNull: ["$mobile", ""],
-                  },
-                  find: " ",
-                  replacement: "",
-                },
-              },
-              regex: safeSearch,
-            },
-          },
-        ],
-      };
+      // Equality on a precomputed prefix is indexable. The legacy branch keeps
+      // old documents searchable until the preparation script has backfilled
+      // them; it disappears from the query plan once that one-time job runs.
+      filter.$or = [
+        { publicSearchTerms: normalizedSearch },
+        {
+          publicSearchTerms: { $exists: false },
+          $expr: legacySearchExpression(normalizedSearch),
+        },
+      ];
     }
 
     // ========================================================
@@ -259,7 +280,7 @@ const getMembers = async (req, res) => {
     // RESPONSE
     // ========================================================
 
-    return res.status(200).json({
+    const payload = {
       success: true,
 
       data: formattedMembers,
@@ -276,7 +297,11 @@ const getMembers = async (req, res) => {
         hasPreviousPage:
           currentPage > 1,
       },
-    });
+    };
+
+    cacheResponse(cacheKey, payload);
+    res.set("Cache-Control", "public, max-age=30, s-maxage=30, stale-while-revalidate=60");
+    return res.status(200).json(payload);
   } catch (error) {
     console.error(
       "GET MEMBERS ERROR:",

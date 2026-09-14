@@ -19,6 +19,9 @@ import {
 import { LJKAContext } from "../context/LJKAContext";
 import locationData from "../data/india/locationData.json";
 
+const DIRECTORY_CACHE_TTL_MS = 30_000;
+const directoryResponseCache = new Map();
+
 const UserList = () => {
   const { backendUrl } = useContext(LJKAContext);
 
@@ -54,6 +57,11 @@ const UserList = () => {
   const [loading, setLoading] = useState(false);
   const requestIdRef = useRef(0);
   const [error, setError] = useState("");
+
+  const queryKey = useMemo(
+    () => JSON.stringify({ page, search, filters }),
+    [page, search, filters]
+  );
 
   const formatEmploymentStatus = (value) =>
     String(value || "")
@@ -143,6 +151,15 @@ const UserList = () => {
 
   const fetchMembers = async (signal) => {
     const requestId = ++requestIdRef.current;
+    const cached = directoryResponseCache.get(queryKey);
+
+    if (cached && Date.now() - cached.createdAt < DIRECTORY_CACHE_TTL_MS) {
+      setMembers(cached.data);
+      setPagination(cached.pagination);
+      setError("");
+      setLoading(false);
+      return;
+    }
 
     try {
       setLoading(true);
@@ -170,7 +187,7 @@ const UserList = () => {
 
       const response = await fetch(
         `${backendUrl}/api/members?${params.toString()}`,
-        { signal }
+        { signal, cache: "force-cache" }
       );
 
       const result = await response.json();
@@ -184,16 +201,21 @@ const UserList = () => {
 
       setMembers(result.data || []);
 
-      setPagination(
-        result.pagination || {
+      const nextPagination = result.pagination || {
           currentPage: page,
           perPage: 50,
           totalMembers: 0,
           totalPages: 0,
           hasNextPage: false,
           hasPreviousPage: false,
-        }
-      );
+        };
+
+      setPagination(nextPagination);
+      directoryResponseCache.set(queryKey, {
+        createdAt: Date.now(),
+        data: result.data || [],
+        pagination: nextPagination,
+      });
     } catch (err) {
       if (err.name === "AbortError") {
         return;
@@ -227,7 +249,7 @@ const UserList = () => {
     fetchMembers(controller.signal);
 
     return () => controller.abort();
-  }, [page, search, filters]);
+  }, [page, search, filters, queryKey]);
 
   // ==========================================
   // SEARCH

@@ -5,7 +5,6 @@ const userSchema = new mongoose.Schema({
   fullName: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, required: true, minlength: 6 },
-  password: { type: String, required: true, minlength: 6 },
 
   passwordChangeVerifiedAt: {
     type: Date,
@@ -22,6 +21,13 @@ const userSchema = new mongoose.Schema({
     unique: true,
     sparse: true,
     index: true,
+  },
+  
+  // Search-ready values used by the public member directory. They are
+  // deliberately non-sensitive: name, member ID and mobile only.
+  publicSearchTerms: {
+    type: [String],
+    default: [],
   },
 
   kycCompletedAt: {
@@ -116,10 +122,47 @@ const userSchema = new mongoose.Schema({
 
 // Member listing is always restricted to completed members and sorted newest first.
 userSchema.index({ kycCompleted: 1, createdAt: -1, _id: -1 });
-userSchema.index({ kycCompleted: 1, "address.stateName": 1, createdAt: -1, _id: -1 });
-userSchema.index({ kycCompleted: 1, "address.districtName": 1, createdAt: -1, _id: -1 });
-userSchema.index({ kycCompleted: 1, "address.tehsilName": 1, createdAt: -1, _id: -1 });
+userSchema.index({ kycCompleted: 1, "address.stateCode": 1, createdAt: -1, _id: -1 });
+userSchema.index({ kycCompleted: 1, "address.districtCode": 1, createdAt: -1, _id: -1 });
+userSchema.index({ kycCompleted: 1, "address.tehsilCode": 1, createdAt: -1, _id: -1 });
 userSchema.index({ kycCompleted: 1, employmentStatus: 1, createdAt: -1, _id: -1 });
+userSchema.index({ kycCompleted: 1, publicSearchTerms: 1, createdAt: -1, _id: -1 });
+
+const normalizeSearch = (value = "") =>
+  String(value).toLowerCase().replace(/\s+/g, "").trim();
+
+const searchPrefixes = (value) => {
+  const normalized = normalizeSearch(value);
+  if (!normalized) return [];
+
+  return Array.from(
+    { length: Math.min(normalized.length, 48) },
+    (_, index) => normalized.slice(0, index + 1)
+  );
+};
+
+export const createPublicSearchTerms = ({ fullName, memberId, mobile }) => {
+  const nameParts = String(fullName || "").split(/\s+/);
+
+  return [...new Set([
+    ...searchPrefixes(fullName),
+    ...nameParts.flatMap(searchPrefixes),
+    ...searchPrefixes(memberId),
+    ...searchPrefixes(mobile),
+  ])];
+};
+
+userSchema.pre("save", function updatePublicSearchTerms(next) {
+  if (
+    this.isModified("fullName") ||
+    this.isModified("memberId") ||
+    this.isModified("mobile")
+  ) {
+    this.publicSearchTerms = createPublicSearchTerms(this);
+  }
+
+  next();
+});
 
 const User = mongoose.model("User", userSchema);
 
