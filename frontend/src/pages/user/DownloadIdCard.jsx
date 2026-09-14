@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useRef, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import html2canvas from "html2canvas-pro";
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
@@ -9,8 +9,7 @@ const DownloadIdCard = () => {
 
   const frontCardRef = useRef(null);
   const backCardRef = useRef(null);
-
-  const [downloading, setDownloading] = useState(false);
+  const [error, setError] = useState("");
 
   const membershipPaid =
     user?.membershipPaymentStatus === "paid";
@@ -27,24 +26,22 @@ const DownloadIdCard = () => {
 
   const qrData = useMemo(() => {
     if (!user?.memberId) return "";
-
     return `${window.location.origin}/verify-member/${user.memberId}`;
   }, [user?.memberId]);
 
-  const generateQR = async () => {
-    if (!qrData) return "";
+  const [qr, setQr] = useState("");
 
-    try {
-      return await QRCode.toDataURL(qrData, {
-        width: 400,
-        margin: 1,
-        errorCorrectionLevel: "H",
-      });
-    } catch (error) {
-      console.error("QR GENERATION ERROR:", error);
-      return "";
-    }
-  };
+  useEffect(() => {
+    if (!qrData) return;
+
+    QRCode.toDataURL(qrData, {
+      width: 400,
+      margin: 1,
+      errorCorrectionLevel: "H",
+    })
+      .then(setQr)
+      .catch((err) => console.error("QR GENERATION ERROR:", err));
+  }, [qrData]);
 
   const waitForImages = async (element) => {
     const images = Array.from(element.querySelectorAll("img"));
@@ -71,643 +68,469 @@ const DownloadIdCard = () => {
     );
   };
 
-  const downloadIdCard = async () => {
-    if (!frontCardRef.current || !backCardRef.current) {
-      alert("ID card is not ready. Please wait a moment and try again.");
-      return;
-    }
+  useEffect(() => {
+    if (!user || !frontCardRef.current || !backCardRef.current || !qr) return;
 
-    try {
-      setDownloading(true);
+    let cancelled = false;
 
-      // Make sure the logo and QR image have finished loading before capture.
-      await Promise.all([
-        waitForImages(frontCardRef.current),
-        waitForImages(backCardRef.current),
-      ]);
+    const autoDownload = async () => {
+      try {
+        await waitForImages(frontCardRef.current);
+        await waitForImages(backCardRef.current);
 
-      // Give the browser one frame to finish layout/paint.
-      await new Promise((resolve) =>
-        requestAnimationFrame(() => resolve())
-      );
+        await new Promise((resolve) =>
+          requestAnimationFrame(() => resolve())
+        );
 
-      const captureOptions = {
-        scale: 3,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: "#ffffff",
-        logging: false,
-        imageTimeout: 15000,
-        removeContainer: true,
-      };
+        await new Promise((resolve) => setTimeout(resolve, 300));
 
-      const frontCanvas = await html2canvas(
-        frontCardRef.current,
-        captureOptions
-      );
+        if (cancelled) return;
 
-      const backCanvas = await html2canvas(
-        backCardRef.current,
-        captureOptions
-      );
+        const captureOptions = {
+          scale: 4,
+          useCORS: true,
+          allowTaint: false,
+          backgroundColor: "#ffffff",
+          logging: false,
+          imageTimeout: 15000,
+          removeContainer: true,
+        };
 
-      const frontImage = frontCanvas.toDataURL("image/png", 1.0);
-      const backImage = backCanvas.toDataURL("image/png", 1.0);
+        const frontCanvas = await html2canvas(
+          frontCardRef.current,
+          captureOptions
+        );
 
-      // Standard ID-1 card size: 85.60 × 53.98 mm.
-      const cardWidth = 85.6;
-      const cardHeight = 54;
+        const backCanvas = await html2canvas(
+          backCardRef.current,
+          captureOptions
+        );
 
-      const pdf = new jsPDF({
-        orientation: "landscape",
-        unit: "mm",
-        format: [cardWidth, cardHeight],
-        compress: true,
-      });
+        if (cancelled) return;
 
-      // Page 1 — FRONT ONLY
-      pdf.addImage(
-        frontImage,
-        "PNG",
-        0,
-        0,
-        cardWidth,
-        cardHeight,
-        undefined,
-        "FAST"
-      );
+        const frontImage = frontCanvas.toDataURL("image/png", 1.0);
+        const backImage = backCanvas.toDataURL("image/png", 1.0);
 
-      // Page 2 — BACK ONLY
-      pdf.addPage([cardWidth, cardHeight], "landscape");
+        // A4 portrait page.
+        // Both the front and back card are placed on the SAME A4 page.
+        const pdf = new jsPDF({
+          orientation: "portrait",
+          unit: "mm",
+          format: "a4",
+          compress: true,
+        });
 
-      pdf.addImage(
-        backImage,
-        "PNG",
-        0,
-        0,
-        cardWidth,
-        cardHeight,
-        undefined,
-        "FAST"
-      );
+        const a4Width = 210;
+        const a4Height = 297;
 
-      const safeName =
-        user?.fullName
-          ?.replace(/[^a-z0-9]/gi, "_")
-          ?.toLowerCase() || "member";
+        // Standard ID-1 card size.
+        const cardWidth = 85.6;
+        const cardHeight = 54;
 
-      pdf.save(`LJKA_ID_CARD_${safeName}.pdf`);
-    } catch (error) {
-      console.error("ID CARD DOWNLOAD ERROR:", error);
-      alert(
-        `Unable to generate ID card. Please try again.\n\nError: ${
-          error?.message || "Unknown error"
-        }`
-      );
-    } finally {
-      setDownloading(false);
-    }
-  };
+        const x = (a4Width - cardWidth) / 2;
 
-  const printIdCard = () => {
-    window.print();
-  };
+        // Front and back cards stacked vertically on the A4 page.
+        const frontY = 82;
+        const backY = 161;
 
-  if (!user) {
-    React.useEffect(() => {
-    const style = document.createElement("style");
-    style.setAttribute("data-ljka-id-card-print", "true");
-    style.textContent = `
-      @media print {
-        body * {
-          visibility: hidden !important;
-        }
+        pdf.addImage(
+          frontImage,
+          "PNG",
+          x,
+          frontY,
+          cardWidth,
+          cardHeight,
+          undefined,
+          "FAST"
+        );
 
-        [data-ljka-id-card-print] *,
-        [data-ljka-id-card-print] {
-          visibility: visible !important;
-        }
+        pdf.addImage(
+          backImage,
+          "PNG",
+          x,
+          backY,
+          cardWidth,
+          cardHeight,
+          undefined,
+          "FAST"
+        );
 
-        [data-ljka-id-card-print] {
-          position: static !important;
-          background: white !important;
-          min-height: auto !important;
-          padding: 0 !important;
-        }
+        const safeName =
+          user?.fullName
+            ?.replace(/[^a-z0-9]/gi, "_")
+            ?.toLowerCase() || "member";
 
-        [data-ljka-id-card-front],
-        [data-ljka-id-card-back] {
-          break-inside: avoid !important;
-          page-break-inside: avoid !important;
-          box-shadow: none !important;
-          margin: 20px auto !important;
-        }
+        pdf.save(`LJKA_ID_CARD_${safeName}.pdf`);
 
-        button,
-        [data-ljka-id-card-label] {
-          display: none !important;
-        }
+        // Close the automatically opened tab after the browser has received
+        // the download. Browsers may ignore this if the tab was not script-opened.
+        setTimeout(() => {
+          try {
+            window.close();
+          } catch {
+            // Ignore browser restriction.
+          }
+        }, 800);
+      } catch (err) {
+        console.error("ID CARD AUTO DOWNLOAD ERROR:", err);
+        setError(
+          "Unable to download the ID card automatically. Please go back and try again."
+        );
       }
-    `;
-    document.head.appendChild(style);
+    };
+
+    autoDownload();
 
     return () => {
-      document.head.removeChild(style);
+      cancelled = true;
     };
-  }, []);
+  }, [user, qr]);
 
-  return (
-      <div className="flex min-h-[70vh] items-center justify-center bg-[var(--ljka-primary-bg)] px-4">
-        <div className="rounded-2xl bg-white p-8 text-center shadow-lg">
-          <h2 className="text-xl font-bold text-[var(--ljka-primary)]">
-            Unable to load member details
-          </h2>
-
-          <p className="mt-2 text-sm text-gray-500">
-            Please login again and try again.
-          </p>
-        </div>
-      </div>
-    );
+  if (!user) {
+    return null;
   }
 
-  return (
-    <div data-ljka-id-card-print className="min-h-screen bg-[var(--ljka-primary-bg)] px-4 py-8 sm:px-6 lg:px-8">
-
-      {/* =====================================================
-          HEADER
-      ====================================================== */}
-
-      <div className="mx-auto max-w-6xl">
-
-        <div className="mb-8 text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--ljka-gold-dark)]">
-            LJKA Member Portal
-          </p>
-
-          <h1 className="mt-2 text-2xl font-bold text-[var(--ljka-primary)] sm:text-3xl">
-            Download Member ID Card
-          </h1>
-
-          <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-gray-600">
-            Your official LJKA digital membership identity card.
-            Download or print the front and back of your ID card whenever required.
-          </p>
-        </div>
-
-        {/* =====================================================
-            CARDS
-        ====================================================== */}
-
-        <div className="flex flex-col items-center gap-8">
-
-          {/* ================= FRONT ================= */}
-
-          <div className="w-full overflow-x-auto pb-3">
-            <div className="mx-auto w-[420px] min-w-[420px] sm:w-[520px] sm:min-w-[520px]">
-
-              <div
-                ref={frontCardRef}
-                data-ljka-id-card-front data-ljka-id-card-back className="relative aspect-[1.586/1] w-full overflow-hidden rounded-[22px] bg-white shadow-2xl"
-              >
-
-                {/* TOP BRAND AREA */}
-
-                <div className="absolute inset-x-0 top-0 h-[28%] bg-[var(--ljka-primary)]">
-
-                  <div className="absolute inset-0 opacity-[0.07]">
-                    <img
-                      src="/img/Lakhdaatar_Logo.png"
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-
-                  <div className="relative flex h-full items-center px-5">
-
-                    <img
-                      src="/img/Lakhdaatar_Logo.png"
-                      alt="LJKA"
-                      crossOrigin="anonymous"
-                      className="h-14 w-14 object-contain sm:h-16 sm:w-16"
-                    />
-
-                    <div className="ml-3 text-white">
-                      <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-[var(--ljka-gold)] sm:text-[10px]">
-                        Official Member Identity Card
-                      </p>
-
-                      <h2 className="mt-1 text-sm font-extrabold leading-tight sm:text-base">
-                        Lakhdaatar Jeevan
-                      </h2>
-
-                      <h2 className="text-sm font-extrabold leading-tight sm:text-base">
-                        Kalyan Association
-                      </h2>
-                    </div>
-
-                  </div>
-                </div>
-
-                {/* WATERMARK */}
-
-                <img
-                  src="/img/Lakhdaatar_Logo.png"
-                  alt=""
-                  crossOrigin="anonymous"
-                  className="pointer-events-none absolute left-1/2 top-[58%] h-40 w-40 -translate-x-1/2 -translate-y-1/2 object-contain opacity-[0.045]"
-                />
-
-                {/* LJKA MEMBER EMBLEM */}
-
-                <div className="absolute left-5 top-[34%]">
-                  <div className="flex h-[105px] w-[82px] items-center justify-center overflow-hidden rounded-xl border-2 border-[var(--ljka-gold)] bg-white shadow-md sm:h-[118px] sm:w-[92px]">
-                    <div className="flex h-full w-full flex-col items-center justify-center bg-[var(--ljka-primary-bg)] px-2">
-                      <img
-                        src="/img/Lakhdaatar_Logo.png"
-                        alt="LJKA Member"
-                        crossOrigin="anonymous"
-                        className="h-14 w-14 object-contain sm:h-16 sm:w-16"
-                      />
-                      <p className="mt-2 text-[7px] font-extrabold uppercase tracking-[0.14em] text-[var(--ljka-primary)]">
-                        LJKA MEMBER
-                      </p>
-                    </div>
-                  </div>
-
-                  <p className="mt-1 text-center text-[7px] font-semibold uppercase tracking-wide text-gray-400">
-                    Member Identity
-                  </p>
-                </div>
-
-                {/* MEMBER DETAILS */}
-
-                <div className="absolute left-[31%] right-4 top-[34%]">
-
-                  <div className="mb-2">
-
-                    <p className="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400">
-                      Member Name
-                    </p>
-
-                    <p className="truncate text-base font-extrabold text-[var(--ljka-primary)] sm:text-lg">
-                      {user.fullName || "—"}
-                    </p>
-
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-x-5 gap-y-2">
-
-                    <div>
-                      <p className="text-[7px] font-bold uppercase text-gray-400">
-                        Member ID
-                      </p>
-
-                      <p className="text-[10px] font-extrabold text-[var(--ljka-primary)] sm:text-[11px]">
-                        {user.memberId || "—"}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-[7px] font-bold uppercase text-gray-400">
-                        Gender
-                      </p>
-
-                      <p className="text-[10px] font-semibold capitalize text-gray-700 sm:text-[11px]">
-                        {user.gender || "—"}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-[7px] font-bold uppercase text-gray-400">
-                        Date of Birth
-                      </p>
-
-                      <p className="text-[10px] font-semibold text-gray-700 sm:text-[11px]">
-                        {formatDate(user.dob)}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-[7px] font-bold uppercase text-gray-400">
-                        Mobile
-                      </p>
-
-                      <p className="text-[10px] font-semibold text-gray-700 sm:text-[11px]">
-                        {user.mobile || "—"}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-[7px] font-bold uppercase text-gray-400">
-                        State
-                      </p>
-
-                      <p className="truncate text-[10px] font-semibold text-gray-700 sm:text-[11px]">
-                        {user.address?.stateName || "—"}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-[7px] font-bold uppercase text-gray-400">
-                        Employment
-                      </p>
-
-                      <p className="truncate text-[10px] font-semibold capitalize text-gray-700 sm:text-[11px]">
-                        {user.employmentStatus || "—"}
-                      </p>
-                    </div>
-
-                  </div>
-
-                </div>
-
-                {/* STATUS STRIP */}
-
-                <div className="absolute inset-x-0 bottom-0 flex h-[15%] items-center justify-between bg-[var(--ljka-gold)] px-5">
-
-                  <div>
-                    <p className="text-[7px] font-bold uppercase tracking-[0.15em] text-[var(--ljka-primary)]">
-                      Membership Status
-                    </p>
-
-                    <p className="text-[11px] font-extrabold uppercase text-[var(--ljka-primary)]">
-                      {membershipPaid ? "ACTIVE" : "INACTIVE"}
-                    </p>
-                  </div>
-
-                  <div className="text-right">
-                    <p className="text-[7px] font-bold uppercase tracking-[0.15em] text-[var(--ljka-primary)]">
-                      {membershipPaid ? "Valid Until" : "Membership"}
-                    </p>
-
-                    <p className="text-[10px] font-extrabold uppercase text-[var(--ljka-primary)]">
-                      {membershipPaid
-                        ? formatDate(user?.membershipExpiresAt)
-                        : "Payment Pending"}
-                    </p>
-                  </div>
-
-                </div>
-
-              </div>
-
-              <p className="mt-3 text-center text-xs font-semibold text-gray-400">
-                FRONT
-              </p>
-
-            </div>
-          </div>
-
-          {/* ================= BACK ================= */}
-
-          <div className="w-full overflow-x-auto pb-3">
-            <div className="mx-auto w-[420px] min-w-[420px] sm:w-[520px] sm:min-w-[520px]">
-
-              <div
-                ref={backCardRef}
-                className="relative aspect-[1.586/1] w-full overflow-hidden rounded-[22px] bg-white shadow-2xl"
-              >
-
-                {/* BACK HEADER */}
-
-                <div className="h-[24%] bg-[var(--ljka-primary)] px-5 py-3">
-
-                  <div className="flex items-center gap-3">
-
-                    <img
-                      src="/img/Lakhdaatar_Logo.png"
-                      alt="LJKA"
-                      crossOrigin="anonymous"
-                      className="h-10 w-10 object-contain"
-                    />
-
-                    <div>
-                      <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-[var(--ljka-gold)]">
-                        Lakhdaatar Jeevan Kalyan Association
-                      </p>
-
-                      <p className="text-[8px] text-white/70">
-                        Member Verification & Identity
-                      </p>
-                    </div>
-
-                  </div>
-
-                </div>
-
-                {/* WATERMARK */}
-
-                <img
-                  src="/img/Lakhdaatar_Logo.png"
-                  alt=""
-                  crossOrigin="anonymous"
-                  className="pointer-events-none absolute left-1/2 top-[58%] h-40 w-40 -translate-x-1/2 -translate-y-1/2 object-contain opacity-[0.045]"
-                />
-
-                {/* BACK CONTENT */}
-
-                <div className="relative px-5 pt-4">
-
-                  <div className="grid grid-cols-[1fr_90px] gap-4">
-
-                    <div>
-
-                      <p className="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400">
-                        Member Address
-                      </p>
-
-                      <p className="mt-1 text-[9px] font-semibold leading-4 text-gray-700">
-                        {user.address?.address || "—"}
-                        {user.address?.townVillage
-                          ? `, ${user.address.townVillage}`
-                          : ""}
-                        {user.address?.districtName
-                          ? `, ${user.address.districtName}`
-                          : ""}
-                        {user.address?.stateName
-                          ? `, ${user.address.stateName}`
-                          : ""}
-                        {user.address?.pincode
-                          ? ` - ${user.address.pincode}`
-                          : ""}
-                      </p>
-
-                      <div className="mt-3">
-
-                        <p className="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400">
-                          Occupation
-                        </p>
-
-                        <p className="text-[9px] font-semibold text-gray-700">
-                          {user.occupation || "—"}
-                        </p>
-
-                      </div>
-
-                    </div>
-
-                    {/* QR */}
-
-                    <div className="flex flex-col items-center">
-
-                      <QRCodeImage qrData={qrData} />
-
-                      <p className="mt-1 text-center text-[6px] font-semibold uppercase text-gray-400">
-                        Scan to verify
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                  {/* EMERGENCY / NOMINEE */}
-
-                  <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
-
-                    <p className="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400">
-                      Registered Nominee
-                    </p>
-
-                    <div className="mt-1 flex justify-between gap-4">
-
-                      <p className="text-[9px] font-bold text-gray-700">
-                        {user.nominee?.name || "—"}
-                      </p>
-
-                      <p className="text-[9px] font-semibold text-gray-600">
-                        {user.nominee?.relationship || "—"}
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                  {/* TERMS */}
-
-                  <p className="mt-3 text-[6.5px] leading-3 text-gray-400">
-                    This card is issued by Lakhdaatar Jeevan Kalyan
-                    Association for identification of a registered member.
-                    This card remains the property of LJKA and may be
-                    withdrawn or invalidated according to applicable
-                    membership rules.
-                  </p>
-
-                  {/* SIGNATURE */}
-
-                  <div className="absolute bottom-[-34px] right-5 text-center">
-
-                    <div className="mb-1 w-20 border-b border-gray-400" />
-
-                    <p className="text-[6px] font-bold uppercase text-gray-400">
-                      Authorized Signatory
-                    </p>
-
-                  </div>
-
-                </div>
-
-                {/* FOOTER */}
-
-                <div className="absolute bottom-0 inset-x-0 h-[10%] bg-[var(--ljka-gold)] px-5">
-
-                  <div className="flex h-full items-center justify-between">
-
-                    <p className="text-[7px] font-bold text-[var(--ljka-primary)]">
-                      www.ljka.org
-                    </p>
-
-                    <p className="text-[7px] font-bold text-[var(--ljka-primary)]">
-                      Member ID: {user.memberId || "—"}
-                    </p>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-              <p className="mt-3 text-center text-xs font-semibold text-gray-400">
-                BACK
-              </p>
-
-            </div>
-          </div>
-
-        </div>
-
-        {/* =====================================================
-            ACTIONS
-        ====================================================== */}
-
-        <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
-
-          <button
-            type="button"
-            onClick={downloadIdCard}
-            disabled={downloading}
-            className="rounded-xl bg-[var(--ljka-primary)] px-6 py-3.5 text-sm font-bold text-white shadow-lg transition hover:bg-[var(--ljka-primary-dark)] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {downloading
-              ? "Generating ID Card..."
-              : "Download ID Card PDF"}
-          </button>
-
-          <button
-            type="button"
-            onClick={printIdCard}
-            className="rounded-xl border border-[var(--ljka-primary)]/20 bg-white px-6 py-3.5 text-sm font-bold text-[var(--ljka-primary)] shadow-sm transition hover:bg-gray-50"
-          >
-            Print ID Card
-          </button>
-
-        </div>
-
-        <p className="mx-auto mt-5 max-w-xl text-center text-xs leading-5 text-gray-400">
-          Keep your digital ID card secure. The QR code can be used
-          to verify your LJKA membership information.
-        </p>
-
-      </div>
-
-    </div>
-  );
-};
-
-
-/* =========================================================
-   QR CODE COMPONENT
-========================================================= */
-
-const QRCodeImage = ({ qrData }) => {
-  const [qr, setQr] = useState("");
-
-  React.useEffect(() => {
-    if (!qrData) return;
-
-    QRCode.toDataURL(qrData, {
-      width: 300,
-      margin: 0,
-      errorCorrectionLevel: "H",
-    })
-      .then(setQr)
-      .catch((error) =>
-        console.error("QR ERROR:", error)
-      );
-  }, [qrData]);
-
-  if (!qr) {
+  if (error) {
     return (
-      <div className="h-[72px] w-[72px] animate-pulse rounded bg-gray-100" />
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "24px",
+          fontFamily: "Arial, sans-serif",
+          background: "#ffffff",
+        }}
+      >
+        <p style={{ color: "#555", textAlign: "center", maxWidth: 420 }}>
+          {error}
+        </p>
+      </div>
     );
   }
 
   return (
-    <img
-      src={qr}
-      alt="Member verification QR"
-      className="h-[72px] w-[72px]"
-    />
+    <>
+      {/* Nothing visible to the user. These exact card designs are rendered
+          off-screen only so html2canvas can create the downloadable A4 PDF. */}
+
+      <div
+        aria-hidden="true"
+        style={{
+          position: "fixed",
+          left: "-10000px",
+          top: "0",
+          width: "520px",
+          zIndex: "-1",
+        }}
+      >
+        {/* ================= FRONT CARD ================= */}
+        <div
+          ref={frontCardRef}
+          style={{
+            width: "520px",
+            height: `${520 / 1.586}px`,
+            position: "relative",
+            overflow: "hidden",
+            background: "#ffffff",
+            borderRadius: "22px",
+          }}
+          className="relative overflow-hidden rounded-[22px] bg-white shadow-2xl"
+        >
+          <div className="absolute inset-x-0 top-0 h-[28%] bg-[var(--ljka-primary)]">
+            <div className="absolute inset-0 opacity-[0.07]">
+              <img
+                src="/img/Lakhdaatar_Logo.png"
+                alt=""
+                className="h-full w-full object-cover"
+              />
+            </div>
+
+            <div className="relative flex h-full items-center px-5">
+              <img
+                src="/img/Lakhdaatar_Logo.png"
+                alt="LJKA"
+                crossOrigin="anonymous"
+                className="h-16 w-16 object-contain"
+              />
+
+              <div className="ml-3 text-white">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--ljka-gold)]">
+                  Official Member Identity Card
+                </p>
+
+                <h2 className="mt-1 text-base font-extrabold leading-tight">
+                  Lakhdaatar Jeevan
+                </h2>
+
+                <h2 className="text-base font-extrabold leading-tight">
+                  Kalyan Association
+                </h2>
+              </div>
+            </div>
+          </div>
+
+          <img
+            src="/img/Lakhdaatar_Logo.png"
+            alt=""
+            crossOrigin="anonymous"
+            className="pointer-events-none absolute left-1/2 top-[58%] h-40 w-40 -translate-x-1/2 -translate-y-1/2 object-contain opacity-[0.045]"
+          />
+
+          <div className="absolute left-5 top-[34%]">
+            <div className="flex h-[118px] w-[92px] items-center justify-center overflow-hidden rounded-xl border-2 border-[var(--ljka-gold)] bg-white shadow-md">
+              <div className="flex h-full w-full flex-col items-center justify-center bg-[var(--ljka-primary-bg)] px-2">
+                <img
+                  src="/img/Lakhdaatar_Logo.png"
+                  alt="LJKA Member"
+                  crossOrigin="anonymous"
+                  className="h-16 w-16 object-contain"
+                />
+
+                <p className="mt-2 text-[7px] font-extrabold uppercase tracking-[0.14em] text-[var(--ljka-primary)]">
+                  LJKA MEMBER
+                </p>
+              </div>
+            </div>
+
+            <p className="mt-1 text-center text-[7px] font-semibold uppercase tracking-wide text-gray-400">
+              Member Identity
+            </p>
+          </div>
+
+          <div className="absolute left-[31%] right-4 top-[34%]">
+            <div className="mb-2">
+              <p className="text-[8px] font-bold uppercase tracking-[0.15em] text-gray-400">
+                Member Name
+              </p>
+
+              <p className="truncate text-lg font-extrabold text-[var(--ljka-primary)]">
+                {user.fullName || "—"}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-x-5 gap-y-2">
+              <div>
+                <p className="text-[7px] font-bold uppercase text-gray-400">
+                  Member ID
+                </p>
+                <p className="text-[11px] font-extrabold text-[var(--ljka-primary)]">
+                  {user.memberId || "—"}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[7px] font-bold uppercase text-gray-400">
+                  Gender
+                </p>
+                <p className="text-[11px] font-semibold capitalize text-gray-700">
+                  {user.gender || "—"}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[7px] font-bold uppercase text-gray-400">
+                  Date of Birth
+                </p>
+                <p className="text-[11px] font-semibold text-gray-700">
+                  {formatDate(user.dob)}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[7px] font-bold uppercase text-gray-400">
+                  Mobile
+                </p>
+                <p className="text-[11px] font-semibold text-gray-700">
+                  {user.mobile || "—"}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[7px] font-bold uppercase text-gray-400">
+                  State
+                </p>
+                <p className="truncate text-[11px] font-semibold text-gray-700">
+                  {user.address?.stateName || "—"}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[7px] font-bold uppercase text-gray-400">
+                  Employment
+                </p>
+                <p className="truncate text-[11px] font-semibold capitalize text-gray-700">
+                  {user.employmentStatus || "—"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="absolute inset-x-0 bottom-0 flex h-[15%] items-center justify-between bg-[var(--ljka-gold)] px-5">
+            <div>
+              <p className="text-[7px] font-bold uppercase tracking-[0.15em] text-[var(--ljka-primary)]">
+                Membership Status
+              </p>
+
+              <p className="text-[11px] font-extrabold uppercase text-[var(--ljka-primary)]">
+                {membershipPaid ? "ACTIVE" : "INACTIVE"}
+              </p>
+            </div>
+
+            <div className="text-right">
+              <p className="text-[7px] font-bold uppercase tracking-[0.15em] text-[var(--ljka-primary)]">
+                {membershipPaid ? "Valid Until" : "Membership"}
+              </p>
+
+              <p className="text-[10px] font-extrabold uppercase text-[var(--ljka-primary)]">
+                {membershipPaid
+                  ? formatDate(user?.membershipExpiresAt)
+                  : "Payment Pending"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ================= BACK CARD ================= */}
+        <div
+          ref={backCardRef}
+          style={{
+            width: "520px",
+            height: `${520 / 1.586}px`,
+            position: "relative",
+            overflow: "hidden",
+            background: "#ffffff",
+            borderRadius: "22px",
+            marginTop: "20px",
+          }}
+          className="relative overflow-hidden rounded-[22px] bg-white shadow-2xl"
+        >
+          <div className="h-[24%] bg-[var(--ljka-primary)] px-5 py-3">
+            <div className="flex items-center gap-3">
+              <img
+                src="/img/Lakhdaatar_Logo.png"
+                alt="LJKA"
+                crossOrigin="anonymous"
+                className="h-10 w-10 object-contain"
+              />
+
+              <div>
+                <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-[var(--ljka-gold)]">
+                  Lakhdaatar Jeevan Kalyan Association
+                </p>
+
+                <p className="text-[8px] text-white/70">
+                  Member Verification & Identity
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <img
+            src="/img/Lakhdaatar_Logo.png"
+            alt=""
+            crossOrigin="anonymous"
+            className="pointer-events-none absolute left-1/2 top-[58%] h-40 w-40 -translate-x-1/2 -translate-y-1/2 object-contain opacity-[0.045]"
+          />
+
+          <div className="relative px-5 pt-4">
+            <div className="grid grid-cols-[1fr_90px] gap-4">
+              <div>
+                <p className="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400">
+                  Member Address
+                </p>
+
+                <p className="mt-1 text-[9px] font-semibold leading-4 text-gray-700">
+                  {user.address?.address || "—"}
+                  {user.address?.townVillage
+                    ? `, ${user.address.townVillage}`
+                    : ""}
+                  {user.address?.districtName
+                    ? `, ${user.address.districtName}`
+                    : ""}
+                  {user.address?.stateName
+                    ? `, ${user.address.stateName}`
+                    : ""}
+                  {user.address?.pincode
+                    ? ` - ${user.address.pincode}`
+                    : ""}
+                </p>
+
+                <div className="mt-3">
+                  <p className="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400">
+                    Occupation
+                  </p>
+
+                  <p className="text-[9px] font-semibold text-gray-700">
+                    {user.occupation || "—"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col items-center">
+                {qr ? (
+                  <img
+                    src={qr}
+                    alt="Member verification QR"
+                    className="h-[72px] w-[72px]"
+                  />
+                ) : (
+                  <div className="h-[72px] w-[72px] rounded bg-gray-100" />
+                )}
+
+                <p className="mt-1 text-center text-[6px] font-semibold uppercase text-gray-400">
+                  Scan to verify
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+              <p className="text-[7px] font-bold uppercase tracking-[0.15em] text-gray-400">
+                Registered Nominee
+              </p>
+
+              <div className="mt-1 flex justify-between gap-4">
+                <p className="text-[9px] font-bold text-gray-700">
+                  {user.nominee?.name || "—"}
+                </p>
+
+                <p className="text-[9px] font-semibold text-gray-600">
+                  {user.nominee?.relationship || "—"}
+                </p>
+              </div>
+            </div>
+
+            <p className="mt-3 text-[6.5px] leading-3 text-gray-400">
+              This card is issued by Lakhdaatar Jeevan Kalyan Association for
+              identification of a registered member. This card remains the
+              property of LJKA and may be withdrawn or invalidated according to
+              applicable membership rules.
+            </p>
+
+            <div className="absolute bottom-[-34px] right-5 text-center">
+              <div className="mb-1 w-20 border-b border-gray-400" />
+
+              <p className="text-[6px] font-bold uppercase text-gray-400">
+                Authorized Signatory
+              </p>
+            </div>
+          </div>
+
+          <div className="absolute inset-x-0 bottom-0 h-[10%] bg-[var(--ljka-gold)] px-5">
+            <div className="flex h-full items-center justify-between">
+              <p className="text-[7px] font-bold text-[var(--ljka-primary)]">
+                www.ljka.org
+              </p>
+
+              <p className="text-[7px] font-bold text-[var(--ljka-primary)]">
+                Member ID: {user.memberId || "—"}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
   );
 };
 

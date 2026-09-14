@@ -30,67 +30,84 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   const onSubmitHandler = async (e) => {
-    e.preventDefault();
-    if (loading) return;
+  e.preventDefault();
 
-    const normalized = identifier.trim();
+  if (loading) return;
 
-    if (!normalized) {
-      toastError("Email or mobile number is required");
-      return;
-    }
+  const normalized = identifier.trim();
 
-    if (!isValidEmail(normalized) && !isValidMobile(normalized)) {
-      toastError("Please enter a valid email address or mobile number");
-      return;
-    }
+  if (!normalized) {
+    toastError("Email or mobile number is required");
+    return;
+  }
 
-    if (!password) {
-      toastError("Password is required");
-      return;
-    }
+  if (!isValidEmail(normalized) && !isValidMobile(normalized)) {
+    toastError("Please enter a valid email address or mobile number");
+    return;
+  }
 
-    try {
-      setLoading(true);
+  if (!password) {
+    toastError("Password is required");
+    return;
+  }
 
-      const res = await axios.post(`${backendUrl}/api/user/login`, {
-        identifier: isValidEmail(normalized)
-          ? normalizeEmail(normalized)
-          : normalized,
-        password,
-      });
+  try {
+    setLoading(true);
 
-      if (!res.data?.success) {
-        toastError(res.data?.message || "Unable to login");
-        return;
-      }
+    const res = await axios.post(`${backendUrl}/api/user/login`, {
+      identifier: isValidEmail(normalized)
+        ? normalizeEmail(normalized)
+        : normalized,
+      password,
+    });
 
-      const { token, user } = res.data;
-
-      setToken(token);
-      localStorage.setItem("token", token);
-      localStorage.setItem("kycCompleted", String(!!user?.kycCompleted));
-
-      if (user?.fullName) {
-        localStorage.setItem("userName", user.fullName);
-      }
-
-      const name = user?.fullName || "there";
-      toastSuccess(`Welcome back, ${name} 😎`);
-
-      if (!user?.kycCompleted) {
-        toastInfo("Please complete your KYC to continue");
-        navigate("/kyc");
-        return;
-      }
-
-      navigate("/user/view-profile");
-    } catch (err) {
-      toastError(err?.response?.data?.message || "Invalid email or password");
-    } finally {
+    if (!res.data?.success) {
+      toastError(res.data?.message || "Unable to login");
       setLoading(false);
+      return;
     }
-  };
+
+    const { token, user } = res.data;
+
+    // Save authentication immediately
+    localStorage.setItem("token", token);
+    localStorage.setItem(
+      "kycCompleted",
+      String(!!user?.kycCompleted)
+    );
+
+    if (user?.fullName) {
+      localStorage.setItem("userName", user.fullName);
+    }
+
+    // Update context
+    setToken(token);
+
+    const name = user?.fullName || "there";
+
+    toastSuccess(`Welcome back, ${name} 😎`);
+
+    // Keep loading=true while navigation happens.
+    // The Login component will unmount after navigation.
+    if (!user?.kycCompleted) {
+      toastInfo("Please complete your KYC to continue");
+      navigate("/kyc");
+      return;
+    }
+
+    navigate("/user/view-profile");
+  } catch (err) {
+    console.error("LOGIN ERROR:", err);
+
+    toastError(
+      err?.response?.data?.message ||
+        "Invalid email or password"
+    );
+
+    // Only stop loading when login actually fails.
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     sessionStorage.setItem("loginIdentifier", identifier);
