@@ -1,5 +1,5 @@
 import React, { useContext, useMemo, useRef, useState } from "react";
-import html2canvas from "html2canvas";
+import html2canvas from "html2canvas-pro";
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
 import { LJKAContext } from "../../context/LJKAContext";
@@ -14,14 +14,6 @@ const DownloadIdCard = () => {
 
   const membershipPaid =
     user?.membershipPaymentStatus === "paid";
-
-  const membershipStartDate = user?.membershipStartDate
-    ? new Date(user.membershipStartDate)
-    : null;
-
-  const membershipExpiresAt = user?.membershipExpiresAt
-    ? new Date(user.membershipExpiresAt)
-    : null;
 
   const formatDate = (date) => {
     if (!date) return "—";
@@ -54,33 +46,75 @@ const DownloadIdCard = () => {
     }
   };
 
+  const waitForImages = async (element) => {
+    const images = Array.from(element.querySelectorAll("img"));
+
+    await Promise.all(
+      images.map(
+        (img) =>
+          new Promise((resolve) => {
+            if (img.complete && img.naturalWidth > 0) {
+              resolve();
+              return;
+            }
+
+            const done = () => {
+              img.removeEventListener("load", done);
+              img.removeEventListener("error", done);
+              resolve();
+            };
+
+            img.addEventListener("load", done);
+            img.addEventListener("error", done);
+          })
+      )
+    );
+  };
+
   const downloadIdCard = async () => {
-    if (!frontCardRef.current || !backCardRef.current) return;
+    if (!frontCardRef.current || !backCardRef.current) {
+      alert("ID card is not ready. Please wait a moment and try again.");
+      return;
+    }
 
     try {
       setDownloading(true);
 
-      const frontCanvas = await html2canvas(frontCardRef.current, {
+      // Make sure the logo and QR image have finished loading before capture.
+      await Promise.all([
+        waitForImages(frontCardRef.current),
+        waitForImages(backCardRef.current),
+      ]);
+
+      // Give the browser one frame to finish layout/paint.
+      await new Promise((resolve) =>
+        requestAnimationFrame(() => resolve())
+      );
+
+      const captureOptions = {
         scale: 3,
         useCORS: true,
+        allowTaint: false,
         backgroundColor: "#ffffff",
         logging: false,
-      });
+        imageTimeout: 15000,
+        removeContainer: true,
+      };
 
-      const backCanvas = await html2canvas(backCardRef.current, {
-        scale: 3,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-        logging: false,
-      });
+      const frontCanvas = await html2canvas(
+        frontCardRef.current,
+        captureOptions
+      );
 
-      const frontImage = frontCanvas.toDataURL("image/png");
-      const backImage = backCanvas.toDataURL("image/png");
+      const backCanvas = await html2canvas(
+        backCardRef.current,
+        captureOptions
+      );
 
-      /*
-       * ID card ratio:
-       * 85.6mm × 54mm
-       */
+      const frontImage = frontCanvas.toDataURL("image/png", 1.0);
+      const backImage = backCanvas.toDataURL("image/png", 1.0);
+
+      // Standard ID-1 card size: 85.60 × 53.98 mm.
       const cardWidth = 85.6;
       const cardHeight = 54;
 
@@ -88,21 +122,23 @@ const DownloadIdCard = () => {
         orientation: "landscape",
         unit: "mm",
         format: [cardWidth, cardHeight],
+        compress: true,
       });
 
+      // Page 1 — FRONT ONLY
       pdf.addImage(
         frontImage,
         "PNG",
         0,
         0,
         cardWidth,
-        cardHeight
+        cardHeight,
+        undefined,
+        "FAST"
       );
 
-      pdf.addPage(
-        [cardWidth, cardHeight],
-        "landscape"
-      );
+      // Page 2 — BACK ONLY
+      pdf.addPage([cardWidth, cardHeight], "landscape");
 
       pdf.addImage(
         backImage,
@@ -110,7 +146,9 @@ const DownloadIdCard = () => {
         0,
         0,
         cardWidth,
-        cardHeight
+        cardHeight,
+        undefined,
+        "FAST"
       );
 
       const safeName =
@@ -121,7 +159,11 @@ const DownloadIdCard = () => {
       pdf.save(`LJKA_ID_CARD_${safeName}.pdf`);
     } catch (error) {
       console.error("ID CARD DOWNLOAD ERROR:", error);
-      alert("Unable to generate ID card. Please try again.");
+      alert(
+        `Unable to generate ID card. Please try again.\n\nError: ${
+          error?.message || "Unknown error"
+        }`
+      );
     } finally {
       setDownloading(false);
     }
@@ -132,7 +174,49 @@ const DownloadIdCard = () => {
   };
 
   if (!user) {
-    return (
+    React.useEffect(() => {
+    const style = document.createElement("style");
+    style.setAttribute("data-ljka-id-card-print", "true");
+    style.textContent = `
+      @media print {
+        body * {
+          visibility: hidden !important;
+        }
+
+        [data-ljka-id-card-print] *,
+        [data-ljka-id-card-print] {
+          visibility: visible !important;
+        }
+
+        [data-ljka-id-card-print] {
+          position: static !important;
+          background: white !important;
+          min-height: auto !important;
+          padding: 0 !important;
+        }
+
+        [data-ljka-id-card-front],
+        [data-ljka-id-card-back] {
+          break-inside: avoid !important;
+          page-break-inside: avoid !important;
+          box-shadow: none !important;
+          margin: 20px auto !important;
+        }
+
+        button,
+        [data-ljka-id-card-label] {
+          display: none !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
+  return (
       <div className="flex min-h-[70vh] items-center justify-center bg-[var(--ljka-primary-bg)] px-4">
         <div className="rounded-2xl bg-white p-8 text-center shadow-lg">
           <h2 className="text-xl font-bold text-[var(--ljka-primary)]">
@@ -148,7 +232,7 @@ const DownloadIdCard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--ljka-primary-bg)] px-4 py-8 sm:px-6 lg:px-8">
+    <div data-ljka-id-card-print className="min-h-screen bg-[var(--ljka-primary-bg)] px-4 py-8 sm:px-6 lg:px-8">
 
       {/* =====================================================
           HEADER
@@ -167,62 +251,8 @@ const DownloadIdCard = () => {
 
           <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-gray-600">
             Your official LJKA digital membership identity card.
-            Download, save or print your ID card whenever required.
+            Download or print the front and back of your ID card whenever required.
           </p>
-        </div>
-
-        {/* =====================================================
-            MEMBERSHIP STATUS
-        ====================================================== */}
-
-        <div
-          className={`mx-auto mb-8 max-w-3xl rounded-2xl border p-4 ${
-            membershipPaid
-              ? "border-green-200 bg-green-50"
-              : "border-amber-200 bg-amber-50"
-          }`}
-        >
-          <div className="flex items-start gap-3">
-
-            <div
-              className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-                membershipPaid
-                  ? "bg-green-100 text-green-700"
-                  : "bg-amber-100 text-amber-700"
-              }`}
-            >
-              {membershipPaid ? "✓" : "!"}
-            </div>
-
-            <div>
-              <p
-                className={`font-bold ${
-                  membershipPaid
-                    ? "text-green-800"
-                    : "text-amber-800"
-                }`}
-              >
-                {membershipPaid
-                  ? "Membership Active"
-                  : "Membership Inactive — Payment Pending"}
-              </p>
-
-              <p
-                className={`mt-1 text-sm ${
-                  membershipPaid
-                    ? "text-green-700"
-                    : "text-amber-700"
-                }`}
-              >
-                {membershipPaid
-                  ? `Valid from ${formatDate(
-                      membershipStartDate
-                    )} to ${formatDate(membershipExpiresAt)}.`
-                  : "Your ID card is available as a digital preview, but membership benefits remain inactive until payment is completed."}
-              </p>
-            </div>
-
-          </div>
         </div>
 
         {/* =====================================================
@@ -238,7 +268,7 @@ const DownloadIdCard = () => {
 
               <div
                 ref={frontCardRef}
-                className="relative aspect-[1.586/1] w-full overflow-hidden rounded-[22px] bg-white shadow-2xl"
+                data-ljka-id-card-front data-ljka-id-card-back className="relative aspect-[1.586/1] w-full overflow-hidden rounded-[22px] bg-white shadow-2xl"
               >
 
                 {/* TOP BRAND AREA */}
@@ -288,37 +318,26 @@ const DownloadIdCard = () => {
                   className="pointer-events-none absolute left-1/2 top-[58%] h-40 w-40 -translate-x-1/2 -translate-y-1/2 object-contain opacity-[0.045]"
                 />
 
-                {/* MEMBER PHOTO */}
+                {/* LJKA MEMBER EMBLEM */}
 
                 <div className="absolute left-5 top-[34%]">
-
-                  <div className="flex h-[105px] w-[82px] items-center justify-center overflow-hidden rounded-xl border-2 border-[var(--ljka-gold)] bg-gray-100 shadow-md sm:h-[118px] sm:w-[92px]">
-
-                    {user.photo || user.profilePhoto ? (
+                  <div className="flex h-[105px] w-[82px] items-center justify-center overflow-hidden rounded-xl border-2 border-[var(--ljka-gold)] bg-white shadow-md sm:h-[118px] sm:w-[92px]">
+                    <div className="flex h-full w-full flex-col items-center justify-center bg-[var(--ljka-primary-bg)] px-2">
                       <img
-                        src={user.photo || user.profilePhoto}
-                        alt={user.fullName}
+                        src="/img/Lakhdaatar_Logo.png"
+                        alt="LJKA Member"
                         crossOrigin="anonymous"
-                        className="h-full w-full object-cover"
+                        className="h-14 w-14 object-contain sm:h-16 sm:w-16"
                       />
-                    ) : (
-                      <div className="text-center">
-                        <div className="text-3xl font-bold text-gray-300">
-                          {user.fullName?.charAt(0)?.toUpperCase()}
-                        </div>
-
-                        <p className="mt-1 text-[8px] font-semibold text-gray-400">
-                          MEMBER
-                        </p>
-                      </div>
-                    )}
-
+                      <p className="mt-2 text-[7px] font-extrabold uppercase tracking-[0.14em] text-[var(--ljka-primary)]">
+                        LJKA MEMBER
+                      </p>
+                    </div>
                   </div>
 
                   <p className="mt-1 text-center text-[7px] font-semibold uppercase tracking-wide text-gray-400">
-                    Member Photo
+                    Member Identity
                   </p>
-
                 </div>
 
                 {/* MEMBER DETAILS */}
@@ -419,13 +438,13 @@ const DownloadIdCard = () => {
 
                   <div className="text-right">
                     <p className="text-[7px] font-bold uppercase tracking-[0.15em] text-[var(--ljka-primary)]">
-                      Valid Until
+                      {membershipPaid ? "Valid Until" : "Membership"}
                     </p>
 
-                    <p className="text-[10px] font-extrabold text-[var(--ljka-primary)]">
+                    <p className="text-[10px] font-extrabold uppercase text-[var(--ljka-primary)]">
                       {membershipPaid
-                        ? formatDate(membershipExpiresAt)
-                        : "PAYMENT PENDING"}
+                        ? formatDate(user?.membershipExpiresAt)
+                        : "Payment Pending"}
                     </p>
                   </div>
 
