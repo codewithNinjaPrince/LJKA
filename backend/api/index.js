@@ -9,6 +9,8 @@ import memberRouter from "../routes/memberRoute.js";
 import sahyogAlertRouter from "../routes/sahyogAlertRoute.js";
 import memberUpdateRequestRouter from "../routes/memberUpdateRequestRoute.js";
 import adminMemberUpdateRouter from "../routes/adminMemberUpdateRoute.js";
+import adminRouter from "../routes/adminRoute.js";
+import publicSahyogRouter from "../routes/publicSahyogRoute.js";
 
 
 const app = express();
@@ -27,6 +29,7 @@ app.use("/api/user/kyc", kycRouter);
 app.use("/api/contact", contactRouter);
 app.use("/api/members", memberRouter);
 app.use("/api/sahyog-alert", sahyogAlertRouter);
+app.use("/api/public/sahyog", publicSahyogRouter);
 app.use(
   "/api/member-update-request",
   memberUpdateRequestRouter
@@ -35,6 +38,7 @@ app.use(
   "/api/admin/member-update-requests",
   adminMemberUpdateRouter
 );
+app.use("/api/admin", adminRouter);
 
 app.get("/", (req, res) => {
   res.json({

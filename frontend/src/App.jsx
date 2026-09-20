@@ -16,6 +16,9 @@ import Niyamawali from "./pages/Niyamawali";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Register from "./pages/Register";
 import SahyogList from "./pages/SahyogList";
+import SahyogDetails from "./pages/SahyogDetails";
+import SahyogDonations from "./pages/SahyogDonations";
+import SahyogLateMembers from "./pages/SahyogLateMembers";
 import TermsConditions from "./pages/TermsConditions";
 import UserList from "./pages/UserList";
 import VyawasthaList from "./pages/VyawasthaList";
@@ -126,6 +129,9 @@ const App = () => {
         <Route path="/niyamawali" element={<Niyamawali />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/sahyog-list" element={<SahyogList />} />
+        <Route path="/sahyog-list/donations" element={<SahyogDonations />} />
+        <Route path="/sahyog-list/late-members" element={<SahyogLateMembers />} />
+        <Route path="/sahyog-list/:id" element={<SahyogDetails />} />
         <Route path="/terms-conditions" element={<TermsConditions />} />
         <Route path="/user-list" element={<UserList />} />
         <Route path="/vyawastha-list" element={<VyawasthaList />} />

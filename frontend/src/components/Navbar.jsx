@@ -10,7 +10,7 @@ import { LJKAContext } from "../context/LJKAContext";
 
 const NAV_LINKS = [
   ["/", "Home"],
-  ["/about", "About LJKA"],
+  ["/about", "About Us"],
   ["/user-list", "Members"],
   ["/sahyog-list", "Sahyog"],
   ["/vyawastha-list", "Vyawastha"],

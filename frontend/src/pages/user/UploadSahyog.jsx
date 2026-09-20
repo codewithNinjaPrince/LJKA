@@ -1,80 +1,14 @@
-import React from "react";
-import {
-  FaArrowRight,
-  FaHandsHelping,
-  FaHeart,
-  FaShieldAlt,
-} from "react-icons/fa";
+import React, { useContext, useEffect, useState } from "react";
+import { FaHandsHelping, FaShieldAlt } from "react-icons/fa";
+import { LJKAContext } from "../../context/LJKAContext";
 
 const UploadSahyog = () => {
-  return (
-    <main className="min-h-screen bg-[var(--ljka-bg)]">
-      <section className="mx-auto flex min-h-[calc(100vh-80px)] max-w-[1100px] items-center justify-center px-5 py-12 sm:px-8">
-        <div className="w-full rounded-3xl border border-[var(--ljka-border-light)] bg-white px-6 py-12 text-center shadow-[var(--ljka-shadow-md)] sm:px-12 sm:py-16">
-
-          {/* Icon */}
-          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-[var(--ljka-primary-bg)] text-3xl text-[var(--ljka-primary)]">
-            <FaHandsHelping />
-          </div>
-
-          {/* Label */}
-          <p className="mt-7 text-xs font-bold uppercase tracking-[0.18em] text-[var(--ljka-gold-dark)]">
-            Upload Sahyog
-          </p>
-
-          {/* Heading */}
-          <h1 className="mt-3 text-3xl font-bold text-[var(--ljka-primary)] sm:text-4xl">
-            Coming Soon
-          </h1>
-
-          {/* Description */}
-          <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-[var(--ljka-muted)] sm:text-base">
-            The Sahyog submission feature will be available here soon.
-            You will be able to submit your Sahyog details and supporting
-            information through your LJKA member portal.
-          </p>
-
-          {/* Features */}
-          <div className="mx-auto mt-9 grid max-w-2xl gap-3 text-left sm:grid-cols-3">
-            <InfoPoint
-              icon={<FaHandsHelping />}
-              text="Submit Sahyog"
-            />
-
-            <InfoPoint
-              icon={<FaHeart />}
-              text="Support Others"
-            />
-
-            <InfoPoint
-              icon={<FaShieldAlt />}
-              text="Verified Records"
-            />
-          </div>
-
-          {/* Bottom Message */}
-          <div className="mt-9 inline-flex items-center gap-2 text-sm font-semibold text-[var(--ljka-primary)]">
-            We are working on this feature
-            <FaArrowRight className="text-xs text-[var(--ljka-gold-dark)]" />
-          </div>
-        </div>
-      </section>
-    </main>
-  );
+  const { backendUrl, token } = useContext(LJKAContext); const [cases, setCases] = useState([]); const [selected, setSelected] = useState(""); const [item, setItem] = useState(null); const [form, setForm] = useState({ amount: "", transactionId: "", paymentMethod: "bank_transfer", isAnonymous: false }); const [message, setMessage] = useState(""); const [loading, setLoading] = useState(true);
+  const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+  useEffect(() => { fetch(`${backendUrl}/api/user/sahyog?limit=100`, { headers }).then((r) => r.ok ? r.json() : Promise.reject()).then((r) => { setCases(r.cases || []); if (r.cases?.length) setSelected(r.cases[0]._id); }).catch(() => setMessage("Unable to load available Sahyog cases.")).finally(() => setLoading(false)); }, [backendUrl, token]);
+  useEffect(() => { if (!selected) return; setItem(null); fetch(`${backendUrl}/api/user/sahyog/${selected}`, { headers }).then((r) => r.ok ? r.json() : Promise.reject()).then((r) => setItem(r.sahyog)).catch(() => setMessage("Unable to load payment instructions.")); }, [backendUrl, selected, token]);
+  const submit = async (event) => { event.preventDefault(); setMessage(""); try { const response = await fetch(`${backendUrl}/api/user/sahyog/${selected}/donations`, { method: "POST", headers, body: JSON.stringify({ ...form, amount: Number(form.amount) }) }); const data = await response.json(); if (!response.ok) throw new Error(data.message); setForm({ amount: "", transactionId: "", paymentMethod: "bank_transfer", isAnonymous: false }); setMessage(data.message); } catch (error) { setMessage(error.message || "Unable to submit donation."); } };
+  if (loading) return <main className="min-h-screen bg-[var(--ljka-bg)] grid place-items-center text-[var(--ljka-primary)]">Loading Sahyog cases…</main>;
+  return <main className="min-h-screen bg-[var(--ljka-bg)]"><section className="mx-auto max-w-4xl px-5 py-10 sm:px-8"><div className="rounded-3xl border border-[var(--ljka-border-light)] bg-white p-6 shadow-[var(--ljka-shadow-sm)] sm:p-8"><div className="flex gap-4"><span className="grid h-14 w-14 place-items-center rounded-2xl bg-[var(--ljka-primary-bg)] text-2xl text-[var(--ljka-primary)]"><FaHandsHelping /></span><div><p className="text-xs font-bold uppercase tracking-[.16em] text-[var(--ljka-gold-dark)]">Sahyog donation</p><h1 className="mt-1 text-2xl font-bold text-[var(--ljka-primary)]">Submit a donation for verification</h1><p className="mt-2 text-sm text-[var(--ljka-muted)]">Payment success is never assumed; submissions remain pending until an authorized administrator verifies them.</p></div></div>{!cases.length ? <p className="mt-8 rounded-xl bg-[var(--ljka-bg)] p-5 text-center text-[var(--ljka-muted)]">No active Sahyog cases are currently available.</p> : <><label className="mt-8 block text-sm font-semibold text-[var(--ljka-text)]">Late member<select value={selected} onChange={(e) => setSelected(e.target.value)} className="mt-2 w-full rounded-lg border border-[var(--ljka-border-light)] bg-white p-3">{cases.map((c) => <option key={c._id} value={c._id}>{c.member.fullName} · {c.member.memberId}</option>)}</select></label>{item && <div className="mt-6 grid gap-5 lg:grid-cols-2"><section className="rounded-2xl bg-[var(--ljka-primary-bg)] p-5"><h2 className="font-bold text-[var(--ljka-primary)]">Late member</h2><p className="mt-3 text-lg font-bold">{item.member.fullName}</p><p className="text-sm text-[var(--ljka-muted)]">Member ID: {item.member.memberId}</p><p className="mt-3 text-sm">Death date: {new Date(item.dateOfDeath).toLocaleDateString("en-IN")}</p><p className="mt-1 text-sm">Minimum amount: {item.minimumDonationAmount ? `₹${item.minimumDonationAmount}` : "Not set"}</p></section><section className="rounded-2xl border border-[var(--ljka-border-light)] p-5"><h2 className="font-bold text-[var(--ljka-primary)]">Payment details</h2><dl className="mt-3 grid grid-cols-2 gap-3 text-sm"><div><dt className="text-[var(--ljka-muted)]">Account holder</dt><dd>{item.paymentDetails.accountHolderName || "—"}</dd></div><div><dt className="text-[var(--ljka-muted)]">Bank / branch</dt><dd>{item.paymentDetails.bankName || "—"}{item.paymentDetails.branchName ? ` · ${item.paymentDetails.branchName}` : ""}</dd></div><div><dt className="text-[var(--ljka-muted)]">Account number</dt><dd>{item.paymentDetails.accountNumber || "—"}</dd></div><div><dt className="text-[var(--ljka-muted)]">IFSC</dt><dd>{item.paymentDetails.ifsc || "—"}</dd></div></dl></section></div>}<form onSubmit={submit} className="mt-6 grid gap-4 rounded-2xl border border-[var(--ljka-border-light)] p-5 sm:grid-cols-2"><label className="text-sm font-semibold">Donation amount (₹)<input required min={item?.minimumDonationAmount || 1} type="number" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} className="mt-2 w-full rounded-lg border p-3" /></label><label className="text-sm font-semibold">Payment method<select value={form.paymentMethod} onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })} className="mt-2 w-full rounded-lg border p-3"><option value="bank_transfer">Bank transfer</option><option value="upi">UPI</option><option value="cash">Cash</option></select></label><label className="text-sm font-semibold sm:col-span-2">Transaction / reference ID (if available)<input value={form.transactionId} onChange={(e) => setForm({ ...form, transactionId: e.target.value })} className="mt-2 w-full rounded-lg border p-3" /></label><label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" checked={form.isAnonymous} onChange={(e) => setForm({ ...form, isAnonymous: e.target.checked })} />Show my donation anonymously on public lists</label><button className="rounded-lg bg-[var(--ljka-primary)] px-5 py-3 text-sm font-bold text-white sm:col-span-2">Submit for verification</button></form></>}{message && <p className="mt-5 rounded-xl bg-[var(--ljka-bg)] p-4 text-sm text-[var(--ljka-text)]">{message}</p>}<p className="mt-5 flex gap-2 text-xs leading-5 text-[var(--ljka-muted)]"><FaShieldAlt className="shrink-0 text-[var(--ljka-primary)]" /> Payment details are controlled by LJKA administration. This authenticated page is not a public bank-information endpoint.</p></div></section></main>;
 };
-
-const InfoPoint = ({ icon, text }) => {
-  return (
-    <div className="flex items-center gap-3 rounded-xl bg-[var(--ljka-bg)] px-4 py-3">
-      <span className="text-[var(--ljka-primary)]">
-        {icon}
-      </span>
-
-      <span className="text-xs font-semibold text-[var(--ljka-text)]">
-        {text}
-      </span>
-    </div>
-  );
-};
-
 export default UploadSahyog;

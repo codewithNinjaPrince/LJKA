@@ -56,6 +56,13 @@ const loginUser = async (req, res) => {
       });
     }
 
+    if (user.accountStatus !== "active") {
+      return res.status(403).json({
+        success: false,
+        message: "This account has been disabled. Please contact LJKA.",
+      });
+    }
+
     // 4. CHECK PASSWORD
 
     const isPasswordMatch = await bcrypt.compare(password, user.password);

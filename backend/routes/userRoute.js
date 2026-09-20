@@ -4,6 +4,7 @@ import { getUserProfile } from "../controller/userProfileController.js";
 import { sendOtp, verifyOtp, sendForgotPasswordOtp, verifyForgotPasswordOtp } from "../controller/otpController.js";
 
 import authUser from "../middleware/auth.js";
+import { userCreateDonation, userGetSahyog, userListSahyog } from "../controller/sahyogController.js";
 
 const userRouter = express.Router();
 
@@ -20,5 +21,8 @@ userRouter.post("/update-password", authUser, updatePassword);
 userRouter.post("/verify-current-password", authUser, verifyCurrentPassword);
 userRouter.get("/profile", authUser, getUserProfile);
 userRouter.put("/update-profile", authUser, updateUserProfile);
+userRouter.get("/sahyog", authUser, userListSahyog);
+userRouter.get("/sahyog/:id", authUser, userGetSahyog);
+userRouter.post("/sahyog/:id/donations", authUser, userCreateDonation);
 
 export default userRouter;

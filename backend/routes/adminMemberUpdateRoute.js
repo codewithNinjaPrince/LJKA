@@ -7,31 +7,35 @@ import {
   rejectMemberUpdateRequest,
 } from "../controller/adminMemberUpdateController.js";
 
-import authUser from "../middleware/auth.js";
+import { adminAuth, requirePermission } from "../middleware/adminAuth.js";
 
 const adminMemberUpdateRouter = express.Router();
 
 adminMemberUpdateRouter.get(
   "/",
-  authUser,
+  adminAuth,
+  requirePermission("member-update-requests", "view"),
   getPendingMemberUpdateRequests
 );
 
 adminMemberUpdateRouter.get(
   "/:requestId",
-  authUser,
+  adminAuth,
+  requirePermission("member-update-requests", "view"),
   getMemberUpdateRequestById
 );
 
 adminMemberUpdateRouter.patch(
   "/:requestId/approve",
-  authUser,
+  adminAuth,
+  requirePermission("member-update-requests", "approve"),
   approveMemberUpdateRequest
 );
 
 adminMemberUpdateRouter.patch(
   "/:requestId/reject",
-  authUser,
+  adminAuth,
+  requirePermission("member-update-requests", "reject"),
   rejectMemberUpdateRequest
 );
 

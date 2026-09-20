@@ -75,7 +75,7 @@ const approveMemberUpdateRequest = async (req, res) => {
 
   try {
     const { requestId } = req.params;
-    const adminId = req.userId;
+    const adminId = req.admin._id;
 
     session.startTransaction();
 
@@ -154,7 +154,7 @@ const approveMemberUpdateRequest = async (req, res) => {
 const rejectMemberUpdateRequest = async (req, res) => {
   try {
     const { requestId } = req.params;
-    const adminId = req.userId;
+    const adminId = req.admin._id;
 
     const { adminRemarks = "" } = req.body;
 

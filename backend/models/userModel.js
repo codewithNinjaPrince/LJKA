@@ -5,6 +5,9 @@ const userSchema = new mongoose.Schema({
   fullName: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, required: true, minlength: 6 },
+  // Kept separate from KYC and payment state so an administrative suspension
+  // is enforced at authentication time without changing membership records.
+  accountStatus: { type: String, enum: ["active", "disabled", "deceased"], default: "active", index: true },
 
   passwordChangeVerifiedAt: {
     type: Date,
@@ -152,7 +155,7 @@ export const createPublicSearchTerms = ({ fullName, memberId, mobile }) => {
   ])];
 };
 
-userSchema.pre("save", function updatePublicSearchTerms(next) {
+userSchema.pre("save", function updatePublicSearchTerms() {
   if (
     this.isModified("fullName") ||
     this.isModified("memberId") ||
@@ -160,8 +163,6 @@ userSchema.pre("save", function updatePublicSearchTerms(next) {
   ) {
     this.publicSearchTerms = createPublicSearchTerms(this);
   }
-
-  next();
 });
 
 const User = mongoose.model("User", userSchema);
