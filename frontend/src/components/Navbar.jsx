@@ -25,8 +25,6 @@ const MEMBER_NAV_LINKS = [
   ["/user/id-card", "Download ID Card"],
   ["/user/upload-sahyog", "Upload Sahyog"],
   ["/user/all-sahyog", "View All Sahyog"],
-  ["/user/upload-kanyadan", "Upload Kanyadan"],
-  ["/user/kanyadan-list", "View Kanyadan Sahyog"],
   ["/user/raise-claim", "Raise Claim"],
   ["/user/update-password", "Update Password"],
 ];
