@@ -1055,7 +1055,7 @@ const SahyogLateMembers = () => {
                                 `/sahyog-list/donations?sahyogId=${item._id}`
                               )
                             }
-                            className="font-semibold text-[var(--ljka-primary)] hover:underline"
+                            className="inline-flex items-center rounded-lg border border-[var(--ljka-primary)]/20 bg-[var(--ljka-primary-bg)] px-3 py-2 font-semibold text-[var(--ljka-primary)] transition hover:bg-[var(--ljka-primary)] hover:text-white"
                           >
                             {item.donationSummary?.count ||
                               0}

@@ -6,7 +6,7 @@ const sahyogSchema = new mongoose.Schema({
   photoUrl: { type: String, trim: true, default: "" },
   dateOfDeath: { type: Date, required: true },
   familyInfo: { type: String, trim: true, default: "" },
-  description: { type: String, trim: true, required: true, maxlength: 5000 },
+  description: { type: String, trim: true, default: "", maxlength: 5000 },
   address: { type: String, trim: true, default: "" },
   contactName: { type: String, trim: true, default: "" },
   contactMobile: { type: String, trim: true, default: "" },

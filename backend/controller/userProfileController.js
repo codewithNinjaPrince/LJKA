@@ -66,7 +66,7 @@ const getUserProfile = async (req, res) => {
           membershipRenewalReminderSentAt: null,
         },
         { $set: { membershipRenewalReminderSentAt: new Date() } },
-        { new: true }
+        { returnDocument: "after" }
       );
 
       if (reminderClaim) {

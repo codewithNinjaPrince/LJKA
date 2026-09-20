@@ -2,6 +2,22 @@ import mongoose from "mongoose";
 import userModel from "../models/userModel.js";
 import MemberUpdateRequest from "../models/memberUpdateRequestModel.js";
 
+const employmentStatusMap = {
+  government: "government",
+  govt: "government",
+  private: "private",
+  "private-sector": "private",
+  business: "business",
+  "self-employed": "business",
+  "self employed": "business",
+  selfemployed: "business",
+  other: "others",
+  others: "others",
+};
+
+const normalizeEmploymentStatus = (value) =>
+  employmentStatusMap[String(value || "").trim().toLowerCase()];
+
 /* =========================================================
    GET ALL PENDING UPDATE REQUESTS
 ========================================================= */
@@ -106,14 +122,46 @@ const approveMemberUpdateRequest = async (req, res) => {
       });
     }
 
+    const requestedChanges = { ...request.requestedChanges };
+
+    // Older records may already contain the legacy self-employed value. A
+    // document save validates every field, so normalize it before applying an
+    // otherwise unrelated requested change.
+    if (user.employmentStatus) {
+      const currentEmploymentStatus = normalizeEmploymentStatus(
+        user.employmentStatus
+      );
+
+      if (currentEmploymentStatus) {
+        user.employmentStatus = currentEmploymentStatus;
+      }
+    }
+
+    if (requestedChanges.employmentStatus !== undefined) {
+      const employmentStatus = normalizeEmploymentStatus(
+        requestedChanges.employmentStatus
+      );
+
+      if (!employmentStatus) {
+        await session.abortTransaction();
+
+        return res.status(422).json({
+          success: false,
+          message: "The requested employment status is no longer valid",
+        });
+      }
+
+      requestedChanges.employmentStatus = employmentStatus;
+    }
+
     /*
      * Apply ONLY the fields requested by the member.
      *
      * The original User document was untouched until
      * the admin approved this request.
      */
-    Object.keys(request.requestedChanges).forEach((field) => {
-      user[field] = request.requestedChanges[field];
+    Object.keys(requestedChanges).forEach((field) => {
+      user[field] = requestedChanges[field];
     });
 
     await user.save({ session });

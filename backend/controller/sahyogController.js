@@ -7,7 +7,12 @@ import { audit } from "../utils/audit.js";
 
 const makeId = (prefix) => `${prefix}-${Date.now().toString(36).toUpperCase()}${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
 const memberFields = "fullName memberId mobile address";
-const publicMember = (member) => ({ fullName: member?.fullName || "Member", memberId: member?.memberId || "—" });
+const publicMember = (member) => ({
+  fullName: member?.fullName || "Member",
+  memberId: member?.memberId || "—",
+  district: member?.address?.districtName || "—",
+  tehsil: member?.address?.tehsilName || "—",
+});
 const publicCase = (item) => ({ _id: item._id, sahyogId: item.sahyogId, photoUrl: item.photoUrl, dateOfDeath: item.dateOfDeath, familyInfo: item.familyInfo, description: item.description, targetAmount: item.targetAmount, minimumDonationAmount: item.minimumDonationAmount, status: item.status, publicPayment: item.publicPayment, createdAt: item.createdAt, member: publicMember(item.memberId), donationSummary: item.donationSummary });
 const totalsFor = async (ids) => Donation.aggregate([{ $match: { sahyogId: { $in: ids }, paymentStatus: "success" } }, { $group: { _id: "$sahyogId", amount: { $sum: "$amount" }, count: { $sum: 1 } } }]);
 const decorate = async (cases) => {
@@ -35,14 +40,37 @@ export const listSahyog = async (req, res) => {
 };
 
 export const getSahyog = async (req, res) => { const item = await Sahyog.findOne({ _id: req.params.id, isDeleted: false }).populate("memberId", memberFields); if (!item) return res.status(404).json({ success: false, message: "Sahyog case not found" }); res.json({ success: true, sahyog: (await decorate([item]))[0] }); };
+export const listEligibleSahyogMembers = async (req, res) => {
+  const members = await User.find({
+    kycCompleted: true,
+    $or: [
+      { accountStatus: "active" },
+      { accountStatus: { $exists: false } },
+    ],
+  })
+    .select(memberFields)
+    .sort({ fullName: 1 })
+    .lean();
+
+  res.json({ success: true, members });
+};
 export const createSahyog = async (req, res) => {
-  const { memberId, dateOfDeath, description, status = "draft", targetAmount } = req.body;
-  if (!memberId || !dateOfDeath || !description?.trim()) return res.status(422).json({ success: false, message: "Member, date of death and description are required" });
+  const { memberId, dateOfDeath, status = "draft", targetAmount } = req.body;
+  if (!memberId || !dateOfDeath) return res.status(422).json({ success: false, message: "Member and date of death are required" });
+  if (!req.body.contactName?.trim() || !req.body.contactMobile?.trim() || !req.body.address?.trim()) return res.status(422).json({ success: false, message: "Family contact person, mobile and address are required" });
   if (!mongoose.isValidObjectId(memberId)) return res.status(400).json({ success: false, message: "Invalid member" });
   const validationError = validateSahyogInput(req.body); if (validationError) return res.status(422).json({ success: false, message: validationError });
-  const member = await User.findById(memberId); if (!member) return res.status(404).json({ success: false, message: "Member not found" });
+  const member = await User.findOne({
+    _id: memberId,
+    kycCompleted: true,
+    $or: [
+      { accountStatus: "active" },
+      { accountStatus: { $exists: false } },
+    ],
+  });
+  if (!member) return res.status(422).json({ success: false, message: "Only active members with completed KYC can be selected" });
   const item = await Sahyog.create({
-    sahyogId: makeId("SHG"), memberId: member._id, dateOfDeath, description: description.trim(), status,
+    sahyogId: makeId("SHG"), memberId: member._id, dateOfDeath, description: String(req.body.description || "").trim(), status,
     targetAmount: targetAmount === "" ? null : targetAmount, minimumDonationAmount: req.body.minimumDonationAmount === "" ? null : req.body.minimumDonationAmount, photoUrl: req.body.photoUrl, familyInfo: req.body.familyInfo,
     address: req.body.address, contactName: req.body.contactName, contactMobile: req.body.contactMobile,
     paymentDetails: req.body.paymentDetails, publicPayment: req.body.publicPayment,
@@ -56,14 +84,14 @@ export const updateSahyog = async (req, res) => {
   const allowed = ["photoUrl", "dateOfDeath", "familyInfo", "description", "address", "contactName", "contactMobile", "targetAmount", "minimumDonationAmount", "status", "paymentDetails", "publicPayment"];
   const changes = Object.fromEntries(allowed.filter((key) => req.body[key] !== undefined).map((key) => [key, req.body[key]]));
   const validationError = validateSahyogInput(changes); if (validationError) return res.status(422).json({ success: false, message: validationError });
-  const item = await Sahyog.findOneAndUpdate({ _id: req.params.id, isDeleted: false }, { $set: { ...changes, updatedBy: req.admin._id } }, { new: true, runValidators: true });
+  const item = await Sahyog.findOneAndUpdate({ _id: req.params.id, isDeleted: false }, { $set: { ...changes, updatedBy: req.admin._id } }, { returnDocument: "after", runValidators: true });
   if (!item) return res.status(404).json({ success: false, message: "Sahyog case not found" });
   await audit(req, { action: Object.hasOwn(changes, "paymentDetails") ? "sahyog_payment_details_updated" : "sahyog_updated", module: "sahyog", resourceId: item._id, metadata: { fields: Object.keys(changes) } });
   res.json({ success: true, sahyog: item });
 };
-export const disableSahyog = async (req, res) => { const item = await Sahyog.findOneAndUpdate({ _id: req.params.id, isDeleted: false }, { $set: { status: "disabled", isDeleted: true, updatedBy: req.admin._id } }, { new: true }); if (!item) return res.status(404).json({ success: false, message: "Sahyog case not found" }); await audit(req, { action: "sahyog_disabled", module: "sahyog", resourceId: item._id }); res.json({ success: true }); };
+export const disableSahyog = async (req, res) => { const item = await Sahyog.findOneAndUpdate({ _id: req.params.id, isDeleted: false }, { $set: { status: "disabled", isDeleted: true, updatedBy: req.admin._id } }, { returnDocument: "after" }); if (!item) return res.status(404).json({ success: false, message: "Sahyog case not found" }); await audit(req, { action: "sahyog_disabled", module: "sahyog", resourceId: item._id }); res.json({ success: true }); };
 export const listDonations = async (req, res) => { const { page, limit } = parsePagination(req); const item = await Sahyog.exists({ _id: req.params.id, isDeleted: false }); if (!item) return res.status(404).json({ success: false, message: "Sahyog case not found" }); const filter = { sahyogId: req.params.id, ...(req.query.status ? { paymentStatus: req.query.status } : {}), ...(req.query.search ? { donorName: new RegExp(String(req.query.search), "i") } : {}) }; const [total, donations] = await Promise.all([Donation.countDocuments(filter), Donation.find(filter).populate("donorId", "memberId fullName").sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean()]); res.json({ success: true, donations, pagination: { page, limit, total, pages: Math.ceil(total / limit) } }); };
-export const updateDonation = async (req, res) => { const allowed = ["paymentStatus", "transactionId", "paymentMethod", "isAnonymous"]; const changes = Object.fromEntries(allowed.filter((key) => req.body[key] !== undefined).map((key) => [key, req.body[key]])); if (changes.paymentStatus === "success") { changes.verifiedAt = new Date(); changes.verifiedBy = req.admin._id; } const donation = await Donation.findOneAndUpdate({ _id: req.params.donationId, sahyogId: req.params.id }, { $set: changes }, { new: true, runValidators: true }); if (!donation) return res.status(404).json({ success: false, message: "Donation not found" }); await audit(req, { action: "donation_updated", module: "sahyog-donations", resourceId: donation._id, metadata: { fields: Object.keys(changes) } }); res.json({ success: true, donation }); };
+export const updateDonation = async (req, res) => { const allowed = ["paymentStatus", "transactionId", "paymentMethod", "isAnonymous"]; const changes = Object.fromEntries(allowed.filter((key) => req.body[key] !== undefined).map((key) => [key, req.body[key]])); if (changes.paymentStatus === "success") { changes.verifiedAt = new Date(); changes.verifiedBy = req.admin._id; } const donation = await Donation.findOneAndUpdate({ _id: req.params.donationId, sahyogId: req.params.id }, { $set: changes }, { returnDocument: "after", runValidators: true }); if (!donation) return res.status(404).json({ success: false, message: "Donation not found" }); await audit(req, { action: "donation_updated", module: "sahyog-donations", resourceId: donation._id, metadata: { fields: Object.keys(changes) } }); res.json({ success: true, donation }); };
 
 export const publicListSahyog = async (req, res) => { const { page, limit } = parsePagination(req); const filter = { status: "active", isDeleted: false }; const [total, cases] = await Promise.all([Sahyog.countDocuments(filter), Sahyog.find(filter).populate("memberId", memberFields).sort({ dateOfDeath: -1, _id: -1 }).skip((page - 1) * limit).limit(limit)]); const enriched = await decorate(cases); res.json({ success: true, cases: enriched.map(publicCase), pagination: { page, limit, total, pages: Math.ceil(total / limit) } }); };
 export const publicGetSahyog = async (req, res) => { const item = await Sahyog.findOne({ _id: req.params.id, status: "active", isDeleted: false }).populate("memberId", memberFields); if (!item) return res.status(404).json({ success: false, message: "Sahyog case not found" }); res.json({ success: true, sahyog: publicCase((await decorate([item]))[0]) }); };

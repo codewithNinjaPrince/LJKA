@@ -1,17 +1,42 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import { AdminLogin, AdminShell } from "./AdminPortal.jsx";
-import SahyogCrudPortal from "./SahyogCrudPortal.jsx";
+import AdminLogin from "./components/AdminLogin.jsx";
+import { AdminShell } from "./pages/AdminPortal.jsx";
 
 export default function App() {
   return (
     <Routes>
-      <Route path="/superadmin/login" element={<AdminLogin />} />
-      <Route path="/admin/login" element={<AdminLogin />} />
-      <Route path="/superadmin/sahyog/*" element={<SahyogCrudPortal />} />
-      <Route path="/admin/sahyog/*" element={<SahyogCrudPortal />} />
-      <Route path="/superadmin/*" element={<AdminShell />} />
-      <Route path="/admin/*" element={<AdminShell />} />
-      <Route path="*" element={<Navigate to="/superadmin/login" replace />} />
+      {/* Authentication */}
+      <Route
+        path="/superadmin/login"
+        element={<AdminLogin />}
+      />
+
+      <Route
+        path="/admin/login"
+        element={<AdminLogin />}
+      />
+
+      {/* Admin Portal */}
+      <Route
+        path="/superadmin/*"
+        element={<AdminShell />}
+      />
+
+      <Route
+        path="/admin/*"
+        element={<AdminShell />}
+      />
+
+      {/* Fallback */}
+      <Route
+        path="*"
+        element={
+          <Navigate
+            to="/superadmin/login"
+            replace
+          />
+        }
+      />
     </Routes>
   );
 }

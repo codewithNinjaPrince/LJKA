@@ -5,6 +5,7 @@ import * as sahyog from "../controller/sahyogController.js";
 const router = express.Router();
 router.use(adminAuth);
 router.get("/sahyog", requirePermission("sahyog", "view"), sahyog.listSahyog);
+router.get("/sahyog/eligible-members", requirePermission("sahyog", "create"), sahyog.listEligibleSahyogMembers);
 router.post("/sahyog", requirePermission("sahyog", "create"), sahyog.createSahyog);
 router.get("/sahyog/:id", requirePermission("sahyog", "view"), sahyog.getSahyog);
 router.patch("/sahyog/:id", requirePermission("sahyog", "update"), sahyog.updateSahyog);

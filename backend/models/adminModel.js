@@ -12,13 +12,10 @@ const adminSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, required: true, select: false },
   role: { type: String, enum: ["superadmin", "admin"], default: "admin", index: true },
-  status: { type: String, enum: ["pending", "active", "disabled", "rejected"], default: "pending", index: true },
+  // Admin accounts are provisioned by a superadmin. They do not go through
+  // the member KYC or approval process.
+  status: { type: String, enum: ["active", "disabled"], default: "active", index: true },
   permissions: { type: [permissionSchema], default: [] },
-  kyc: {
-    dob: Date, address: String, idType: String, idNumber: String,
-    documentUrl: String, profilePhotoUrl: String,
-    status: { type: String, enum: ["pending", "verified", "rejected"], default: "pending" },
-  },
   lastLoginAt: { type: Date, default: null },
   authVersion: { type: Number, default: 0 },
 }, { timestamps: true });
