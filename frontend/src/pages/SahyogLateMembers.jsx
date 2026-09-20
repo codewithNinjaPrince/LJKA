@@ -588,7 +588,7 @@ const SahyogLateMembers = () => {
                 </div>
 
                 <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-                  Late Members / Sahyog Cases
+                  Late Members  Sahyog
                 </h1>
 
                 <p className="mt-1 text-sm text-gray-500">
@@ -597,17 +597,6 @@ const SahyogLateMembers = () => {
                 </p>
 
               </div>
-
-              {!loading && (
-                <div className="text-sm text-gray-500">
-                  Total Cases:{" "}
-                  <span className="font-semibold text-gray-900">
-                    {pagination.totalCases.toLocaleString(
-                      "en-IN"
-                    )}
-                  </span>
-                </div>
-              )}
 
             </div>
 
