@@ -27,8 +27,9 @@ export const requireRole = (...roles) => (req, res, next) =>
 export const requirePermission = (module, action) => (req, res, next) => {
   if (req.admin?.role === "superadmin") return next();
   const permission = req.admin?.permissions.find((entry) => entry.module === module);
-  if (!permission?.actions.includes(action)) {
-    return res.status(403).json({ success: false, message: `Permission denied: ${module}.${action}` });
+  const actions = permission?.actions || [];
+  if (actions.includes(action) || (action === "view" && actions.length > 0)) {
+    return next();
   }
-  next();
+  return res.status(403).json({ success: false, message: `Permission denied: ${module}.${action}` });
 };

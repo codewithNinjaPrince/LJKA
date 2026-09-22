@@ -903,7 +903,7 @@ const SahyogDonations = () => {
                                                 <td className="whitespace-nowrap px-4 py-4 text-sm font-semibold text-gray-900">
                                                     {donor?.memberId || (
                                                         <span className="font-medium text-gray-500">
-                                                            Anonymous
+                                                            —
                                                         </span>
                                                     )}
                                                 </td>
@@ -913,7 +913,7 @@ const SahyogDonations = () => {
                                                 <td className="whitespace-nowrap px-4 py-4 text-sm font-medium text-gray-900">
                                                     {donor?.fullName || (
                                                         <span className="font-medium text-gray-500">
-                                                            Anonymous
+                                                            —
                                                         </span>
                                                     )}
                                                 </td>

@@ -2,6 +2,7 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import { adminAuth, requirePermission, requireRole } from "../middleware/adminAuth.js";
 import * as admin from "../controller/adminController.js";
+import * as claims from "../controller/claimController.js";
 import sahyogRouter from "./sahyogRoute.js";
 
 const router = express.Router();
@@ -21,10 +22,23 @@ router.put("/admins/:id/rights", requireRole("superadmin"), admin.updateRights);
 router.get("/members", requirePermission("members", "view"), admin.listManagedMembers);
 router.post("/members", requirePermission("members", "create"), admin.createManagedMember);
 router.patch("/members/:id", requirePermission("members", "update"), admin.updateManagedMember);
-router.delete("/members/:id", requirePermission("members", "delete"), admin.deleteManagedMember);
-router.get("/referrals", requirePermission("referrals", "view"), admin.listReferrals);
-router.post("/referrals", requirePermission("referrals", "create"), admin.createReferral);
-router.patch("/referrals/:id", requirePermission("referrals", "update"), admin.updateReferral);
-router.delete("/referrals/:id", requirePermission("referrals", "delete"), admin.deleteReferral);
+// Member records are never deleted from the management portal.
+// Referral-code management is a superadmin-only responsibility.
+router.get("/referrals", requireRole("superadmin"), admin.listReferrals);
+router.get("/referrals/:id/users", requireRole("superadmin"), admin.listReferralUsers);
+router.post("/referrals", requireRole("superadmin"), admin.createReferral);
+router.patch("/referrals/:id", requireRole("superadmin"), admin.updateReferral);
+router.delete("/referrals/:id", requireRole("superadmin"), admin.deleteReferral);
+router.get("/contacts", requirePermission("contacts", "view"), admin.listContacts);
+router.get("/contacts/assignees", requireRole("superadmin"), admin.listContactAssignees);
+router.get("/contacts/:id", requirePermission("contacts", "view"), admin.getContact);
+router.patch("/contacts/:id", requirePermission("contacts", "update"), admin.updateContact);
+router.delete("/contacts/:id", requireRole("superadmin"), admin.deleteContact);
+router.get("/sahyog-alerts", requirePermission("sahyog-alerts", "view"), admin.listSahyogAlerts);
+router.post("/sahyog-alerts", requirePermission("sahyog-alerts", "create"), admin.createSahyogAlert);
+router.patch("/sahyog-alerts/:id", requirePermission("sahyog-alerts", "update"), admin.updateSahyogAlert);
+router.delete("/sahyog-alerts/:id", requirePermission("sahyog-alerts", "delete"), admin.deleteSahyogAlert);
+router.get("/claims", requireRole("superadmin"), claims.adminListClaims);
+router.patch("/claims/:id", requireRole("superadmin"), claims.adminUpdateClaim);
 router.use("/", sahyogRouter);
 export default router;

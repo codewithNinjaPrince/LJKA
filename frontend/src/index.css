@@ -232,6 +232,37 @@ a.active hr {
   display: block;
 }
 
+/* One responsive toast treatment for every success, error and info message.
+   React Toastify keeps horizontal drag enabled so a member can dismiss it by
+   swiping either left or right. */
+.Toastify__toast-container {
+  width: min(calc(100vw - 24px), 440px);
+  padding: 0;
+}
+
+.Toastify__toast {
+  min-height: 58px;
+  margin-bottom: 10px;
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(38, 50, 56, 0.2);
+  font-family: inherit;
+}
+
+.Toastify__toast-body {
+  padding: 12px 14px;
+  line-height: 1.35;
+}
+
+.Toastify__progress-bar {
+  height: 3px;
+}
+
+@media (max-width: 640px) {
+  .Toastify__toast-container--bottom-center {
+    bottom: max(12px, env(safe-area-inset-bottom));
+  }
+}
+
 
 /* =========================================================
    TEXT SELECTION

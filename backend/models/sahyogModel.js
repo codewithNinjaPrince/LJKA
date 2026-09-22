@@ -25,4 +25,5 @@ const sahyogSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 sahyogSchema.index({ status: 1, isDeleted: 1, createdAt: -1 });
+sahyogSchema.index({ status: 1, isDeleted: 1, dateOfDeath: -1, _id: -1 });
 export default mongoose.model("Sahyog", sahyogSchema);

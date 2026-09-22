@@ -7,3 +7,8 @@ button, input { font: inherit; }
 textarea.field { min-height: 5rem; resize: vertical; }
 label { display: block; font-size: .875rem; font-weight: 600; }
 .reference, .hint { margin-top: .75rem; border-radius: .5rem; background: #f8fafc; padding: .75rem; font-size: .875rem; color: #475569; }
+.Toastify__toast-container { width: min(calc(100vw - 24px), 440px); padding: 0; }
+.Toastify__toast { min-height: 58px; margin-bottom: 10px; border-radius: 14px; box-shadow: 0 12px 30px rgba(38, 50, 56, .2); }
+.Toastify__toast-body { padding: 12px 14px; line-height: 1.35; }
+.Toastify__progress-bar { height: 3px; }
+@media (max-width: 640px) { .Toastify__toast-container--bottom-center { bottom: max(12px, env(safe-area-inset-bottom)); } }

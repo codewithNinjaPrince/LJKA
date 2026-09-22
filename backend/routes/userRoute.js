@@ -4,7 +4,8 @@ import { getUserProfile } from "../controller/userProfileController.js";
 import { sendOtp, verifyOtp, sendForgotPasswordOtp, verifyForgotPasswordOtp } from "../controller/otpController.js";
 
 import authUser from "../middleware/auth.js";
-import { userCreateDonation, userGetSahyog, userListSahyog } from "../controller/sahyogController.js";
+import { userCreateDonation, userGetSahyog, userListMyDonations, userListSahyog } from "../controller/sahyogController.js";
+import { userCreateClaim, userListClaims } from "../controller/claimController.js";
 
 const userRouter = express.Router();
 
@@ -24,5 +25,8 @@ userRouter.put("/update-profile", authUser, updateUserProfile);
 userRouter.get("/sahyog", authUser, userListSahyog);
 userRouter.get("/sahyog/:id", authUser, userGetSahyog);
 userRouter.post("/sahyog/:id/donations", authUser, userCreateDonation);
+userRouter.get("/donations", authUser, userListMyDonations);
+userRouter.get("/claims", authUser, userListClaims);
+userRouter.post("/claims", authUser, userCreateClaim);
 
 export default userRouter;

@@ -1,14 +1,19 @@
 import bcrypt from "bcrypt";
-import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import validator from "validator";
 
 import Admin from "../models/adminModel.js";
-import User from "../models/userModel.js";
+import User, { createPublicSearchTerms } from "../models/userModel.js";
 import ReferralCode from "../models/referralCodeModel.js";
 import AuditLog from "../models/auditLogModel.js";
+import Contact from "../models/contactModel.js";
+import SahyogAlert from "../models/sahyogAlert.js";
+import Claim from "../models/claimModel.js";
 
 import { audit } from "../utils/audit.js";
+import generateMemberId from "../utils/generateMemberId.js";
+import { validateMemberDetails } from "../utils/memberDetails.js";
+import { ensureLegacyReferralCodes, referralCodeMatch } from "../utils/legacyReferrals.js";
 
 
 /* -------------------------------------------------------------------------- */
@@ -23,28 +28,6 @@ export const MODULES = [
             "view",
             "create",
             "update",
-            "delete",
-        ],
-    },
-
-    {
-        key: "referrals",
-        label: "Referral Codes",
-        actions: [
-            "view",
-            "create",
-            "update",
-            "delete",
-        ],
-    },
-
-    {
-        key: "member-update-requests",
-        label: "Member Update Requests",
-        actions: [
-            "view",
-            "approve",
-            "reject",
         ],
     },
 
@@ -60,32 +43,11 @@ export const MODULES = [
     },
 
     {
-        key: "sahyog",
-        label: "Sahyog Cases",
-        actions: [
-            "view",
-            "create",
-            "update",
-            "delete",
-            "approve",
-        ],
-    },
-
-    {
-        key: "sahyog-donations",
-        label: "Sahyog Donations",
-        actions: [
-            "view",
-            "update",
-        ],
-    },
-
-    {
         key: "contacts",
         label: "Contact Messages",
         actions: [
             "view",
-            "delete",
+            "update",
         ],
     },
 ];
@@ -321,6 +283,7 @@ export const dashboard = async (
         totalMembers,
         completedMembers,
         referrals,
+        openClaims,
         recentActivity,
     ] = await Promise.all([
         Admin.countDocuments({
@@ -345,6 +308,8 @@ export const dashboard = async (
 
         ReferralCode.countDocuments(),
 
+        Claim.countDocuments(),
+
         AuditLog.find()
             .sort({
                 createdAt: -1,
@@ -363,6 +328,7 @@ export const dashboard = async (
             totalMembers,
             completedMembers,
             referrals,
+            openClaims,
         },
 
         recentActivity,
@@ -931,66 +897,55 @@ export const createManagedMember = async (
     req,
     res
 ) => {
-    const {
-        fullName,
-        email,
-        mobile,
-        password,
-    } = req.body;
+    const { error, data } = await validateMemberDetails(req.body, {
+        requirePassword: true,
+        requireAadhaar: true,
+        requireReferral: true,
+    });
 
-    if (
-        !fullName?.trim() ||
-        !validator.isEmail(
-            String(email || "")
-        ) ||
-        !/^[6-9]\d{9}$/.test(
-            String(mobile || "")
-        ) ||
-        !password
-    ) {
+    if (error) {
         return res.status(400).json({
             success: false,
-            message:
-                "Name, valid email, mobile and password are required",
-        });
-    }
-
-    if (
-        password.length < 6 ||
-        !/[A-Za-z]/.test(password) ||
-        !/\d/.test(password)
-    ) {
-        return res.status(400).json({
-            success: false,
-            message:
-                "Password must include a letter and number and be at least 6 characters",
+            message: error,
         });
     }
 
     try {
-        const member =
-            await User.create({
-                fullName:
-                    fullName.trim(),
+        const now = new Date();
+        const memberId = await generateMemberId({
+            address: data.address,
+            employmentStatus: data.employmentStatus,
+        });
 
-                email:
-                    email
-                        .toLowerCase()
-                        .trim(),
-
-                mobile:
-                    String(
-                        mobile
-                    ).trim(),
-
-                password:
-                    await bcrypt.hash(
-                        password,
-                        12
-                    ),
-
-                emailVerified: true,
-            });
+        const member = await User.create({
+            fullName: data.fullName,
+            email: data.email,
+            mobile: data.mobile,
+            password: await bcrypt.hash(data.password, 12),
+            emailVerified: true,
+            mobileVerified: true,
+            fatherHusbandName: data.fatherHusbandName,
+            aadhaar: data.aadhaar,
+            dob: data.dob,
+            gender: data.gender,
+            address: data.address,
+            employmentStatus: data.employmentStatus,
+            occupation: data.occupation,
+            nominee: data.nominee,
+            referralCode: data.referralCode,
+            kycCompleted: true,
+            kycCompletedAt: now,
+            membershipStartDate: now,
+            membershipExpiresAt: new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000),
+            kycConsentAcceptedAt: now,
+            memberId,
+            accountStatus: data.accountStatus,
+            publicSearchTerms: createPublicSearchTerms({
+                fullName: data.fullName,
+                memberId,
+                mobile: data.mobile,
+            }),
+        });
 
         await audit(req, {
             action: "create",
@@ -1000,23 +955,25 @@ export const createManagedMember = async (
 
         res.status(201).json({
             success: true,
-
             member: {
                 id: member._id,
-                fullName:
-                    member.fullName,
-                email:
-                    member.email,
+                fullName: member.fullName,
+                email: member.email,
+                memberId: member.memberId,
             },
         });
     } catch (error) {
-        if (
-            error.code === 11000
-        ) {
+        if (error.code === 11000) {
+            const field = Object.keys(error.keyPattern || {})[0];
+            const messages = {
+                email: "Email is already registered",
+                mobile: "Mobile is already registered",
+                aadhaar: "Aadhaar number is already registered",
+                memberId: "Member ID could not be allocated. Please try again",
+            };
             return res.status(409).json({
                 success: false,
-                message:
-                    "Email or mobile is already registered",
+                message: messages[field] || "Email, mobile or Aadhaar is already registered",
             });
         }
 
@@ -1029,113 +986,92 @@ export const updateManagedMember = async (
     req,
     res
 ) => {
-    const allowed = [
-        "fullName",
-        "mobile",
-        "fatherHusbandName",
-        "dob",
-        "gender",
-        "address",
-        "employmentStatus",
-        "occupation",
-        "nominee",
-        "membershipPaymentStatus",
-        "accountStatus",
-    ];
-
-    const changes =
-        Object.fromEntries(
-            allowed
-                .filter(
-                    (key) =>
-                        req.body[key] !==
-                        undefined
-                )
-                .map(
-                    (key) => [
-                        key,
-                        req.body[key],
-                    ]
-                )
-        );
-
-    const member =
-        await User.findByIdAndUpdate(
-            req.params.id,
-            {
-                $set: changes,
-            },
-            {
-                returnDocument: "after",
-                runValidators: true,
-            }
-        ).select(
-            "-password -aadhaar"
-        );
-
-    if (!member) {
-        return res.status(404).json({
-            success: false,
-            message:
-                "Member not found",
-        });
+    const existing = await User.findById(req.params.id);
+    if (!existing) {
+        return res.status(404).json({ success: false, message: "Member not found" });
     }
 
-    await audit(req, {
-        action: "update",
-        module: "members",
-        resourceId: member._id,
-
-        metadata: {
-            fields:
-                Object.keys(
-                    changes
-                ),
+    const { error, data } = await validateMemberDetails(
+        {
+            ...req.body,
+            email: existing.email,
+            referralCode: req.body.referralCode || existing.referralCode || "",
         },
-    });
+        {
+            requirePassword: false,
+            requireAadhaar: !existing.aadhaar,
+            requireReferral: Boolean(req.body.referralCode),
+        }
+    );
 
-    res.json({
-        success: true,
-        member,
-    });
-};
-
-
-export const deleteManagedMember = async (
-    req,
-    res
-) => {
-    const member =
-        await User.findByIdAndUpdate(
-            req.params.id,
-            {
-                $set: {
-                    accountStatus:
-                        "disabled",
-                },
-            },
-            {
-                returnDocument: "after",
-            }
-        );
-
-    if (!member) {
-        return res.status(404).json({
-            success: false,
-            message:
-                "Member not found",
-        });
+    if (error) {
+        return res.status(400).json({ success: false, message: error });
     }
 
-    await audit(req, {
-        action: "deactivate",
-        module: "members",
-        resourceId: member._id,
+    const changes = {
+        fullName: data.fullName,
+        mobile: data.mobile,
+        fatherHusbandName: data.fatherHusbandName,
+        dob: data.dob,
+        gender: data.gender,
+        address: data.address,
+        employmentStatus: data.employmentStatus,
+        occupation: data.occupation,
+        nominee: data.nominee,
+        accountStatus: data.accountStatus,
+    };
+
+    if (req.body.aadhaar && /^\d{12}$/.test(String(req.body.aadhaar))) {
+        changes.aadhaar = String(req.body.aadhaar).trim();
+    }
+
+    if (data.referralCode) changes.referralCode = data.referralCode;
+
+    if (!existing.kycCompleted) {
+        const now = new Date();
+        changes.kycCompleted = true;
+        changes.kycCompletedAt = now;
+        changes.membershipStartDate = existing.membershipStartDate || now;
+        changes.membershipExpiresAt = existing.membershipExpiresAt || new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+        changes.kycConsentAcceptedAt = existing.kycConsentAcceptedAt || now;
+        if (!existing.memberId) {
+            changes.memberId = await generateMemberId({
+                address: data.address,
+                employmentStatus: data.employmentStatus,
+            });
+        }
+    }
+
+    changes.publicSearchTerms = createPublicSearchTerms({
+        fullName: data.fullName,
+        memberId: changes.memberId || existing.memberId,
+        mobile: data.mobile,
     });
 
-    res.json({
-        success: true,
-    });
+    try {
+        const member = await User.findByIdAndUpdate(
+            req.params.id,
+            { $set: changes },
+            { returnDocument: "after", runValidators: true }
+        ).select("-password -aadhaar");
+
+        await audit(req, {
+            action: "update",
+            module: "members",
+            resourceId: member._id,
+            metadata: { fields: Object.keys(changes) },
+        });
+
+        res.json({ success: true, member });
+    } catch (error) {
+        if (error.code === 11000) {
+            return res.status(409).json({
+                success: false,
+                message: "Mobile or Aadhaar is already registered",
+            });
+        }
+        throw error;
+    }
 };
 
 
@@ -1147,15 +1083,74 @@ export const listReferrals = async (
     req,
     res
 ) => {
+    await ensureLegacyReferralCodes();
+    const search = String(req.query.search || "").trim();
+    const filter = {};
+
+    if (search) {
+        const expression = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+        filter.$or = [
+            { code: expression },
+            { label: expression },
+            { email: expression },
+            { phone: expression },
+        ];
+    }
+
+    const referrals = await ReferralCode.find(filter).sort({ createdAt: -1 }).lean();
+    const counts = await User.aggregate([
+        { $addFields: { codeUpper: { $toUpper: { $ifNull: ["$referralCode", ""] } } } },
+        { $match: { codeUpper: { $in: referrals.map((item) => item.code) } } },
+        { $group: { _id: "$codeUpper", count: { $sum: 1 } } },
+    ]);
+    const countByCode = new Map(counts.map((item) => [item._id, item.count]));
+
     res.json({
         success: true,
+        referrals: referrals.map((referral) => ({
+            ...referral,
+            userCount: countByCode.get(referral.code) || 0,
+        })),
+    });
+};
 
-        referrals:
-            await ReferralCode.find()
-                .sort({
-                    createdAt: -1,
-                })
-                .lean(),
+export const listReferralUsers = async (req, res) => {
+    await ensureLegacyReferralCodes();
+    const idOrCode = String(req.params.id || "").trim();
+    let referral = null;
+    if (/^[a-fA-F0-9]{24}$/.test(idOrCode)) {
+        referral = await ReferralCode.findById(idOrCode).lean();
+    }
+    if (!referral) {
+        referral = await ReferralCode.findOne({ code: idOrCode.toUpperCase() }).lean();
+    }
+    if (!referral) {
+        return res.status(404).json({ success: false, message: "Referral code not found" });
+    }
+
+    const search = String(req.query.search || "").trim();
+    const userFilter = { referralCode: referralCodeMatch(referral.code) };
+    if (search) {
+        const expression = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+        userFilter.$or = [
+            { fullName: expression },
+            { email: expression },
+            { memberId: expression },
+            { mobile: expression },
+        ];
+    }
+
+    const users = await User.find(userFilter)
+        .select("fullName email memberId mobile kycCompleted createdAt accountStatus")
+        .sort({ createdAt: -1 })
+        .limit(500)
+        .lean();
+
+    res.json({
+        success: true,
+        referral,
+        userCount: users.length,
+        users,
     });
 };
 
@@ -1164,12 +1159,9 @@ export const createReferral = async (
     req,
     res
 ) => {
-    const code = String(
-        req.body.code ||
-            crypto
-                .randomBytes(4)
-                .toString("hex")
-    ).toUpperCase();
+    const code = String(req.body.code || "").trim().toUpperCase();
+    const email = String(req.body.email || "").trim().toLowerCase();
+    const phone = String(req.body.phone || "").trim();
 
     if (
         !/^[A-Z0-9]{4,32}$/.test(
@@ -1183,6 +1175,20 @@ export const createReferral = async (
         });
     }
 
+    if (!validator.isEmail(email)) {
+        return res.status(400).json({
+            success: false,
+            message: "A valid referral contact email is required",
+        });
+    }
+
+    if (!/^[6-9]\d{9}$/.test(phone)) {
+        return res.status(400).json({
+            success: false,
+            message: "A valid 10-digit referral contact phone is required",
+        });
+    }
+
     try {
         const referral =
             await ReferralCode.create({
@@ -1192,6 +1198,9 @@ export const createReferral = async (
                     req.body.label ||
                         ""
                 ).trim(),
+
+                email,
+                phone,
 
                 createdBy:
                     req.admin._id,
@@ -1218,8 +1227,7 @@ export const createReferral = async (
         ) {
             return res.status(409).json({
                 success: false,
-                message:
-                    "Referral code already exists",
+                message: "Referral code, email or phone already exists",
             });
         }
 
@@ -1232,41 +1240,60 @@ export const updateReferral = async (
     req,
     res
 ) => {
-    const referral =
-        await ReferralCode.findByIdAndUpdate(
-            req.params.id,
-            {
-                $set: {
-                    label:
-                        req.body.label,
-                    isActive:
-                        req.body.isActive,
-                },
-            },
-            {
-                returnDocument: "after",
-            }
-        );
+    const changes = {};
 
-    if (!referral) {
-        return res.status(404).json({
-            success: false,
-            message:
-                "Referral code not found",
-        });
+    if (req.body.code !== undefined) {
+        const code = String(req.body.code || "").trim().toUpperCase();
+        if (!/^[A-Z0-9]{4,32}$/.test(code)) {
+            return res.status(400).json({ success: false, message: "Code must be 4–32 letters or digits" });
+        }
+        changes.code = code;
     }
 
-    await audit(req, {
-        action: "update",
-        module: "referrals",
-        resourceId:
-            referral._id,
-    });
+    if (req.body.email !== undefined) {
+        const email = String(req.body.email || "").trim().toLowerCase();
+        if (!validator.isEmail(email)) {
+            return res.status(400).json({ success: false, message: "A valid referral contact email is required" });
+        }
+        changes.email = email;
+    }
 
-    res.json({
-        success: true,
-        referral,
-    });
+    if (req.body.phone !== undefined) {
+        const phone = String(req.body.phone || "").trim();
+        if (!/^[6-9]\d{9}$/.test(phone)) {
+            return res.status(400).json({ success: false, message: "A valid 10-digit referral contact phone is required" });
+        }
+        changes.phone = phone;
+    }
+
+    if (req.body.label !== undefined) changes.label = String(req.body.label || "").trim();
+    if (typeof req.body.isActive === "boolean") changes.isActive = req.body.isActive;
+
+    try {
+        const referral = await ReferralCode.findByIdAndUpdate(
+            req.params.id,
+            { $set: changes },
+            { returnDocument: "after", runValidators: true }
+        );
+
+        if (!referral) {
+            return res.status(404).json({ success: false, message: "Referral code not found" });
+        }
+
+        await audit(req, {
+            action: "update",
+            module: "referrals",
+            resourceId: referral._id,
+            metadata: { fields: Object.keys(changes) },
+        });
+
+        res.json({ success: true, referral });
+    } catch (error) {
+        if (error.code === 11000) {
+            return res.status(409).json({ success: false, message: "Referral code, email or phone already exists" });
+        }
+        throw error;
+    }
 };
 
 
@@ -1297,4 +1324,204 @@ export const deleteReferral = async (
     res.json({
         success: true,
     });
+};
+
+
+/* -------------------------------------------------------------------------- */
+/* CONTACT MESSAGES                                                            */
+/* -------------------------------------------------------------------------- */
+
+export const listContacts = async (req, res) => {
+    try {
+        const search = String(req.query.search || "").trim();
+        const status = String(req.query.status || "").trim();
+        const limit = Math.min(Math.max(Number(req.query.limit) || 100, 1), 200);
+        const filter = {
+            ...(status ? { status } : {}),
+        };
+
+        if (search) {
+            const expression = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+            filter.$or = ["name", "email", "phone", "subject", "message"].map((field) => ({ [field]: expression }));
+        }
+
+        const contacts = await Contact.find(filter)
+            .populate("assignedTo", "fullName email username")
+            .sort({ createdAt: -1, _id: -1 })
+            .limit(limit)
+            .lean();
+
+        res.json({ success: true, contacts });
+    } catch (error) {
+        console.error("LIST CONTACTS ERROR:", error);
+        res.status(500).json({ success: false, message: "Unable to load contact messages" });
+    }
+};
+
+export const listContactAssignees = async (req, res) => {
+    const admins = await Admin.find({ role: "admin", status: "active" })
+        .select("fullName email username")
+        .sort({ fullName: 1 })
+        .lean();
+
+    res.json({ success: true, admins });
+};
+
+export const getContact = async (req, res) => {
+    const contact = await Contact.findOne({
+        _id: req.params.id,
+    })
+        .populate("assignedTo", "fullName email username")
+        .lean();
+
+    if (!contact) {
+        return res.status(404).json({ success: false, message: "Contact message not found" });
+    }
+
+    res.json({ success: true, contact });
+};
+
+export const updateContact = async (req, res) => {
+    const changes = {};
+    const isSuperadmin = req.admin.role === "superadmin";
+
+    if (req.body.status !== undefined) {
+        if (!["new", "read", "in_progress", "resolved"].includes(req.body.status)) {
+            return res.status(400).json({ success: false, message: "Invalid contact status" });
+        }
+        changes.status = req.body.status;
+    }
+
+    if (isSuperadmin && req.body.assignedTo !== undefined) {
+        if (req.body.assignedTo === "" || req.body.assignedTo === null) {
+            changes.assignedTo = null;
+            changes.assignedAt = null;
+        } else {
+            const assignee = await Admin.findOne({
+                _id: req.body.assignedTo,
+                role: "admin",
+                status: "active",
+            }).select("_id");
+
+            if (!assignee) {
+                return res.status(400).json({ success: false, message: "Choose an active administrator" });
+            }
+
+            changes.assignedTo = assignee._id;
+            changes.assignedAt = new Date();
+        }
+    }
+
+    if (!Object.keys(changes).length) {
+        return res.status(400).json({ success: false, message: "No valid contact changes were supplied" });
+    }
+
+    const contact = await Contact.findOneAndUpdate(
+        {
+            _id: req.params.id,
+        },
+        { $set: changes },
+        { returnDocument: "after", runValidators: true }
+    ).populate("assignedTo", "fullName email username");
+
+    if (!contact) {
+        return res.status(404).json({ success: false, message: "Contact message not found" });
+    }
+
+    await audit(req, {
+        action: "contact_updated",
+        module: "contacts",
+        resourceId: contact._id,
+        metadata: { fields: Object.keys(changes) },
+    });
+
+    res.json({ success: true, contact });
+};
+
+export const deleteContact = async (req, res) => {
+    const contact = await Contact.findByIdAndDelete(req.params.id);
+
+    if (!contact) {
+        return res.status(404).json({ success: false, message: "Contact message not found" });
+    }
+
+    await audit(req, {
+        action: "contact_deleted",
+        module: "contacts",
+        resourceId: contact._id,
+    });
+
+    res.json({ success: true });
+};
+
+
+/* -------------------------------------------------------------------------- */
+/* SAHYOG ALERTS                                                               */
+/* -------------------------------------------------------------------------- */
+
+const alertPayload = (body, { partial = false } = {}) => {
+    const changes = {};
+
+    if (!partial || body.title !== undefined) {
+        const title = String(body.title || "").trim();
+        if (!title) return { error: "Alert title is required" };
+        changes.title = title;
+    }
+
+    if (!partial || body.message !== undefined) {
+        const message = String(body.message || "").trim();
+        if (!message) return { error: "Alert message is required" };
+        changes.message = message;
+    }
+
+    if (typeof body.isActive === "boolean") changes.isActive = body.isActive;
+    return { changes };
+};
+
+export const listSahyogAlerts = async (req, res) => {
+    const alerts = await SahyogAlert.find()
+        .sort({ updatedAt: -1, _id: -1 })
+        .limit(200)
+        .lean();
+
+    res.json({ success: true, alerts });
+};
+
+export const createSahyogAlert = async (req, res) => {
+    const { changes, error } = alertPayload(req.body);
+    if (error) return res.status(400).json({ success: false, message: error });
+
+    const alert = await SahyogAlert.create(changes);
+    await audit(req, { action: "sahyog_alert_created", module: "sahyog-alerts", resourceId: alert._id });
+    res.status(201).json({ success: true, alert });
+};
+
+export const updateSahyogAlert = async (req, res) => {
+    const { changes, error } = alertPayload(req.body, { partial: true });
+    if (error) return res.status(400).json({ success: false, message: error });
+    if (!Object.keys(changes).length) return res.status(400).json({ success: false, message: "No alert changes were supplied" });
+
+    const alert = await SahyogAlert.findByIdAndUpdate(
+        req.params.id,
+        { $set: changes },
+        { returnDocument: "after", runValidators: true }
+    );
+
+    if (!alert) return res.status(404).json({ success: false, message: "Sahyog alert not found" });
+
+    await audit(req, {
+        action: "sahyog_alert_updated",
+        module: "sahyog-alerts",
+        resourceId: alert._id,
+        metadata: { fields: Object.keys(changes) },
+    });
+    res.json({ success: true, alert });
+};
+
+export const deleteSahyogAlert = async (req, res) => {
+    const alert = await SahyogAlert.findByIdAndDelete(req.params.id);
+    if (!alert) return res.status(404).json({ success: false, message: "Sahyog alert not found" });
+
+    await audit(req, { action: "sahyog_alert_deleted", module: "sahyog-alerts", resourceId: alert._id });
+    res.json({ success: true });
 };

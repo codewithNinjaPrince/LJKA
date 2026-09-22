@@ -1,5 +1,16 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
-export default defineConfig({ plugins: [react(), tailwindcss()] });
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: {
+      "@indiaLocations": path.resolve(__dirname, "../frontend/src/data/india/locationData.json"),
+    },
+  },
+});

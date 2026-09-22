@@ -17,6 +17,7 @@ import {
 } from "react-icons/fa";
 
 import HeroCarousel from "../components/HeroCarousel";
+import SahyogAlertList from "../components/SahyogAlertList";
 import { LJKAContext } from "../context/LJKAContext";
 
 const MissionPoint = ({ title, text }) => (
@@ -49,6 +50,8 @@ const Home = () => {
     <main className="w-full overflow-hidden bg-[var(--ljka-bg)] text-[var(--ljka-text)]">
 
       <HeroCarousel />
+
+      <SahyogAlertList />
 
       {/* =========================================================
           QUICK ACTIONS
@@ -92,7 +95,7 @@ const Home = () => {
       {/* =========================================================
     SAHYOG ALERT
     ========================================================= */}
-      {sahyogAlert?.isActive && (
+      {false && sahyogAlert?.isActive && (
         <section className="relative z-20 bg-[var(--ljka-primary-bg)] border-b border-[var(--ljka-border)]">
           <div className="mx-auto max-w-[1450px] px-4 py-5 sm:px-6 md:py-6 lg:px-8">
 

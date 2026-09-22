@@ -8,6 +8,17 @@ import App from "./App.jsx";
 createRoot(document.getElementById("root")).render(
   <BrowserRouter>
     <App />
-    <ToastContainer />
+    <ToastContainer
+      position="bottom-center"
+      autoClose={5000}
+      hideProgressBar={false}
+      closeOnClick
+      pauseOnHover
+      pauseOnFocusLoss
+      draggable="touch"
+      draggableDirection="x"
+      limit={3}
+      newestOnTop
+    />
   </BrowserRouter>
 );

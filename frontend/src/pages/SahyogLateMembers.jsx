@@ -174,7 +174,7 @@ const SahyogLateMembers = () => {
         `${backendUrl}/api/public/sahyog?${query.toString()}`,
         {
           signal,
-          cache: "force-cache",
+          cache: "no-store",
         }
       );
 
@@ -508,25 +508,18 @@ const SahyogLateMembers = () => {
       return "-";
     }
 
-    const parsedDate =
-      new Date(date);
+    const parsedDate = new Date(date);
 
-    if (
-      Number.isNaN(
-        parsedDate.getTime()
-      )
-    ) {
+    if (Number.isNaN(parsedDate.getTime())) {
       return "-";
     }
 
-    return new Intl.DateTimeFormat(
-      "en-IN",
-      {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      }
-    ).format(parsedDate);
+    return new Intl.DateTimeFormat("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      timeZone: "UTC",
+    }).format(parsedDate);
   };
 
   // ==========================================

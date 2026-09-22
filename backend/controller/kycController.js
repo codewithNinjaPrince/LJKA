@@ -1,5 +1,7 @@
 import User from "../models/userModel.js";
 import generateMemberId from "../utils/generateMemberId.js";
+import ReferralCode from "../models/referralCodeModel.js";
+import { ensureLegacyReferralCodes } from "../utils/legacyReferrals.js";
 
 const submitKYC = async (req, res) => {
     try {
@@ -254,8 +256,29 @@ const submitKYC = async (req, res) => {
             });
         }
 
-        const finalReferralCode =
-            referralCode?.trim() || "AY92";
+        const finalReferralCode = String(referralCode || "")
+            .trim()
+            .toUpperCase();
+
+        if (!finalReferralCode) {
+            return res.status(400).json({
+                success: false,
+                message: "A referral code is required",
+            });
+        }
+
+        await ensureLegacyReferralCodes();
+        const referral = await ReferralCode.findOne({
+            code: finalReferralCode,
+            isActive: true,
+        }).select("_id");
+
+        if (!referral) {
+            return res.status(400).json({
+                success: false,
+                message: "This referral code is invalid or inactive",
+            });
+        }
 
         // ==========================================
         // NOMINEE

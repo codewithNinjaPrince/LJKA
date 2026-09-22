@@ -19,7 +19,7 @@ const Login = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  const { setToken, navigate, backendUrl } = useContext(LJKAContext);
+  const { setToken, setUser, navigate, backendUrl } = useContext(LJKAContext);
 
   const [identifier, setIdentifier] = useState(
     () => sessionStorage.getItem("loginIdentifier") || sessionStorage.getItem("loginEmail") || ""
@@ -80,22 +80,22 @@ const Login = () => {
       localStorage.setItem("userName", user.fullName);
     }
 
-    // Update context
+    // Update the entire authenticated route state before navigating.  A token
+    // on its own leaves the route guards with no user and used to remount this
+    // form (including a cleared password) after a successful login.
     setToken(token);
+    setUser(user);
 
     const name = user?.fullName || "there";
 
-    toastSuccess(`Welcome back, ${name} 😎`);
-
-    // Keep loading=true while navigation happens.
-    // The Login component will unmount after navigation.
     if (!user?.kycCompleted) {
-      toastInfo("Please complete your KYC to continue");
-      navigate("/kyc");
+      toastInfo(`Welcome back, ${name}. Please complete your KYC to continue.`);
+      navigate("/kyc", { replace: true });
       return;
     }
 
-    navigate("/user/view-profile");
+    toastSuccess(`Welcome back, ${name} 😎`);
+    navigate("/user/view-profile", { replace: true });
   } catch (err) {
     console.error("LOGIN ERROR:", err);
 

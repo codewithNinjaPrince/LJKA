@@ -48,6 +48,7 @@ const LJKAContextProvider = ({ children }) => {
 
   const [appLoading, setAppLoading] = useState(true);
   const [sahyogAlert, setSahyogAlert] = useState(null);
+  const [sahyogAlerts, setSahyogAlerts] = useState([]);
 
 
   /* =====================================================
@@ -61,9 +62,14 @@ const LJKAContextProvider = ({ children }) => {
       );
 
       if (data?.success) {
-        setSahyogAlert(data.alert);
+        const alerts = Array.isArray(data.alerts)
+          ? data.alerts
+          : data.alert ? [data.alert] : [];
+        setSahyogAlerts(alerts);
+        setSahyogAlert(alerts[0] || null);
       } else {
         setSahyogAlert(null);
+        setSahyogAlerts([]);
       }
     } catch (error) {
       // 404 simply means there is currently no active alert.
@@ -75,6 +81,7 @@ const LJKAContextProvider = ({ children }) => {
       }
 
       setSahyogAlert(null);
+      setSahyogAlerts([]);
     }
   }, [backendUrl]);
 
@@ -321,6 +328,7 @@ const LJKAContextProvider = ({ children }) => {
 
     /* Sahyog Alert */
     sahyogAlert,
+    sahyogAlerts,
     getSahyogAlert,
 
     /* Authentication */

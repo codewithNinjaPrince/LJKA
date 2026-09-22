@@ -10,7 +10,18 @@ import "react-toastify/dist/ReactToastify.css";
 createRoot(document.getElementById("root")).render(
   <BrowserRouter>
     <LJKAContextProvider>
-      <ToastContainer />
+      <ToastContainer
+        position="bottom-center"
+        autoClose={5000}
+        hideProgressBar={false}
+        closeOnClick
+        pauseOnHover
+        pauseOnFocusLoss
+        draggable="touch"
+        draggableDirection="x"
+        limit={3}
+        newestOnTop
+      />
       <App />
     </LJKAContextProvider>
   </BrowserRouter>

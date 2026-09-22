@@ -16,14 +16,13 @@ import {
 import axios from "axios";
 import {
   Activity,
-  ClipboardCheck,
   Code2,
+  FileText,
   HandHeart,
   LayoutDashboard,
   LogOut,
   Menu,
   Plus,
-  RefreshCw,
   Settings,
   ShieldCheck,
   Users,
@@ -31,7 +30,11 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 import AdminManagement, { Rights } from "../components/AdminManagement.jsx";
-import MemberUpdateRequests from "../components/member-update-requests/MemberUpdateRequests.jsx";
+import MemberManagement from "../components/MemberManagement.jsx";
+import ReferralCodes from "../components/ReferralCodes.jsx";
+import ClaimsReview from "../components/ClaimsReview.jsx";
+import ContactMessages from "../components/ContactMessages.jsx";
+import SahyogAlerts from "../components/SahyogAlerts.jsx";
 import SahyogCrudPortal from "./SahyogCrudPortal.jsx";
 
 const apiUrl = import.meta.env.VITE_BACKEND_URL;
@@ -50,9 +53,9 @@ const moduleIcons = {
   referrals: Code2,
   sahyog: HandHeart,
   "sahyog-donations": HandHeart,
-  "member-update-requests": ClipboardCheck,
   "sahyog-alerts": Activity,
   contacts: Activity,
+  claims: FileText,
 };
 
 const api = (token) =>
@@ -139,13 +142,12 @@ function AdminShell() {
   const { admin, modules } = me;
   const isSuper = admin.role === "superadmin";
 
-  const allowed = (key, action = "view") =>
-    isSuper ||
-    admin.permissions.some(
-      (p) =>
-        p.module === key &&
-        p.actions.includes(action)
-    );
+  const allowed = (key, action = "view") => {
+    if (isSuper) return true;
+    const permission = admin.permissions.find((p) => p.module === key);
+    const actions = permission?.actions || [];
+    return actions.includes(action) || (action === "view" && actions.length > 0);
+  };
 
   const root = isSuper ? "/superadmin" : "/admin";
 
@@ -171,11 +173,31 @@ function AdminShell() {
         ]
       : []),
 
+    ...(isSuper
+      ? [
+          {
+            to: `${root}/referrals`,
+            label: "Referral Codes",
+            icon: Code2,
+          },
+          {
+            to: `${root}/sahyog`,
+            label: "Sahyog Cases",
+            icon: HandHeart,
+          },
+          {
+            to: `${root}/claims`,
+            label: "Member Claims",
+            icon: FileText,
+          },
+        ]
+      : []),
+
     ...modules
       .filter(
         (m) =>
           allowed(m.key) &&
-          ["members", "referrals", "member-update-requests", "sahyog"].includes(m.key)
+          ["members", "sahyog-alerts", "contacts"].includes(m.key)
       )
       .map((m) => ({
         to: `${root}/${m.key}`,
@@ -307,26 +329,10 @@ function AdminShell() {
               path="members"
               element={
                 allowed("members") ? (
-                  <Members token={token} />
-                ) : (
-                  <Navigate
-                    to="../dashboard"
-                    replace
-                  />
-                )
-              }
-            />
-
-            <Route
-              path="referrals"
-              element={
-                allowed("referrals") ? (
-                  <Referrals
+                  <MemberManagement
                     token={token}
-                    canCreate={allowed(
-                      "referrals",
-                      "create"
-                    )}
+                    canCreate={allowed("members", "create")}
+                    canUpdate={allowed("members", "update")}
                   />
                 ) : (
                   <Navigate
@@ -337,29 +343,44 @@ function AdminShell() {
               }
             />
 
-            <Route
-              path="member-update-requests"
-              element={
-                allowed("member-update-requests") ? (
-                  <MemberUpdateRequests
-                    token={token}
-                    canApprove={allowed("member-update-requests", "approve")}
-                    canReject={allowed("member-update-requests", "reject")}
-                  />
-                ) : (
-                  <Navigate to="../dashboard" replace />
-                )
-              }
-            />
+            {isSuper && <Route path="referrals" element={<ReferralCodes token={token} />} />}
+            {isSuper && <Route path="claims" element={<ClaimsReview token={token} />} />}
 
             <Route
               path="sahyog/*"
               element={
-                allowed("sahyog") ? (
+                isSuper ? (
                   <SahyogCrudPortal token={token} admin={admin} />
                 ) : (
                   <Navigate to="../dashboard" replace />
                 )
+              }
+            />
+
+            <Route
+              path="sahyog-alerts"
+              element={
+                allowed("sahyog-alerts") ? (
+                  <SahyogAlerts
+                    token={token}
+                    canCreate={allowed("sahyog-alerts", "create")}
+                    canUpdate={allowed("sahyog-alerts", "update")}
+                    canDelete={allowed("sahyog-alerts", "delete")}
+                  />
+                ) : <Navigate to="../dashboard" replace />
+              }
+            />
+
+            <Route
+              path="contacts"
+              element={
+                allowed("contacts") ? (
+                  <ContactMessages
+                    token={token}
+                    isSuperadmin={isSuper}
+                    canUpdate={allowed("contacts", "update")}
+                  />
+                ) : <Navigate to="../dashboard" replace />
               }
             />
 
@@ -484,267 +505,6 @@ function Dashboard({ token, isSuper }) {
           )}
         </section>
       )}
-    </>
-  );
-}
-
-function Members({ token }) {
-  const [members, setMembers] = useState([]);
-  const [search, setSearch] = useState("");
-
-  const load = useCallback(
-    () =>
-      api(token)
-        .get("/members", {
-          params: { search },
-        })
-        .then((r) =>
-          setMembers(r.data.members)
-        )
-        .catch((e) =>
-          toast.error(
-            e.response?.data?.message ||
-              "Could not load members"
-          )
-        ),
-    [token, search]
-  );
-
-  useEffect(() => {
-    const timer = setTimeout(load, 250);
-
-    return () => clearTimeout(timer);
-  }, [load]);
-
-  return (
-    <>
-      <PageTitle
-        title="Members"
-        subtitle="Existing LJKA member records. Sensitive Aadhaar data is never returned."
-        action={
-          <button
-            onClick={load}
-            className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm"
-          >
-            <RefreshCw size={15} />
-            Refresh
-          </button>
-        }
-      />
-
-      <input
-        className="mb-4 w-full max-w-md rounded-lg border bg-white p-3"
-        placeholder="Search name, email, member ID or mobile"
-        value={search}
-        onChange={(e) =>
-          setSearch(e.target.value)
-        }
-      />
-
-      <div className="overflow-x-auto rounded-xl border bg-white">
-        <table className="min-w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-500">
-            <tr>
-              {[
-                "Member",
-                "Member ID",
-                "Mobile",
-                "KYC",
-                "Registered",
-              ].map((x) => (
-                <th
-                  key={x}
-                  className="p-4 font-medium"
-                >
-                  {x}
-                </th>
-              ))}
-            </tr>
-          </thead>
-
-          <tbody>
-            {members.map((m) => (
-              <tr
-                key={m._id}
-                className="border-t"
-              >
-                <td className="p-4">
-                  <b>{m.fullName}</b>
-                  <br />
-                  <span className="text-slate-500">
-                    {m.email}
-                  </span>
-                </td>
-
-                <td className="p-4">
-                  {m.memberId || "—"}
-                </td>
-
-                <td className="p-4">
-                  {m.mobile || "—"}
-                </td>
-
-                <td className="p-4">
-                  <Badge
-                    value={
-                      m.kycCompleted
-                        ? "completed"
-                        : "pending"
-                    }
-                  />
-                </td>
-
-                <td className="p-4 text-slate-500">
-                  {new Date(
-                    m.createdAt
-                  ).toLocaleDateString()}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {!members.length && (
-          <p className="p-6 text-slate-500">
-            No matching members.
-          </p>
-        )}
-      </div>
-    </>
-  );
-}
-
-function Referrals({ token }) {
-  const [referrals, setReferrals] = useState([]);
-  const [label, setLabel] = useState("");
-
-  const load = useCallback(
-    () =>
-      api(token)
-        .get("/referrals")
-        .then((r) =>
-          setReferrals(r.data.referrals)
-        )
-        .catch((e) =>
-          toast.error(
-            e.response?.data?.message ||
-              "Could not load referral codes"
-          )
-        ),
-    [token]
-  );
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  const create = async (e) => {
-    e.preventDefault();
-
-    try {
-      await api(token).post("/referrals", {
-        label,
-      });
-
-      setLabel("");
-
-      toast.success(
-        "Referral code generated"
-      );
-
-      load();
-    } catch (err) {
-      toast.error(
-        err.response?.data?.message ||
-          "Could not create code"
-      );
-    }
-  };
-
-  return (
-    <>
-      <PageTitle
-        title="Referral Codes"
-        subtitle="Collision-resistant codes stored separately from member KYC references."
-      />
-
-      <form
-        onSubmit={create}
-        className="mb-5 flex max-w-lg gap-2"
-      >
-        <input
-          className="min-w-0 flex-1 rounded-lg border bg-white p-2.5"
-          placeholder="Optional label"
-          value={label}
-          onChange={(e) =>
-            setLabel(e.target.value)
-          }
-        />
-
-        <button className="rounded-lg bg-[#78081c] px-4 text-sm font-semibold text-white">
-          Generate code
-        </button>
-      </form>
-
-      <div className="overflow-hidden rounded-xl border bg-white">
-        <table className="min-w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-500">
-            <tr>
-              <th className="p-4 font-medium">
-                Code
-              </th>
-              <th className="p-4 font-medium">
-                Label
-              </th>
-              <th className="p-4 font-medium">
-                Status
-              </th>
-              <th className="p-4 font-medium">
-                Created
-              </th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {referrals.map((r) => (
-              <tr
-                key={r._id}
-                className="border-t"
-              >
-                <td className="p-4 font-mono font-bold">
-                  {r.code}
-                </td>
-
-                <td className="p-4">
-                  {r.label || "—"}
-                </td>
-
-                <td className="p-4">
-                  <Badge
-                    value={
-                      r.isActive
-                        ? "active"
-                        : "disabled"
-                    }
-                  />
-                </td>
-
-                <td className="p-4 text-slate-500">
-                  {new Date(
-                    r.createdAt
-                  ).toLocaleDateString()}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {!referrals.length && (
-          <p className="p-6 text-slate-500">
-            No referral codes yet.
-          </p>
-        )}
-      </div>
     </>
   );
 }

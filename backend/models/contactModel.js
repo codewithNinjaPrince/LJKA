@@ -17,8 +17,8 @@ const contactSchema = new mongoose.Schema(
 
     phone: {
       type: String,
-      required: true,
       trim: true,
+      default: "",
     },
 
     subject: {
@@ -38,11 +38,27 @@ const contactSchema = new mongoose.Schema(
       enum: ["new", "read", "in_progress", "resolved"],
       default: "new",
     },
+
+    // Superadmin can assign a message to an administrator for follow-up.
+    // Administrators with contact view permission can see every message.
+    assignedTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Admin",
+      default: null,
+      index: true,
+    },
+
+    assignedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
   }
 );
+
+contactSchema.index({ assignedTo: 1, status: 1, createdAt: -1 });
 
 const ContactModel =
   mongoose.models.Contact ||

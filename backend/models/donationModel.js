@@ -18,4 +18,5 @@ const donationSchema = new mongoose.Schema({
 
 donationSchema.index({ sahyogId: 1, paymentStatus: 1, createdAt: -1 });
 donationSchema.index({ paymentStatus: 1, createdAt: -1 });
+donationSchema.index({ paymentStatus: 1, verifiedAt: -1, createdAt: -1 });
 export default mongoose.model("Donation", donationSchema);

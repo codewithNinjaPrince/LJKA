@@ -2,20 +2,14 @@ import SahyogAlert from "../models/sahyogAlert.js";
 
 const getSahyogAlert = async (req, res) => {
   try {
-    const alert = await SahyogAlert.findOne({
-      isActive: true,
-    }).sort({ updatedAt: -1 });
-
-    if (!alert) {
-      return res.status(404).json({
-        success: false,
-        message: "No active Sahyog alert found",
-      });
-    }
+    const alerts = await SahyogAlert.find({ isActive: true })
+      .sort({ updatedAt: -1, createdAt: -1, _id: -1 })
+      .lean();
 
     res.status(200).json({
       success: true,
-      alert,
+      alerts,
+      alert: alerts[0] || null,
     });
   } catch (error) {
     console.error("Error fetching Sahyog alert:", error);

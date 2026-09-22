@@ -23,7 +23,10 @@ const UserLayout = () => {
         <Navbar memberPortal />
       </div>
 
-      <main className="relative z-10 px-4 pb-12 pt-[132px] sm:px-8 sm:pb-16 sm:pt-[140px] lg:px-12 xl:px-16">
+      {/* Individual member pages own their horizontal gutters, matching the
+          public layout.  Keeping them here as well caused pages with their
+          own padding (such as Update Profile and Sahyog) to look shrunken. */}
+      <main className="relative z-10 pb-12 pt-[132px] sm:pb-16 sm:pt-[140px]">
         <Outlet />
       </main>
 

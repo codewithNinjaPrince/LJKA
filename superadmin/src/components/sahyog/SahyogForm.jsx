@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 
 import { adminApi } from "../../services/adminApi.js";
+import { dateInputValue } from "../../utils/dates.js";
 import { LoadingButton, PageHeading } from "./SahyogUi.jsx";
 
 const blankForm = () => ({
@@ -12,12 +13,10 @@ const blankForm = () => ({
   contactMobile: "",
   address: "",
   minimumDonationAmount: "",
-  status: "draft",
+  status: "active",
   paymentDetails: { bankName: "", accountHolderName: "", accountNumber: "", ifsc: "", upiId: "", paymentCode: "", branchName: "" },
   publicPayment: { upiId: "" },
 });
-
-const dateInputValue = (value) => value ? new Date(value).toISOString().slice(0, 10) : "";
 
 export default function SahyogForm({ token, root }) {
   const { id } = useParams();
@@ -55,7 +54,19 @@ export default function SahyogForm({ token, root }) {
     event.preventDefault();
     setIsSaving(true);
     try {
-      const payload = { ...form, minimumDonationAmount: form.minimumDonationAmount === "" ? "" : Number(form.minimumDonationAmount) };
+      const payload = {
+        memberId: typeof form.memberId === "object" ? form.memberId._id : form.memberId,
+        dateOfDeath: form.dateOfDeath,
+        contactName: form.contactName,
+        contactMobile: form.contactMobile,
+        address: form.address,
+        familyInfo: form.familyInfo || "",
+        description: form.description || "",
+        minimumDonationAmount: form.minimumDonationAmount === "" ? "" : Number(form.minimumDonationAmount),
+        status: form.status || "active",
+        paymentDetails: form.paymentDetails,
+        publicPayment: form.publicPayment,
+      };
       if (editing) await adminApi(token).patch(`/sahyog/${id}`, payload);
       else await adminApi(token).post("/sahyog", payload);
       toast.success(editing ? "Sahyog case updated" : "Sahyog case created");

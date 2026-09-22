@@ -39,7 +39,7 @@ const Register = () => {
 
   const [agreeTerms, setAgreeTerms] = useState(false);
 
-  const { setToken, navigate, backendUrl } = useContext(LJKAContext);
+  const { setToken, setUser, navigate, backendUrl } = useContext(LJKAContext);
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -397,6 +397,7 @@ const Register = () => {
           const { token, user } = loginRes.data;
 
           setToken(token);
+          setUser(user);
 
           localStorage.setItem("token", token);
 
@@ -411,7 +412,7 @@ const Register = () => {
 
           toastSuccess("Account created 🎉 Let's finish your KYC");
 
-          navigate("/kyc");
+          navigate("/kyc", { replace: true });
 
           return;
         }

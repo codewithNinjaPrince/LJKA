@@ -59,7 +59,7 @@ const EMPLOYMENT_OPTIONS = [
 
 /* ---------------- COMPONENT ---------------- */
 const KYC = () => {
-  const { token, navigate, backendUrl, user, getUserProfile } = useContext(LJKAContext);
+  const { token, navigate, backendUrl, user, setUser, getUserProfile } = useContext(LJKAContext);
   const location = useLocation();
   const isUpdateMode = location.pathname === "/user/update-profile";
   const KYC_DRAFT_KEY = isUpdateMode
@@ -547,6 +547,11 @@ const KYC = () => {
       return;
     }
 
+    if (!isUpdateMode && !formData.referralCode.trim()) {
+      toastError("A referral code is required");
+      return;
+    }
+
     if (!formData.nomineeName.trim()) {
       toastError("Nominee name is required");
       return;
@@ -644,20 +649,26 @@ const KYC = () => {
         return;
       }
 
-      if (
-        !isUpdateMode &&
-        localStorage.getItem("kycCompleted") === "true"
-      ) {
-        sessionStorage.removeItem("ljka_kyc_in_progress");
-
-        navigate("/user/view-profile", { replace: true });
-        return;
-      }
+      // Complete the route-guard state before navigating.  Previously this
+      // state was only changed after a later profile request, which could
+      // bounce a successful KYC submission back to the same page.
+      localStorage.setItem("kycCompleted", "true");
+      sessionStorage.removeItem("ljka_kyc_in_progress");
+      sessionStorage.removeItem(KYC_DRAFT_KEY);
+      setUser((current) => ({
+        ...(current || {}),
+        ...(res.data.user || {}),
+        kycCompleted: true,
+      }));
+      toastSuccess("KYC completed successfully");
+      navigate("/user/view-profile", { replace: true });
+      return;
     } catch (err) {
       const response = err?.response;
 
       if (!isUpdateMode && response?.data?.message === "KYC has already been completed") {
         localStorage.setItem("kycCompleted", "true");
+        setUser((current) => ({ ...(current || {}), kycCompleted: true }));
         toastInfo("Your KYC is already completed");
         navigate("/user/view-profile");
         return;
@@ -1044,14 +1055,15 @@ const KYC = () => {
                 {!isUpdateMode && (
                   <div className="md:col-span-2">
                     <label className="ljka-login-label">
-                      Referral Code
+                      Referral Code <span className="text-red-500">*</span>
                     </label>
 
                     <input
                       name="referralCode"
                       value={formData.referralCode}
                       onChange={(e) => handleChange("referralCode", e.target.value)}
-                      placeholder="e.g. AY92"
+                      placeholder="Enter the code issued by LJKA"
+                      required
                       className="ljka-login-input"
                     />
                   </div>
