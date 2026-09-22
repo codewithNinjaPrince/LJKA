@@ -32,6 +32,16 @@ export const MODULES = [
     },
 
     {
+        key: "member-update-requests",
+        label: "Member Update Requests",
+        actions: [
+            "view",
+            "approve",
+            "reject",
+        ],
+    },
+
+    {
         key: "sahyog-alerts",
         label: "Sahyog Alerts",
         actions: [
@@ -1083,39 +1093,53 @@ export const listReferrals = async (
     req,
     res
 ) => {
-    await ensureLegacyReferralCodes();
     const search = String(req.query.search || "").trim();
-    const filter = {};
+    const [registeredReferrals, usedCodes] = await Promise.all([
+        ReferralCode.find().sort({ createdAt: -1 }).lean(),
+        User.aggregate([
+            { $project: { code: { $trim: { input: { $toUpper: { $ifNull: ["$referralCode", ""] } } } } } },
+            { $match: { code: { $regex: "^[A-Z0-9]{2,32}$" } } },
+            { $group: { _id: "$code", count: { $sum: 1 } } },
+        ]),
+    ]);
+
+    const countByCode = new Map(usedCodes.map((item) => [item._id, item.count]));
+    const byCode = new Map(registeredReferrals.map((item) => [String(item.code).toUpperCase(), item]));
+    // AY92 was the old shared code and must stay visible even if no registry
+    // document was ever created.  Every code saved against a member is also
+    // surfaced, so the superadmin can audit historic registrations.
+    const allCodes = new Set(["AY92", ...byCode.keys(), ...countByCode.keys()]);
+    let referrals = [...allCodes].map((code) => {
+        const referral = byCode.get(code);
+        return referral || {
+            _id: code,
+            code,
+            label: "Imported from existing members",
+            email: "",
+            phone: "",
+            isActive: true,
+            legacy: true,
+            createdAt: null,
+        };
+    });
 
     if (search) {
         const expression = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
-        filter.$or = [
-            { code: expression },
-            { label: expression },
-            { email: expression },
-            { phone: expression },
-        ];
+        referrals = referrals.filter((item) => expression.test([item.code, item.label, item.email, item.phone].join(" ")));
     }
 
-    const referrals = await ReferralCode.find(filter).sort({ createdAt: -1 }).lean();
-    const counts = await User.aggregate([
-        { $addFields: { codeUpper: { $toUpper: { $ifNull: ["$referralCode", ""] } } } },
-        { $match: { codeUpper: { $in: referrals.map((item) => item.code) } } },
-        { $group: { _id: "$codeUpper", count: { $sum: 1 } } },
-    ]);
-    const countByCode = new Map(counts.map((item) => [item._id, item.count]));
+    referrals.sort((a, b) => String(a.code).localeCompare(String(b.code)));
 
     res.json({
         success: true,
         referrals: referrals.map((referral) => ({
             ...referral,
-            userCount: countByCode.get(referral.code) || 0,
+            userCount: countByCode.get(String(referral.code).toUpperCase()) || 0,
         })),
     });
 };
 
 export const listReferralUsers = async (req, res) => {
-    await ensureLegacyReferralCodes();
     const idOrCode = String(req.params.id || "").trim();
     let referral = null;
     if (/^[a-fA-F0-9]{24}$/.test(idOrCode)) {
@@ -1125,7 +1149,17 @@ export const listReferralUsers = async (req, res) => {
         referral = await ReferralCode.findOne({ code: idOrCode.toUpperCase() }).lean();
     }
     if (!referral) {
-        return res.status(404).json({ success: false, message: "Referral code not found" });
+        const code = idOrCode.toUpperCase();
+        if (!/^[A-Z0-9]{2,32}$/.test(code)) {
+            return res.status(404).json({ success: false, message: "Referral code not found" });
+        }
+        referral = {
+            _id: code,
+            code,
+            label: "Imported from existing members",
+            isActive: true,
+            legacy: true,
+        };
     }
 
     const search = String(req.query.search || "").trim();

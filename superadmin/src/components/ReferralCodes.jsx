@@ -129,12 +129,11 @@ export default function ReferralCodes({ token }) {
               <td className="p-4 text-slate-600"><span className="block break-all">{referral.email || "Legacy referral"}</span><span>{referral.phone || "—"}</span></td>
               <td className="p-4 font-semibold">{referral.userCount || 0}</td>
               <td className="p-4"><Badge value={referral.isActive ? "active" : "disabled"} /></td>
-              <td className="p-4 text-slate-500">{new Date(referral.createdAt).toLocaleDateString("en-IN")}</td>
+              <td className="p-4 text-slate-500">{referral.createdAt ? new Date(referral.createdAt).toLocaleDateString("en-IN") : "Legacy"}</td>
               <td className="p-4">
                 <div className="flex flex-wrap gap-3">
                   <button onClick={() => { setUserSearch(""); loadUsers(referral._id); }} className="font-semibold text-[#78081c]">View members</button>
-                  <button onClick={() => edit(referral)} className="font-semibold text-slate-700">Edit</button>
-                  <button onClick={() => remove(referral._id)} className="font-semibold text-rose-700">Delete</button>
+                  {!referral.legacy && <><button onClick={() => edit(referral)} className="font-semibold text-slate-700">Edit</button><button onClick={() => remove(referral._id)} className="font-semibold text-rose-700">Delete</button></>}
                 </div>
               </td>
             </tr>

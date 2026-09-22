@@ -6,6 +6,7 @@ const getSahyogAlert = async (req, res) => {
       .sort({ updatedAt: -1, createdAt: -1, _id: -1 })
       .lean();
 
+    res.set("Cache-Control", "no-store, max-age=0");
     res.status(200).json({
       success: true,
       alerts,

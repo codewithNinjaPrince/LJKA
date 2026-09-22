@@ -58,7 +58,13 @@ const LJKAContextProvider = ({ children }) => {
   const getSahyogAlert = useCallback(async () => {
     try {
       const { data } = await axios.get(
-        `${backendUrl}/api/sahyog-alert`
+        `${backendUrl}/api/sahyog-alert`,
+        {
+          // Alerts are time-sensitive.  A cache-buster ensures a visitor does
+          // not keep receiving a previously cached single-alert response.
+          params: { _: Date.now() },
+          headers: { "Cache-Control": "no-cache" },
+        }
       );
 
       if (data?.success) {
@@ -312,6 +318,21 @@ const LJKAContextProvider = ({ children }) => {
 
     initializeApp();
   }, [getUserProfile, getSahyogAlert]);
+
+  // Alerts are managed independently of a visitor's session. Refreshing them
+  // while the site remains open lets a newly published alert appear without a
+  // manual reload, while keeping the request rate intentionally low.
+  useEffect(() => {
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") getSahyogAlert();
+    };
+    const timer = window.setInterval(getSahyogAlert, 30_000);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
+  }, [getSahyogAlert]);
 
 
   /* =====================================================

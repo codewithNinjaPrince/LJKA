@@ -31,6 +31,7 @@ import {
 import { toast } from "react-toastify";
 import AdminManagement, { Rights } from "../components/AdminManagement.jsx";
 import MemberManagement from "../components/MemberManagement.jsx";
+import MemberUpdateRequests from "../components/member-update-requests/MemberUpdateRequests.jsx";
 import ReferralCodes from "../components/ReferralCodes.jsx";
 import ClaimsReview from "../components/ClaimsReview.jsx";
 import ContactMessages from "../components/ContactMessages.jsx";
@@ -197,7 +198,7 @@ function AdminShell() {
       .filter(
         (m) =>
           allowed(m.key) &&
-          ["members", "sahyog-alerts", "contacts"].includes(m.key)
+          ["members", "member-update-requests", "sahyog-alerts", "contacts"].includes(m.key)
       )
       .map((m) => ({
         to: `${root}/${m.key}`,
@@ -345,6 +346,19 @@ function AdminShell() {
 
             {isSuper && <Route path="referrals" element={<ReferralCodes token={token} />} />}
             {isSuper && <Route path="claims" element={<ClaimsReview token={token} />} />}
+
+            <Route
+              path="member-update-requests"
+              element={
+                allowed("member-update-requests") ? (
+                  <MemberUpdateRequests
+                    token={token}
+                    canApprove={allowed("member-update-requests", "approve")}
+                    canReject={allowed("member-update-requests", "reject")}
+                  />
+                ) : <Navigate to="../dashboard" replace />
+              }
+            />
 
             <Route
               path="sahyog/*"
