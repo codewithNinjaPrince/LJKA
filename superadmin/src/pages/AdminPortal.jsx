@@ -182,11 +182,6 @@ function AdminShell() {
             icon: Code2,
           },
           {
-            to: `${root}/sahyog`,
-            label: "Sahyog Cases",
-            icon: HandHeart,
-          },
-          {
             to: `${root}/claims`,
             label: "Member Claims",
             icon: FileText,
@@ -198,7 +193,7 @@ function AdminShell() {
       .filter(
         (m) =>
           allowed(m.key) &&
-          ["members", "member-update-requests", "sahyog-alerts", "contacts"].includes(m.key)
+          ["members", "member-update-requests", "sahyog-alerts", "contacts", "sahyog"].includes(m.key)
       )
       .map((m) => ({
         to: `${root}/${m.key}`,
@@ -363,7 +358,7 @@ function AdminShell() {
             <Route
               path="sahyog/*"
               element={
-                isSuper ? (
+                allowed("sahyog") ? (
                   <SahyogCrudPortal token={token} admin={admin} />
                 ) : (
                   <Navigate to="../dashboard" replace />

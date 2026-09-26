@@ -53,6 +53,18 @@ export const MODULES = [
     },
 
     {
+        key: "sahyog",
+        label: "Sahyog Cases",
+        actions: ["view", "create", "update", "delete"],
+    },
+
+    {
+        key: "sahyog-donations",
+        label: "Sahyog Donations",
+        actions: ["view", "verify", "reject"],
+    },
+
+    {
         key: "contacts",
         label: "Contact Messages",
         actions: [
@@ -1024,6 +1036,19 @@ export const updateManagedMember = async (
 
     if (error) {
         return res.status(400).json({ success: false, message: error });
+    }
+
+    // Do this before the write so Super Admin receives a clear validation
+    // response instead of a late database duplicate-key error.
+    const [mobileOwner, aadhaarOwner] = await Promise.all([
+        User.findOne({ mobile: data.mobile, _id: { $ne: existing._id } }).select("_id"),
+        User.findOne({ aadhaar: data.aadhaar, _id: { $ne: existing._id } }).select("_id"),
+    ]);
+    if (mobileOwner) {
+        return res.status(409).json({ success: false, message: "Mobile number is already registered" });
+    }
+    if (aadhaarOwner) {
+        return res.status(409).json({ success: false, message: "Aadhaar number is already registered" });
     }
 
     const changes = {

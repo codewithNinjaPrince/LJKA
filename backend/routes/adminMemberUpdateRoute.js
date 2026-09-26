@@ -5,6 +5,8 @@ import {
   getMemberUpdateRequestById,
   approveMemberUpdateRequest,
   rejectMemberUpdateRequest,
+  approveMemberUpdateField,
+  rejectMemberUpdateField,
 } from "../controller/adminMemberUpdateController.js";
 
 import { adminAuth, requirePermission } from "../middleware/adminAuth.js";
@@ -38,5 +40,8 @@ adminMemberUpdateRouter.patch(
   requirePermission("member-update-requests", "reject"),
   rejectMemberUpdateRequest
 );
+
+adminMemberUpdateRouter.patch("/:requestId/fields/:field/approve", adminAuth, requirePermission("member-update-requests", "approve"), approveMemberUpdateField);
+adminMemberUpdateRouter.patch("/:requestId/fields/:field/reject", adminAuth, requirePermission("member-update-requests", "reject"), rejectMemberUpdateField);
 
 export default adminMemberUpdateRouter;

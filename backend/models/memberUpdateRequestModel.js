@@ -22,6 +22,13 @@ const memberUpdateRequestSchema = new mongoose.Schema(
       required: true,
     },
 
+    // One review decision per changed field. Keys use dot paths such as
+    // address.pincode and nominee.mobile.
+    fieldReviews: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
+
     status: {
       type: String,
       enum: ["pending", "approved", "rejected"],

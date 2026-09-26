@@ -1,5 +1,24 @@
 import userModel from "../models/userModel.js";
 import MemberUpdateRequest from "../models/memberUpdateRequestModel.js";
+import { validateMemberDetails } from "../utils/memberDetails.js";
+
+const mergeProfile = (user, changes = {}) => {
+  const profile = user.toObject ? user.toObject() : user;
+  return {
+    fullName: changes.fullName ?? profile.fullName,
+    email: profile.email,
+    mobile: changes.mobile ?? profile.mobile,
+    fatherHusbandName: changes.fatherHusbandName ?? profile.fatherHusbandName,
+    aadhaar: changes.aadhaar ?? profile.aadhaar,
+    dob: changes.dob ?? profile.dob,
+    gender: changes.gender ?? profile.gender,
+    occupation: changes.occupation ?? profile.occupation,
+    employmentStatus: changes.employmentStatus ?? profile.employmentStatus,
+    address: { ...(profile.address || {}), ...(changes.address || {}) },
+    nominee: { ...(profile.nominee || {}), ...(changes.nominee || {}) },
+    accountStatus: profile.accountStatus,
+  };
+};
 
 const submitMemberUpdateRequest = async (req, res) => {
   try {
@@ -87,6 +106,25 @@ const submitMemberUpdateRequest = async (req, res) => {
         message: "No valid profile fields were provided for update.",
       });
     }
+
+    // A profile-change request must pass the exact same complete-profile rules
+    // as registration/KYC. This prevents invalid data from reaching admins.
+    const { error, data } = await validateMemberDetails(
+      mergeProfile(user, filteredChanges),
+      { requireAadhaar: true }
+    );
+    if (error) return res.status(400).json({ success: false, message: error });
+
+    const [mobileOwner, aadhaarOwner] = await Promise.all([
+      userModel.findOne({ mobile: data.mobile, _id: { $ne: user._id } }).select("_id"),
+      userModel.findOne({ aadhaar: data.aadhaar, _id: { $ne: user._id } }).select("_id"),
+    ]);
+    if (mobileOwner) return res.status(409).json({ success: false, message: "This mobile number is already registered" });
+    if (aadhaarOwner) return res.status(409).json({ success: false, message: "This Aadhaar number is already registered" });
+
+    // Store sanitized values, rather than raw browser input, for every field
+    // included in the request.
+    for (const field of Object.keys(filteredChanges)) filteredChanges[field] = data[field];
 
     /*
      * Take a snapshot of the current values.

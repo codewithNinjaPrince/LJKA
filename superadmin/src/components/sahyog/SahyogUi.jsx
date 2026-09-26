@@ -8,6 +8,7 @@ export const statusStyles = {
   closed: "bg-blue-100 text-blue-800",
   disabled: "bg-rose-100 text-rose-800",
   failed: "bg-rose-100 text-rose-800",
+  rejected: "bg-rose-100 text-rose-800",
   refunded: "bg-slate-200 text-slate-700",
 };
 

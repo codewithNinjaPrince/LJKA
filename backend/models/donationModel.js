@@ -9,7 +9,7 @@ const donationSchema = new mongoose.Schema({
   donorMobile: { type: String, trim: true, default: "" },
   isAnonymous: { type: Boolean, default: false },
   amount: { type: Number, required: true, min: 1 },
-  paymentStatus: { type: String, enum: ["pending", "success", "failed", "refunded"], default: "pending", index: true },
+  paymentStatus: { type: String, enum: ["pending", "success", "failed", "rejected", "refunded"], default: "pending", index: true },
   transactionId: { type: String, trim: true, default: "" },
   paymentMethod: { type: String, trim: true, default: "" },
   verifiedAt: { type: Date, default: null },
