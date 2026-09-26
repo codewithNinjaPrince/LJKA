@@ -80,6 +80,38 @@ const DownloadIdCard = () => {
     );
   };
 
+  // Preview cards live inside a scaled mobile container. PDF capture must not
+  // inherit that transform, so each card is cloned onto an unscaled 520px
+  // surface before html2canvas renders it.
+  const captureFullSizeCard = async (card) => {
+    const surface = document.createElement("div");
+    const clone = card.cloneNode(true);
+    surface.style.cssText = "position:fixed;left:-10000px;top:0;width:520px;height:328px;overflow:hidden;background:#fff;transform:none;z-index:-1;";
+    clone.style.width = "520px";
+    clone.style.height = `${520 / 1.586}px`;
+    clone.style.transform = "none";
+    surface.appendChild(clone);
+    document.body.appendChild(surface);
+
+    try {
+      await waitForImages(clone);
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      return await html2canvas(clone, {
+        scale: 4,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: "#ffffff",
+        logging: false,
+        imageTimeout: 15000,
+        removeContainer: true,
+        windowWidth: 520,
+        windowHeight: 328,
+      });
+    } finally {
+      surface.remove();
+    }
+  };
+
   useEffect(() => {
     if (!user || !frontCardRef.current || !backCardRef.current || !qr) return;
     if (!downloadRequested) return;
@@ -88,36 +120,10 @@ const DownloadIdCard = () => {
 
     const autoDownload = async () => {
       try {
-        await waitForImages(frontCardRef.current);
-        await waitForImages(backCardRef.current);
-
-        await new Promise((resolve) =>
-          requestAnimationFrame(() => resolve())
-        );
-
-        await new Promise((resolve) => setTimeout(resolve, 300));
-
         if (cancelled) return;
 
-        const captureOptions = {
-          scale: 4,
-          useCORS: true,
-          allowTaint: false,
-          backgroundColor: "#ffffff",
-          logging: false,
-          imageTimeout: 15000,
-          removeContainer: true,
-        };
-
-        const frontCanvas = await html2canvas(
-          frontCardRef.current,
-          captureOptions
-        );
-
-        const backCanvas = await html2canvas(
-          backCardRef.current,
-          captureOptions
-        );
+        const frontCanvas = await captureFullSizeCard(frontCardRef.current);
+        const backCanvas = await captureFullSizeCard(backCardRef.current);
 
         if (cancelled) return;
 
