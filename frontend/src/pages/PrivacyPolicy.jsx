@@ -62,7 +62,7 @@ const PrivacyPolicy = () => {
             </h1>
 
             <p className="mt-4 max-w-2xl text-sm leading-7 text-[var(--ljka-muted)] sm:text-base">
-              This Privacy Policy explains how Lakhdaatar Jeevan Kalyan
+              This Privacy Policy explains how Lakhdatar Jeevan Kalyan
               Association (LJKA) collects, uses, protects and manages
               personal information provided through its website, account
               registration, membership and KYC processes.

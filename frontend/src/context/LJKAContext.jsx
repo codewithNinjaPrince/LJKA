@@ -16,7 +16,7 @@ const LJKAContextProvider = ({ children }) => {
   const navigate = useNavigate();
 
   const LJKA_TITLE = {
-    english: "Lakhdaatar Jeevan Kalyan Association",
+    english: "Lakhdatar Jeevan Kalyan Association",
     hindi: "लखदातार जीवन कल्याण एसोसिएशन",
     short: "LJKA",
   };

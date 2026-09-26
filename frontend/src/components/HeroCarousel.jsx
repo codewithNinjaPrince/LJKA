@@ -17,7 +17,7 @@ const HeroCarousel = () => {
       badge: "Welcome to LJKA",
       title: "Together, We Create a Stronger Community",
       description:
-        "Lakhdaatar Jeevan Kalyan Association brings people together through trust, humanity, support and collective responsibility.",
+        "Lakhdatar Jeevan Kalyan Association brings people together through trust, humanity, support and collective responsibility.",
       primaryText: "Become a Member",
       primaryLink: "/register",
       secondaryText: "About LJKA",
@@ -272,7 +272,7 @@ export default HeroCarousel;
 //       badge: "Welcome to LJKA",
 //       title: "Together, We Create a Stronger Community",
 //       description:
-//         "Lakhdaatar Jeevan Kalyan Association brings people together through trust, humanity, support and collective responsibility.",
+//         "Lakhdatar Jeevan Kalyan Association brings people together through trust, humanity, support and collective responsibility.",
 //       primaryText: "Become a Member",
 //       primaryLink: "/register",
 //       secondaryText: "About LJKA",

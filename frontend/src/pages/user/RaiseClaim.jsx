@@ -77,7 +77,7 @@ const RaiseClaim = () => {
           </div>
 
           <form onSubmit={submit} className="mt-8 grid gap-4 sm:grid-cols-2">
-            <label className="text-sm font-semibold">Date of death<input required type="date" value={form.dateOfDeath} onChange={(event) => set("dateOfDeath", event.target.value)} className="mt-2 w-full rounded-lg border p-3" /></label>
+            <label className="text-sm font-semibold">Date of death<input required type="date" max={new Date().toISOString().slice(0, 10)} value={form.dateOfDeath} onChange={(event) => set("dateOfDeath", event.target.value)} className="mt-2 w-full rounded-lg border p-3" /></label>
             <label className="text-sm font-semibold">Cause of death<input value={form.causeOfDeath} onChange={(event) => set("causeOfDeath", event.target.value)} className="mt-2 w-full rounded-lg border p-3" /></label>
             <label className="text-sm font-semibold">Place of death<input value={form.placeOfDeath} onChange={(event) => set("placeOfDeath", event.target.value)} className="mt-2 w-full rounded-lg border p-3" /></label>
             <label className="text-sm font-semibold">Nominee mobile<input inputMode="numeric" maxLength={10} value={form.nomineeMobile} onChange={(event) => set("nomineeMobile", event.target.value.replace(/\D/g, "").slice(0, 10))} className="mt-2 w-full rounded-lg border p-3" /></label>

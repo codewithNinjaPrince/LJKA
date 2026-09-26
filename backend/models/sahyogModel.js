@@ -8,7 +8,7 @@ const sahyogSchema = new mongoose.Schema({
   familyInfo: { type: String, trim: true, default: "" },
   description: { type: String, trim: true, default: "", maxlength: 5000 },
   address: { type: String, trim: true, default: "" },
-  contactName: { type: String, trim: true, default: "" },
+  contactName: { type: String, trim: true, uppercase: true, default: "" },
   contactMobile: { type: String, trim: true, default: "" },
   targetAmount: { type: Number, min: 0, default: null },
   minimumDonationAmount: { type: Number, min: 1, default: null },

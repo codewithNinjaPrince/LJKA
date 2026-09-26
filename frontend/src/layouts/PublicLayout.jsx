@@ -40,7 +40,7 @@ const PublicLayout = () => {
   aria-hidden="true"
 >
   <img
-    src="/img/Lakhdaatar_Logo.png"
+    src="/img/Lakhdatar_Logo.png"
     alt=""
     className="
       block
@@ -110,7 +110,7 @@ export default PublicLayout;
 //         aria-hidden="true"
 //       >
 //         <img
-//           src="/img/Lakhdaatar_Logo.png"
+//           src="/img/Lakhdatar_Logo.png"
 //           alt=""
 //           className="w-[260px] sm:w-[340px] md:w-[430px] lg:w-[520px] object-contain opacity-[0.08]"
 //         />

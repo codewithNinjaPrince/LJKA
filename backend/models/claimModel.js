@@ -6,7 +6,7 @@ const claimSchema = new mongoose.Schema(
     claimantId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
     deceasedMemberId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null, index: true },
     deceasedMemberCode: { type: String, trim: true, default: "" },
-    deceasedFullName: { type: String, required: true, trim: true },
+  deceasedFullName: { type: String, required: true, trim: true, uppercase: true },
     dateOfDeath: { type: Date, required: true },
     relationship: { type: String, trim: true, default: "member" },
     causeOfDeath: { type: String, trim: true, default: "" },

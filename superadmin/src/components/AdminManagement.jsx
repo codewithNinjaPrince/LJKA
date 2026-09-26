@@ -60,6 +60,17 @@ function AdminManagement({ token }) {
     }
   };
 
+  const deleteAdmin = async (id, name) => {
+    if (!window.confirm(`Delete administrator ${name}? This cannot be undone.`)) return;
+    try {
+      await adminApi(token).delete(`/admins/${id}`);
+      toast.success("Admin deleted");
+      loadAdmins();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Unable to delete admin");
+    }
+  };
+
   return (
     <>
       <PageTitle
@@ -67,7 +78,7 @@ function AdminManagement({ token }) {
         subtitle="New administrators are active immediately and do not require KYC."
         action={<button onClick={() => setIsCreateOpen(true)} className="rounded-lg bg-[#78081c] px-4 py-2 text-sm font-semibold text-white">Create Admin</button>}
       />
-      <AdminTable admins={admins} isLoading={isLoading} onOpenRights={(admin) => navigate(`${root}/admins/${admin._id}/rights`)} onChangeStatus={updateStatus} />
+      <AdminTable admins={admins} isLoading={isLoading} onOpenRights={(admin) => navigate(`${root}/admins/${admin._id}/rights`)} onChangeStatus={updateStatus} onDelete={deleteAdmin} />
       <AdminCreateModal isOpen={isCreateOpen} form={form} isCreating={isCreating} onChange={setForm} onClose={() => setIsCreateOpen(false)} onSubmit={createAdmin} />
     </>
   );

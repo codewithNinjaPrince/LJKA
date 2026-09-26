@@ -16,15 +16,17 @@ import {
     X,
 } from "lucide-react";
 
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { LJKAContext } from "../context/LJKAContext";
 import locationData from "../data/india/locationData.json";
 
-const DONATION_CACHE_TTL_MS = 30_000;
+const DONATION_CACHE_TTL_MS = 0;
 const donationResponseCache = new Map();
 
 const SahyogDonations = () => {
     const { backendUrl } = useContext(LJKAContext);
+    const [searchParams] = useSearchParams();
+    const sahyogId = searchParams.get("sahyogId") || "";
 
     // ==========================================
     // STATE
@@ -69,8 +71,9 @@ const SahyogDonations = () => {
                 page,
                 search,
                 filters,
+                sahyogId,
             }),
-        [page, search, filters]
+        [page, search, filters, sahyogId]
     );
 
     // ==========================================
@@ -143,6 +146,7 @@ const SahyogDonations = () => {
 
             params.append("page", String(page));
             params.append("limit", "20");
+            if (sahyogId) params.append("sahyogId", sahyogId);
 
             if (search.trim()) {
                 params.append("search", search.trim());
@@ -172,7 +176,7 @@ const SahyogDonations = () => {
                 `${backendUrl}/api/public/sahyog/donations?${params.toString()}`,
                 {
                     signal,
-                    cache: "force-cache",
+                    cache: "no-store",
                 }
             );
 
@@ -273,7 +277,7 @@ const SahyogDonations = () => {
         fetchDonations(controller.signal);
 
         return () => controller.abort();
-    }, [page, search, filters, queryKey]);
+    }, [page, search, filters, queryKey, sahyogId]);
 
     // ==========================================
     // SEARCH
@@ -1013,7 +1017,7 @@ const SahyogDonations = () => {
                                     <span className="absolute inset-2 rounded-full border-2 border-[var(--ljka-primary)]/15 border-t-[var(--ljka-gold)] animate-spin" />
 
                                     <img
-                                        src="/img/Lakhdaatar_Logo.png"
+                                        src="/img/Lakhdatar_Logo.png"
                                         alt="LJKA"
                                         className="h-11 w-11 object-contain animate-pulse"
                                     />

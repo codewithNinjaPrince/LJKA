@@ -183,7 +183,7 @@ export default AnnouncementBar;
 // const AnnouncementBar = () => {
 //   const messages = [
 //     <>For the first <span className="font-bold text-[var(--ljka-gold-light)]">11,000 Members</span>, Registration is <span className="font-extrabold text-[var(--ljka-gold-light)]">FREE</span></>,
-//     <>Help, Trust, Humanity — by <span className="font-bold text-white">Lakhdaatar Jeevan Kalyan Association</span></>,
+//     <>Help, Trust, Humanity — by <span className="font-bold text-white">Lakhdatar Jeevan Kalyan Association</span></>,
 //     <>Join the LJKA community and become a part of <span className="font-bold text-[var(--ljka-gold-light)]">collective support</span></>,
 //   ];
 
@@ -295,7 +295,7 @@ export default AnnouncementBar;
 
 //   const messages = [
 //     <>For the first <span className="font-semibold text-[var(--ljka-gold)]">11,000 Members</span>, Registration is <span className="font-semibold text-[var(--ljka-gold)]">FREE</span></>,
-//     <>Help, Trust, Humanity — by <span className="font-semibold text-[var(--ljka-gold)]">Lakhdaatar Jeevan Kalyan Association</span></>,
+//     <>Help, Trust, Humanity — by <span className="font-semibold text-[var(--ljka-gold)]">Lakhdatar Jeevan Kalyan Association</span></>,
 //   ];
 
 //   if (dismissed) return null;
@@ -363,7 +363,7 @@ export default AnnouncementBar;
 //     <>
 //       Help, Trust, Humanity — by{" "}
 //       <span className="font-semibold text-white">
-//         Lakhdaatar Jeevan Kalyan Association
+//         Lakhdatar Jeevan Kalyan Association
 //       </span>
 //     </>,
 //   ];

@@ -36,7 +36,7 @@ const AboutUs = () => {
                 <FaHeart className="text-xs text-[var(--ljka-gold-dark)]" />
 
                 <span className="text-xs font-semibold tracking-wide text-[var(--ljka-primary)] sm:text-sm">
-                  ABOUT LAKHDAATAR JEEVAN KALYAN ASSOCIATION
+                  ABOUT LAKHDATAR JEEVAN KALYAN ASSOCIATION
                 </span>
               </div>
 
@@ -48,7 +48,7 @@ const AboutUs = () => {
               </h1>
 
               <p className="mt-6 max-w-2xl text-sm leading-7 text-[var(--ljka-muted)] sm:text-base lg:text-lg">
-                Lakhdaatar Jeevan Kalyan Association is a community-driven
+                Lakhdatar Jeevan Kalyan Association is a community-driven
                 organization created with a simple belief — when people come
                 together with responsibility and compassion, they can support
                 one another when it matters most.

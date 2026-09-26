@@ -10,6 +10,18 @@ const DownloadIdCard = () => {
   const frontCardRef = useRef(null);
   const backCardRef = useRef(null);
   const [error, setError] = useState("");
+  const [downloadRequested, setDownloadRequested] = useState(false);
+  const [previewScale, setPreviewScale] = useState(1);
+
+  // Keep the desktop card artwork intact and scale the complete artwork as a
+  // single unit on narrow screens. This avoids independently shrinking icons,
+  // text and absolute-positioned sections.
+  useEffect(() => {
+    const updateScale = () => setPreviewScale(Math.min(1, Math.max(0.35, (window.innerWidth - 32) / 520)));
+    updateScale();
+    window.addEventListener("resize", updateScale);
+    return () => window.removeEventListener("resize", updateScale);
+  }, []);
 
   const membershipPaid =
     user?.membershipPaymentStatus === "paid";
@@ -70,6 +82,7 @@ const DownloadIdCard = () => {
 
   useEffect(() => {
     if (!user || !frontCardRef.current || !backCardRef.current || !qr) return;
+    if (!downloadRequested) return;
 
     let cancelled = false;
 
@@ -162,15 +175,10 @@ const DownloadIdCard = () => {
 
         pdf.save(`LJKA_ID_CARD_${safeName}.pdf`);
 
-        // Close the automatically opened tab after the browser has received
-        // the download. Browsers may ignore this if the tab was not script-opened.
+        // Keep the preview open in the current tab and restore the button.
         setTimeout(() => {
-          try {
-            window.close();
-          } catch {
-            // Ignore browser restriction.
-          }
-        }, 800);
+          setDownloadRequested(false);
+        }, 300);
       } catch (err) {
         console.error("ID CARD AUTO DOWNLOAD ERROR:", err);
         setError(
@@ -184,7 +192,7 @@ const DownloadIdCard = () => {
     return () => {
       cancelled = true;
     };
-  }, [user, qr]);
+  }, [user, qr, downloadRequested]);
 
   if (!user) {
     return null;
@@ -212,19 +220,19 @@ const DownloadIdCard = () => {
 
   return (
     <>
-      {/* Nothing visible to the user. These exact card designs are rendered
-          off-screen only so html2canvas can create the downloadable A4 PDF. */}
-
       <div
-        aria-hidden="true"
+        aria-label="ID card preview"
         style={{
-          position: "fixed",
-          left: "-10000px",
-          top: "0",
-          width: "520px",
-          zIndex: "-1",
+          position: "relative",
+          margin: "0 auto",
+          padding: "32px 16px",
+          width: "100%",
+          maxWidth: "520px",
+          boxSizing: "border-box",
         }}
       >
+        <div className="mb-5 flex items-center justify-between gap-3"><div><p className="text-sm font-semibold text-[var(--ljka-gold-dark)]">LJKA</p><h1 className="text-2xl font-bold text-[var(--ljka-primary)]">ID Card</h1></div><button type="button" onClick={() => setDownloadRequested(true)} disabled={downloadRequested} className="rounded-lg bg-[var(--ljka-primary)] px-4 py-3 text-sm font-bold text-white disabled:opacity-60">{downloadRequested ? "Preparing download…" : "Download ID Card"}</button></div>
+        <div style={{ height: `${(520 / 1.586 * 2 + 20) * previewScale}px` }}><div style={{ width: "520px", transform: `scale(${previewScale})`, transformOrigin: "top left" }}>
         {/* ================= FRONT CARD ================= */}
         <div
           ref={frontCardRef}
@@ -241,7 +249,7 @@ const DownloadIdCard = () => {
           <div className="absolute inset-x-0 top-0 h-[28%] bg-[var(--ljka-primary)]">
             <div className="absolute inset-0 opacity-[0.07]">
               <img
-                src="/img/Lakhdaatar_Logo.png"
+                src="/img/Lakhdatar_Logo.png"
                 alt=""
                 className="h-full w-full object-cover"
               />
@@ -249,7 +257,7 @@ const DownloadIdCard = () => {
 
             <div className="relative flex h-full items-center px-5">
               <img
-                src="/img/Lakhdaatar_Logo.png"
+                src="/img/Lakhdatar_Logo.png"
                 alt="LJKA"
                 crossOrigin="anonymous"
                 className="h-16 w-16 object-contain"
@@ -261,7 +269,7 @@ const DownloadIdCard = () => {
                 </p>
 
                 <h2 className="mt-1 text-base font-extrabold leading-tight">
-                  Lakhdaatar Jeevan
+                  Lakhdatar Jeevan
                 </h2>
 
                 <h2 className="text-base font-extrabold leading-tight">
@@ -272,7 +280,7 @@ const DownloadIdCard = () => {
           </div>
 
           <img
-            src="/img/Lakhdaatar_Logo.png"
+            src="/img/Lakhdatar_Logo.png"
             alt=""
             crossOrigin="anonymous"
             className="pointer-events-none absolute left-1/2 top-[58%] h-40 w-40 -translate-x-1/2 -translate-y-1/2 object-contain opacity-[0.045]"
@@ -282,7 +290,7 @@ const DownloadIdCard = () => {
             <div className="flex h-[118px] w-[92px] items-center justify-center overflow-hidden rounded-xl border-2 border-[var(--ljka-gold)] bg-white shadow-md">
               <div className="flex h-full w-full flex-col items-center justify-center bg-[var(--ljka-primary-bg)] px-2">
                 <img
-                  src="/img/Lakhdaatar_Logo.png"
+                  src="/img/Lakhdatar_Logo.png"
                   alt="LJKA Member"
                   crossOrigin="anonymous"
                   className="h-16 w-16 object-contain"
@@ -294,9 +302,6 @@ const DownloadIdCard = () => {
               </div>
             </div>
 
-            <p className="mt-1 text-center text-[7px] font-semibold uppercase tracking-wide text-gray-400">
-              Member Identity
-            </p>
           </div>
 
           <div className="absolute left-[31%] right-4 top-[34%]">
@@ -409,7 +414,7 @@ const DownloadIdCard = () => {
           <div className="h-[24%] bg-[var(--ljka-primary)] px-5 py-3">
             <div className="flex items-center gap-3">
               <img
-                src="/img/Lakhdaatar_Logo.png"
+                src="/img/Lakhdatar_Logo.png"
                 alt="LJKA"
                 crossOrigin="anonymous"
                 className="h-10 w-10 object-contain"
@@ -417,7 +422,7 @@ const DownloadIdCard = () => {
 
               <div>
                 <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-[var(--ljka-gold)]">
-                  Lakhdaatar Jeevan Kalyan Association
+                  Lakhdatar Jeevan Kalyan Association
                 </p>
 
                 <p className="text-[8px] text-white/70">
@@ -428,7 +433,7 @@ const DownloadIdCard = () => {
           </div>
 
           <img
-            src="/img/Lakhdaatar_Logo.png"
+            src="/img/Lakhdatar_Logo.png"
             alt=""
             crossOrigin="anonymous"
             className="pointer-events-none absolute left-1/2 top-[58%] h-40 w-40 -translate-x-1/2 -translate-y-1/2 object-contain opacity-[0.045]"
@@ -502,7 +507,7 @@ const DownloadIdCard = () => {
             </div>
 
             <p className="mt-3 text-[6.5px] leading-3 text-gray-400">
-              This card is issued by Lakhdaatar Jeevan Kalyan Association for
+              This card is issued by Lakhdatar Jeevan Kalyan Association for
               identification of a registered member. This card remains the
               property of LJKA and may be withdrawn or invalidated according to
               applicable membership rules.
@@ -528,7 +533,7 @@ const DownloadIdCard = () => {
               </p>
             </div>
           </div>
-        </div>
+        </div></div></div>
       </div>
     </>
   );

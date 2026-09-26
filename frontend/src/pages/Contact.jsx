@@ -7,6 +7,8 @@ import {
   FaPaperPlane,
   FaShieldAlt,
   FaSpinner,
+  FaFacebookF,
+  FaInstagram,
 } from "react-icons/fa";
 import { toastError, toastSuccess } from "../utils/toast";
 
@@ -199,7 +201,7 @@ const Contact = () => {
           {/* PHONE */}
 
           <a
-            href="tel:+919194068237"
+            href="tel:+9194068234"
             className="group flex items-center gap-4 rounded-xl border border-[var(--ljka-border)] bg-[var(--ljka-card)] p-4 shadow-[var(--ljka-shadow-sm)] transition hover:-translate-y-0.5 hover:border-[var(--ljka-primary)]/30 hover:shadow-[var(--ljka-shadow-md)]"
           >
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[var(--ljka-primary-bg)] text-[var(--ljka-primary)] transition group-hover:bg-[var(--ljka-primary)] group-hover:text-white">
@@ -216,7 +218,7 @@ const Contact = () => {
               </p>
 
               <p className="mt-1.5 text-sm font-semibold text-[var(--ljka-primary)]">
-                +91 91940 68237
+                +91 9194068234 · +91 9194068235 · +91 9194068236
               </p>
             </div>
           </a>
@@ -469,7 +471,7 @@ const Contact = () => {
             aria-label="Open LJKA Instagram"
             className="rounded-lg border border-[var(--ljka-border)] bg-white px-4 py-2.5 text-xs font-bold text-[var(--ljka-primary)] transition hover:border-[var(--ljka-primary)] hover:bg-[var(--ljka-primary)] hover:text-white"
           >
-            Instagram
+            <FaInstagram className="text-base" aria-hidden="true" />
           </a>
 
           <a
@@ -479,7 +481,7 @@ const Contact = () => {
             aria-label="Open LJKA Facebook Page"
             className="rounded-lg border border-[var(--ljka-border)] bg-white px-4 py-2.5 text-xs font-bold text-[var(--ljka-primary)] transition hover:border-[var(--ljka-primary)] hover:bg-[var(--ljka-primary)] hover:text-white"
           >
-            Facebook
+            <FaFacebookF className="text-base" aria-hidden="true" />
           </a>
         </div>
       </section>

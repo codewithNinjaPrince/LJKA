@@ -4,7 +4,7 @@ const submitContactForm = async (req, res) => {
   try {
     const { name, email, phone, subject, message } = req.body;
 
-    const trimmedName = name?.trim();
+    const trimmedName = name?.trim().toUpperCase();
     const trimmedEmail = email?.trim().toLowerCase();
     const trimmedPhone = phone?.trim();
     const trimmedSubject = subject?.trim();

@@ -47,8 +47,8 @@ const Footer = () => {
             <div className="flex items-center gap-4">
 
               <img
-                src="/img/Lakhdaatar_Logo.png"
-                alt="Lakhdaatar Jeevan Kalyan Association"
+                src="/img/Lakhdatar_Logo.png"
+                alt="Lakhdatar Jeevan Kalyan Association"
                 className="h-14 w-14 shrink-0 object-contain sm:h-16 sm:w-16"
               />
 
@@ -56,7 +56,7 @@ const Footer = () => {
 
                 <h2 className="text-lg font-bold leading-tight text-white sm:text-xl">
                   <span className="block">
-                    Lakhdaatar Jeevan
+                    Lakhdatar Jeevan
                   </span>
 
                   <span className="block">
@@ -146,13 +146,13 @@ const Footer = () => {
               <div className="mt-6 inline-flex items-center rounded-lg border border-[var(--ljka-gold)]/20 bg-white/[0.04] px-3.5 py-2">
 
                 <p className="text-[11px] text-white/45">
-                  Registration No.
+                  CIN NO.
                 </p>
 
                 <span className="mx-2 h-3.5 w-px bg-white/15" />
 
                 <p className="text-[11px] font-semibold text-[var(--ljka-gold-light)]">
-                  102/2026
+                  U88900UP2026NPL251994
                 </p>
 
               </div>
@@ -177,11 +177,6 @@ const Footer = () => {
                 />
 
                 <FooterLink
-                  to="/vyawastha-list"
-                  text="How It Works"
-                />
-
-                <FooterLink
                   to="/user-list"
                   text="Members"
                 />
@@ -189,6 +184,11 @@ const Footer = () => {
                 <FooterLink
                   to="/sahyog-list"
                   text="Sahyog"
+                />
+
+                <FooterLink
+                  to="/vyawastha-list"
+                  text="Vyawastha"
                 />
 
               </div>
@@ -246,8 +246,8 @@ const Footer = () => {
 
                 {/* PHONE */}
                 <a
-                  href="tel:+919194068237"
-                  aria-label="Call LJKA Support at +91 91940 68237"
+                  href="tel:+9194068234"
+                  aria-label="Call LJKA Support at +91 9194068234"
                   className="group flex items-start gap-3 text-sm text-white/60 transition hover:text-white"
                 >
                   <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-[var(--ljka-gold)] transition group-hover:bg-[var(--ljka-gold)] group-hover:text-[var(--ljka-primary)]">
@@ -260,10 +260,12 @@ const Footer = () => {
                     </span>
 
                     <span className="mt-0.5 block font-semibold text-white/80">
-                      +91 91940 68237
+                      +91 9194068234 · +91 9194068235 · +91 9194068236
                     </span>
                   </span>
                 </a>
+
+                <div className="group flex items-start gap-3 text-sm text-white/60"><span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-[var(--ljka-gold)]"><FaPhoneAlt className="text-xs" /></span><span><span className="block text-[10px] font-semibold uppercase tracking-wider text-white/35">Registered address</span><span className="mt-0.5 block text-xs font-semibold text-white/80">H NO.00, BEHIND KRISHNA DHAM, ORAI, ORAI, JALAUN - 285001, UTTAR PRADESH</span></span></div>
 
                 {/* EMAIL */}
                 <a
@@ -403,7 +405,7 @@ const Footer = () => {
         <div className="mx-auto flex max-w-[1450px] flex-col items-center justify-between gap-2 px-5 py-5 text-center sm:flex-row sm:px-8 sm:text-left lg:px-12">
 
           <p className="text-[11px] leading-5 text-white/40">
-            © {year} Lakhdaatar Jeevan Kalyan Association (LJKA).
+            © {year} Lakhdatar Jeevan Kalyan Association (LJKA).
             All Rights Reserved.
           </p>
 

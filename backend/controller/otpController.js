@@ -172,7 +172,7 @@ const sendOtp = async (req, res) => {
                     font-size: 14px;
                   "
                 >
-                  Lakhdaatar Jeevan Kalyan Association
+                  Lakhdatar Jeevan Kalyan Association
                 </p>
 
               </div>
@@ -285,7 +285,7 @@ const sendOtp = async (req, res) => {
                   font-size: 12px;
                 "
               >
-                © LJKA - Lakhdaatar Jeevan Kalyan Association
+                © LJKA - Lakhdatar Jeevan Kalyan Association
               </p>
 
             </div>
@@ -537,7 +537,7 @@ const sendForgotPasswordOtp = async (req, res) => {
         <div style="font-family:Arial,sans-serif;max-width:600px;margin:40px auto;padding:30px;text-align:center;background:#fff;border-radius:12px">
           <h1 style="color:#1f2937">LJKA</h1>
           <p style="color:#6b7280">
-            Lakhdaatar Jeevan Kalyan Association
+            Lakhdatar Jeevan Kalyan Association
           </p>
 
           <h2 style="color:#111827">Reset Your Password</h2>

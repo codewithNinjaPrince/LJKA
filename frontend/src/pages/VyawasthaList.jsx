@@ -43,7 +43,7 @@ const VyawasthaList = () => {
             </div>
 
             <p className="mt-6 text-sm text-gray-500">
-              Lakhdaatar Jeevan Kalyan Association
+              Lakhdatar Jeevan Kalyan Association
             </p>
 
           </div>

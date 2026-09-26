@@ -22,7 +22,7 @@ const NAV_LINKS = [
 
 const MEMBER_NAV_LINKS = [
   ["/user/view-profile", "View Profile"],
-  ["/user/id-card", "Download ID Card"],
+  ["/user/id-card", "ID Card"],
   ["/user/upload-sahyog", "Upload Sahyog"],
   ["/user/all-sahyog", "View All Sahyog"],
   ["/user/raise-claim", "Raise Claim"],
@@ -80,15 +80,15 @@ const Navbar = ({ memberPortal = false }) => {
               className="flex min-w-0 flex-1 items-center gap-3 overflow-hidden text-left lg:flex-none lg:overflow-visible"
             >
               <img
-                src="/img/Lakhdaatar_Logo.png"
-                alt="Lakhdaatar Jeevan Kalyan Association"
+                src="/img/Lakhdatar_Logo.png"
+                alt="Lakhdatar Jeevan Kalyan Association"
                 className="h-15 w-15 shrink-0 object-contain"
               />
 
               <div className="min-w-0 leading-tight">
                 <h1 className="text-[13px] font-bold tracking-[-0.01em] text-white sm:text-[15px] xl:text-[17px]">
                   <span className="block whitespace-nowrap">
-                    Lakhdaatar Jeevan
+                    Lakhdatar Jeevan
                   </span>
 
                   <span className="block whitespace-nowrap">
@@ -107,8 +107,6 @@ const Navbar = ({ memberPortal = false }) => {
                   <NavLink
                     key={path}
                     to={path}
-                    target={path === "/user/id-card" ? "_blank" : undefined}
-                    rel={path === "/user/id-card" ? "noopener noreferrer" : undefined}
                     className={({ isActive }) =>
                       `relative whitespace-nowrap rounded-lg px-2.5 py-2.5 text-[12px] font-semibold transition-all xl:px-3 xl:text-[13px] ${isActive
                         ? "bg-white/20 text-white"
@@ -220,13 +218,13 @@ const Navbar = ({ memberPortal = false }) => {
               className="flex min-w-0 items-center gap-3 text-left"
             >
               <img
-                src="/img/Lakhdaatar_Logo.png"
-                alt="Lakhdaatar Jeevan Kalyan Association"
+                src="/img/Lakhdatar_Logo.png"
+                alt="Lakhdatar Jeevan Kalyan Association"
                 className="h-11 w-11 shrink-0 object-contain"
               />
 
               <p className="min-w-0 text-[12px] font-bold leading-4 text-white">
-                <span className="block">Lakhdaatar Jeevan</span>
+                <span className="block">Lakhdatar Jeevan</span>
                 <span className="block">Kalyan Association</span>
               </p>
             </button>
@@ -270,8 +268,6 @@ const Navbar = ({ memberPortal = false }) => {
                 <NavLink
                   key={path}
                   to={path}
-                  target={path === "/user/id-card" ? "_blank" : undefined}
-                  rel={path === "/user/id-card" ? "noopener noreferrer" : undefined}
                   onClick={closeMenu}
                   className={({ isActive }) =>
                     `flex items-center justify-between px-3.5 py-3.5 text-[14px] font-semibold transition-all duration-200 hover:rounded-lg ${isActive

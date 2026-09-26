@@ -1,6 +1,6 @@
 import User from "../models/userModel.js";
 
-const MEMBER_CACHE_TTL_MS = 30_000;
+const MEMBER_CACHE_TTL_MS = 0;
 const MAX_CACHED_MEMBER_QUERIES = 100;
 const memberResponseCache = new Map();
 
@@ -111,7 +111,7 @@ const getMembers = async (req, res) => {
 
     const cached = getCachedResponse(cacheKey);
     if (cached) {
-      res.set("Cache-Control", "public, max-age=30, s-maxage=30, stale-while-revalidate=60");
+      res.set("Cache-Control", "no-store");
       return res.status(200).json(cached);
     }
 
@@ -202,18 +202,51 @@ const getMembers = async (req, res) => {
     // ========================================================
 
     const [members, totalMembers] = await Promise.all([
-      User.find(filter)
-        .select(
-          "memberId fullName mobile address.stateName address.districtName address.tehsilName address.address occupation employmentStatus createdAt"
-        )
-        .sort({
-          createdAt: -1,
-          _id: -1,
-        })
-        .skip(skip)
-        .limit(perPage)
-        .lean(),
-
+      // KYC time is the membership-list order. membershipStartDate is the
+      // equivalent timestamp on older records created before kycCompletedAt
+      // existed; createdAt is only a final legacy fallback.
+      User.aggregate([
+        { $match: filter },
+        {
+          $addFields: {
+            memberListedAt: {
+              $ifNull: ["$kycCompletedAt", { $ifNull: ["$membershipStartDate", "$createdAt"] }],
+            },
+            // Member IDs end in their allocation number (for example UPG12).
+            // Convert that suffix to a real number so 12 is correctly ahead
+            // of 11 and 10 rather than using alphabetical ordering.
+            memberIdNumber: {
+              $convert: {
+                input: {
+                  $let: {
+                    vars: {
+                      matched: {
+                        $regexFind: {
+                          input: { $ifNull: ["$memberId", ""] },
+                          regex: "(\\d+)$",
+                        },
+                      },
+                    },
+                    in: { $arrayElemAt: ["$$matched.captures", 0] },
+                  },
+                },
+                to: "int",
+                onError: 0,
+                onNull: 0,
+              },
+            },
+          },
+        },
+        { $sort: { memberIdNumber: -1, memberListedAt: -1, _id: -1 } },
+        { $skip: skip },
+        { $limit: perPage },
+        {
+          $project: {
+            memberId: 1, fullName: 1, mobile: 1, address: 1,
+            occupation: 1, employmentStatus: 1, memberListedAt: 1, kycCompletedAt: 1,
+          },
+        },
+      ]),
       User.countDocuments(filter),
     ]);
 
@@ -255,7 +288,7 @@ const getMembers = async (req, res) => {
 
         memberId: user.memberId,
 
-        fullName: user.fullName,
+        fullName: String(user.fullName || "").toUpperCase(),
 
         mobile: maskMobile(user.mobile),
 
@@ -272,7 +305,7 @@ const getMembers = async (req, res) => {
         employmentStatus:
           user.employmentStatus || "",
 
-        registeredAt: user.createdAt,
+        registeredAt: user.kycCompletedAt || user.memberListedAt,
       })
     );
 
@@ -300,7 +333,7 @@ const getMembers = async (req, res) => {
     };
 
     cacheResponse(cacheKey, payload);
-    res.set("Cache-Control", "public, max-age=30, s-maxage=30, stale-while-revalidate=60");
+    res.set("Cache-Control", "no-store");
     return res.status(200).json(payload);
   } catch (error) {
     console.error(

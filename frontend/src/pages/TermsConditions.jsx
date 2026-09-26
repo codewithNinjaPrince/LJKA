@@ -64,7 +64,7 @@ const TermsConditions = () => {
             </h1>
 
             <p className="mt-4 max-w-2xl text-sm leading-7 text-[var(--ljka-muted)] sm:text-base">
-              These Terms & Conditions govern your use of the Lakhdaatar
+              These Terms & Conditions govern your use of the Lakhdatar
               Jeevan Kalyan Association (LJKA) website, account registration,
               membership, KYC verification and related association services.
             </p>

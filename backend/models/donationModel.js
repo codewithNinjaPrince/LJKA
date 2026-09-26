@@ -4,7 +4,7 @@ const donationSchema = new mongoose.Schema({
   donationId: { type: String, required: true, unique: true, index: true },
   sahyogId: { type: mongoose.Schema.Types.ObjectId, ref: "Sahyog", required: true, index: true },
   donorId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null, index: true },
-  donorName: { type: String, trim: true, default: "" },
+  donorName: { type: String, trim: true, uppercase: true, default: "" },
   donorEmail: { type: String, trim: true, lowercase: true, default: "" },
   donorMobile: { type: String, trim: true, default: "" },
   isAnonymous: { type: Boolean, default: false },

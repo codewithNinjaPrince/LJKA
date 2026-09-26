@@ -680,8 +680,8 @@ const Niyamawali = () => {
           <div className="mx-auto max-w-3xl text-center">
             <div className="mb-5 flex justify-center">
               <img
-                src="/img/Lakhdaatar_Logo.png"
-                alt="Lakhdaatar Jeevan Kalyan Association"
+                src="/img/Lakhdatar_Logo.png"
+                alt="Lakhdatar Jeevan Kalyan Association"
                 className="h-20 w-20 object-contain sm:h-24 sm:w-24"
               />
             </div>

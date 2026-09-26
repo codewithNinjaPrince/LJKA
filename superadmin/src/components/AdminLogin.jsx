@@ -59,8 +59,8 @@ export default function AdminLogin() {
                     <div className="flex items-center gap-3 sm:gap-4">
 
                         <img
-                            src="/img/Lakhdaatar_Logo.png"
-                            alt="Lakhdaatar Logo"
+                            src="/img/Lakhdatar_Logo.png"
+                            alt="Lakhdatar Logo"
                             className="h-11 w-11 object-contain sm:h-14 sm:w-14"
                         />
 
@@ -114,8 +114,8 @@ export default function AdminLogin() {
                                     <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white p-2 shadow-md ring-1 ring-[#eadfe1]">
 
                                         <img
-                                            src="/img/Lakhdaatar_Logo.png"
-                                            alt="Lakhdaatar Logo"
+                                            src="/img/Lakhdatar_Logo.png"
+                                            alt="Lakhdatar Logo"
                                             className="h-full w-full object-contain"
                                         />
 

@@ -134,7 +134,7 @@ const Login = () => {
 
             <p className="mt-5 text-base leading-7 text-[var(--ljka-muted)]">
               Login to access your LJKA membership, view your profile and
-              continue your journey with Lakhdaatar Jeevan Kalyan Association.
+              continue your journey with Lakhdatar Jeevan Kalyan Association.
             </p>
 
             <div className="mt-8 rounded-2xl border border-[var(--ljka-gold)]/30 bg-white p-5 shadow-sm">
@@ -182,8 +182,8 @@ const Login = () => {
 
             <div className="mx-auto flex h-15 w-15 items-center justify-center">
               <img
-                src="/img/Lakhdaatar_Logo.png"
-                alt="Lakhdaatar Jeevan Kalyan Association"
+                src="/img/Lakhdatar_Logo.png"
+                alt="Lakhdatar Jeevan Kalyan Association"
                 className="h-15 w-15 object-contain"
               />
             </div>

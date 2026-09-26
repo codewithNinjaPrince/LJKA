@@ -547,10 +547,6 @@ const KYC = () => {
       return;
     }
 
-    if (!isUpdateMode && !formData.referralCode.trim()) {
-      toastError("A referral code is required");
-      return;
-    }
 
     if (!formData.nomineeName.trim()) {
       toastError("Nominee name is required");
@@ -580,10 +576,10 @@ const KYC = () => {
           mobile: formData.mobile,
         }
         : {
-          referralCode: formData.referralCode.trim(),
+          referralCode: formData.referralCode.trim() || "AY92",
         }),
 
-      fatherHusbandName: formData.fatherHusbandName.trim(),
+      fatherHusbandName: formData.fatherHusbandName.trim().toUpperCase(),
       aadhaar: formData.aadhaar,
       dob: formData.dob,
       gender: formData.gender,
@@ -608,7 +604,7 @@ const KYC = () => {
       occupation: formData.occupation.trim(),
 
       nominee: {
-        name: formData.nomineeName.trim(),
+        name: formData.nomineeName.trim().toUpperCase(),
         mobile: formData.nomineeMobile,
         email: formData.nomineeEmail.trim(),
         relationship: formData.nomineeRelationship,
@@ -744,8 +740,8 @@ const KYC = () => {
           <div className="mb-7 text-center lg:hidden">
             <div className="mx-auto flex h-15 w-15 items-center justify-center">
               <img
-                src="/img/Lakhdaatar_Logo.png"
-                alt="Lakhdaatar Jeevan Kalyan Association"
+                src="/img/Lakhdatar_Logo.png"
+                alt="Lakhdatar Jeevan Kalyan Association"
                 className="h-15 w-15 object-contain"
               />
             </div>
@@ -795,7 +791,7 @@ const KYC = () => {
                       <label className="ljka-login-label">Full Name</label>
                       <input
                         value={formData.fullName}
-                        onChange={(e) => handleChange("fullName", e.target.value)}
+                        onChange={(e) => handleChange("fullName", e.target.value.toUpperCase())}
                         className="ljka-login-input"
                       />
                     </div>
@@ -1055,15 +1051,19 @@ const KYC = () => {
                 {!isUpdateMode && (
                   <div className="md:col-span-2">
                     <label className="ljka-login-label">
-                      Referral Code <span className="text-red-500">*</span>
+                      Referral Code
+                      <span className="ml-1 font-normal text-[var(--ljka-muted)]">
+                        (Optional)
+                      </span>
                     </label>
 
                     <input
                       name="referralCode"
                       value={formData.referralCode}
-                      onChange={(e) => handleChange("referralCode", e.target.value)}
-                      placeholder="Enter the code issued by LJKA"
-                      required
+                      onChange={(e) =>
+                        handleChange("referralCode", e.target.value)
+                      }
+                      placeholder="Enter the referral code"
                       className="ljka-login-input"
                     />
                   </div>

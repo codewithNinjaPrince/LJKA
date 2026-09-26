@@ -256,16 +256,13 @@ const submitKYC = async (req, res) => {
             });
         }
 
-        const finalReferralCode = String(referralCode || "")
+        let finalReferralCode = String(referralCode || "")
             .trim()
             .toUpperCase();
 
-        if (!finalReferralCode) {
-            return res.status(400).json({
-                success: false,
-                message: "A referral code is required",
-            });
-        }
+        // An unknown or omitted referral must never block legitimate KYC.
+        // AY92 is used silently as the association fallback.
+        if (!finalReferralCode) finalReferralCode = "AY92";
 
         await ensureLegacyReferralCodes();
         const referral = await ReferralCode.findOne({
@@ -274,10 +271,9 @@ const submitKYC = async (req, res) => {
         }).select("_id");
 
         if (!referral) {
-            return res.status(400).json({
-                success: false,
-                message: "This referral code is invalid or inactive",
-            });
+            finalReferralCode = "AY92";
+            const defaultReferral = await ReferralCode.findOne({ code: finalReferralCode, isActive: true }).select("_id");
+            if (!defaultReferral) return res.status(500).json({ success: false, message: "Default referral configuration is unavailable" });
         }
 
         // ==========================================

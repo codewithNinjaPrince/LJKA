@@ -85,7 +85,7 @@ const getUserProfile = async (req, res) => {
                 <p>Your LJKA membership has <strong>${Math.max(remainingDays, 0)} days</strong> remaining.</p>
                 <p>Please renew your membership and pay the required annual fee before <strong>${new Date(membershipExpiresAt).toLocaleDateString("en-IN")}</strong> to keep it active.</p>
                 <p>For renewal assistance, please contact LJKA through the official channels.</p>
-                <p>Regards,<br />Lakhdaatar Jeevan Kalyan Association</p>
+                <p>Regards,<br />Lakhdatar Jeevan Kalyan Association</p>
               </div>
             `,
           });

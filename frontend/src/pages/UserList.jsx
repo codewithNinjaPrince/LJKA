@@ -19,7 +19,7 @@ import {
 import { LJKAContext } from "../context/LJKAContext";
 import locationData from "../data/india/locationData.json";
 
-const DIRECTORY_CACHE_TTL_MS = 30_000;
+const DIRECTORY_CACHE_TTL_MS = 0;
 const directoryResponseCache = new Map();
 
 const UserList = () => {
@@ -187,7 +187,7 @@ const UserList = () => {
 
       const response = await fetch(
         `${backendUrl}/api/members?${params.toString()}`,
-        { signal, cache: "force-cache" }
+        { signal, cache: "no-store" }
       );
 
       const result = await response.json();
@@ -202,13 +202,13 @@ const UserList = () => {
       setMembers(result.data || []);
 
       const nextPagination = result.pagination || {
-          currentPage: page,
-          perPage: 50,
-          totalMembers: 0,
-          totalPages: 0,
-          hasNextPage: false,
-          hasPreviousPage: false,
-        };
+        currentPage: page,
+        perPage: 50,
+        totalMembers: 0,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      };
 
       setPagination(nextPagination);
       directoryResponseCache.set(queryKey, {
@@ -838,7 +838,7 @@ const UserList = () => {
                 <span className="absolute inset-2 rounded-full border-2 border-[var(--ljka-primary)]/15 border-t-[var(--ljka-gold)] animate-spin" />
 
                 <img
-                  src="/img/Lakhdaatar_Logo.png"
+                  src="/img/Lakhdatar_Logo.png"
                   alt="LJKA"
                   className="h-11 w-11 object-contain animate-pulse"
                 />
@@ -931,7 +931,9 @@ const UserList = () => {
                       </td>
 
                       <td className="whitespace-nowrap px-4 py-4 text-sm font-medium text-gray-900">
-                        {member.fullName || "-"}
+                        {member.fullName
+                          ? String(member.fullName).toUpperCase()
+                          : "-"}
                       </td>
 
                       <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-600">

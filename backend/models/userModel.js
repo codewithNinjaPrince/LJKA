@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
   // ACCOUNT / REGISTRATION
-  fullName: { type: String, required: true, trim: true },
+  fullName: { type: String, required: true, trim: true, uppercase: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, required: true, minlength: 6 },
   // Kept separate from KYC and payment state so an administrative suspension
@@ -62,7 +62,7 @@ const userSchema = new mongoose.Schema({
     index: true,
   },
   mobileVerified: { type: Boolean, default: false },
-  fatherHusbandName: { type: String, trim: true },
+  fatherHusbandName: { type: String, trim: true, uppercase: true },
   aadhaar: { type: String, trim: true, unique: true, sparse: true, minlength: 12, maxlength: 12 },
   dob: { type: Date },
   gender: { type: String, enum: ["male", "female", "other"] },
@@ -87,7 +87,7 @@ const userSchema = new mongoose.Schema({
   occupation: { type: String, trim: true },
 
   nominee: {
-    name: { type: String, trim: true },
+    name: { type: String, trim: true, uppercase: true },
     mobile: { type: String, trim: true },
     email: { type: String, trim: true },
     relationship: { type: String, trim: true },
@@ -124,12 +124,12 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Member listing is always restricted to completed members and sorted newest first.
-userSchema.index({ kycCompleted: 1, createdAt: -1, _id: -1 });
-userSchema.index({ kycCompleted: 1, "address.stateCode": 1, createdAt: -1, _id: -1 });
-userSchema.index({ kycCompleted: 1, "address.districtCode": 1, createdAt: -1, _id: -1 });
-userSchema.index({ kycCompleted: 1, "address.tehsilCode": 1, createdAt: -1, _id: -1 });
-userSchema.index({ kycCompleted: 1, employmentStatus: 1, createdAt: -1, _id: -1 });
-userSchema.index({ kycCompleted: 1, publicSearchTerms: 1, createdAt: -1, _id: -1 });
+userSchema.index({ kycCompleted: 1, kycCompletedAt: -1, _id: -1 });
+userSchema.index({ kycCompleted: 1, "address.stateCode": 1, kycCompletedAt: -1, _id: -1 });
+userSchema.index({ kycCompleted: 1, "address.districtCode": 1, kycCompletedAt: -1, _id: -1 });
+userSchema.index({ kycCompleted: 1, "address.tehsilCode": 1, kycCompletedAt: -1, _id: -1 });
+userSchema.index({ kycCompleted: 1, employmentStatus: 1, kycCompletedAt: -1, _id: -1 });
+userSchema.index({ kycCompleted: 1, publicSearchTerms: 1, kycCompletedAt: -1, _id: -1 });
 
 const normalizeSearch = (value = "") =>
   String(value).toLowerCase().replace(/\s+/g, "").trim();
@@ -156,6 +156,11 @@ export const createPublicSearchTerms = ({ fullName, memberId, mobile }) => {
 };
 
 userSchema.pre("save", function updatePublicSearchTerms() {
+  // Every future KYC completion receives an ordering timestamp even when a
+  // caller omitted it. The directory must never fall back to signup time.
+  if (this.isModified("kycCompleted") && this.kycCompleted && !this.kycCompletedAt) {
+    this.kycCompletedAt = new Date();
+  }
   if (
     this.isModified("fullName") ||
     this.isModified("memberId") ||

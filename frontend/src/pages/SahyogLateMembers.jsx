@@ -21,7 +21,7 @@ import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { LJKAContext } from "../context/LJKAContext";
 import locationData from "../data/india/locationData.json";
 
-const SAHYOG_CACHE_TTL_MS = 30_000;
+const SAHYOG_CACHE_TTL_MS = 0;
 const sahyogResponseCache = new Map();
 
 const SahyogLateMembers = () => {
@@ -1318,7 +1318,7 @@ const SahyogLateMembers = () => {
               <span className="absolute inset-2 animate-spin rounded-full border-2 border-[var(--ljka-primary)]/15 border-t-[var(--ljka-gold)]" />
 
               <img
-                src="/img/Lakhdaatar_Logo.png"
+                src="/img/Lakhdatar_Logo.png"
                 alt="LJKA"
                 className="h-11 w-11 animate-pulse object-contain"
               />

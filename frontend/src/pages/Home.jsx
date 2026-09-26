@@ -944,7 +944,7 @@ export default Home;
 //             </div>
 
 //             <h1 className="mt-7 max-w-4xl text-[42px] font-black leading-[.98] tracking-[-.045em] sm:text-5xl md:text-6xl lg:text-[66px] xl:text-[76px]">
-//               Lakhdaatar
+//               Lakhdatar
 //               <span className="block text-[var(--ljka-gold)]">Jeevan Kalyan</span>
 //               <span className="block text-white/95">Association</span>
 //             </h1>
@@ -1741,7 +1741,7 @@ export default Home;
 //             </div>
 
 //             <h1 className="max-w-3xl text-4xl font-bold leading-[1.05] tracking-[-0.035em] sm:text-5xl lg:text-6xl xl:text-[68px]">
-//               Lakhdaatar Jeevan
+//               Lakhdatar Jeevan
 //               <span className="mt-1 block text-[var(--ljka-gold)]">Kalyan Association</span>
 //             </h1>
 
@@ -2174,7 +2174,7 @@ export default Home;
 //             </div>
 
 //             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.08] tracking-tight">
-//               Lakhdaatar Jeevan
+//               Lakhdatar Jeevan
 //               <span className="block text-[var(--ljka-gold)]">
 //                 Kalyan Association
 //               </span>

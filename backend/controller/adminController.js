@@ -684,6 +684,14 @@ export const setAdminStatus = async (
     });
 };
 
+export const deleteAdmin = async (req, res) => {
+    // Superadmin accounts are deliberately not eligible for deletion.
+    const admin = await Admin.findOneAndDelete({ _id: req.params.id, role: "admin" });
+    if (!admin) return res.status(404).json({ success: false, message: "Admin not found" });
+    await audit(req, { action: "admin_deleted", module: "admins", resourceId: admin._id });
+    return res.json({ success: true, message: "Admin deleted" });
+};
+
 
 /* -------------------------------------------------------------------------- */
 /* RESET ADMIN PASSWORD                                                       */

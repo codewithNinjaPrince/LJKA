@@ -2,7 +2,7 @@
 
 /* =========================================================
    LJKA — GLOBAL DESIGN SYSTEM
-   Lakhdaatar Jeevan Kalyan Association
+   Lakhdatar Jeevan Kalyan Association
    ========================================================= */
 
 :root {
@@ -243,9 +243,11 @@ a.active hr {
 .Toastify__toast {
   min-height: 58px;
   margin-bottom: 10px;
-  border-radius: 14px;
+  border-radius: 10px;
   box-shadow: 0 12px 30px rgba(38, 50, 56, 0.2);
   font-family: inherit;
+  background: var(--ljka-primary);
+  color: var(--ljka-text-on-primary);
 }
 
 .Toastify__toast-body {
@@ -255,6 +257,7 @@ a.active hr {
 
 .Toastify__progress-bar {
   height: 3px;
+  background: var(--ljka-gold);
 }
 
 @media (max-width: 640px) {

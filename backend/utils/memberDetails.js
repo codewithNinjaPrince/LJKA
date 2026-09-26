@@ -27,7 +27,7 @@ export const validateMemberDetails = async (body, { requirePassword = false, req
   const gender = String(body.gender || "").trim();
   const employmentStatus = String(body.employmentStatus || "").trim();
   const occupation = String(body.occupation || "").trim();
-  const referralCode = String(body.referralCode || "").trim().toUpperCase();
+  let referralCode = String(body.referralCode || "").trim().toUpperCase();
   const dob = parseCalendarDate(body.dob);
   const address = buildAddress(body.address || {});
   const nominee = {
@@ -61,10 +61,11 @@ export const validateMemberDetails = async (body, { requirePassword = false, req
   if (!occupation) return { error: "Occupation is required" };
 
   if (requireReferral) {
-    if (!referralCode) return { error: "A referral code is required" };
+    if (!referralCode) referralCode = "AY92";
     await ensureLegacyReferralCodes();
     const referral = await ReferralCode.findOne({ code: referralCode, isActive: true }).select("_id");
-    if (!referral) return { error: "This referral code is invalid or inactive" };
+    // Unknown referral codes are deliberately accepted under the default code.
+    if (!referral) referralCode = "AY92";
   }
 
   if (!nominee.name) return { error: "Nominee name is required" };

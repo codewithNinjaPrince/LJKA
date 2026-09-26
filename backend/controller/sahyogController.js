@@ -7,7 +7,7 @@ import { audit } from "../utils/audit.js";
 import { parseCalendarDate } from "../utils/calendarDate.js";
 
 const makeId = (prefix) => `${prefix}-${Date.now().toString(36).toUpperCase()}${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
-const LIST_CACHE_TTL_MS = 20_000;
+const LIST_CACHE_TTL_MS = 0;
 const MAX_CACHED_LISTS = 100;
 const listResponseCache = new Map();
 
@@ -30,7 +30,7 @@ const cacheList = (key, payload) => {
 const clearListCache = () => listResponseCache.clear();
 const memberFields = "fullName memberId mobile address";
 const publicMember = (member) => ({
-  fullName: member?.fullName || "Member",
+  fullName: String(member?.fullName || "Member").toUpperCase(),
   memberId: member?.memberId || "—",
   district: member?.address?.districtName || "—",
   tehsil: member?.address?.tehsilName || "—",
@@ -47,6 +47,7 @@ const validateSahyogInput = (value) => {
   if (value.dateOfDeath) {
     const parsed = parseCalendarDate(value.dateOfDeath);
     if (!parsed) return "Date of death is invalid";
+    if (parsed > new Date()) return "Date of death cannot be in the future";
   }
   for (const key of ["minimumDonationAmount", "targetAmount"]) if (value[key] !== undefined && value[key] !== "" && (!Number.isFinite(Number(value[key])) || Number(value[key]) < 0)) return `${key === "targetAmount" ? "Target" : "Minimum donation"} amount cannot be negative`;
   if (value.minimumDonationAmount && value.targetAmount && Number(value.minimumDonationAmount) > Number(value.targetAmount)) return "Minimum donation amount cannot exceed the target amount";
@@ -177,12 +178,15 @@ export const publicListDonations = async (req, res) => {
   const cacheKey = `public-donations:${JSON.stringify({ page, limit, search, sahyogId: req.query.sahyogId || "", dateFrom: req.query.dateFrom || "", dateTo: req.query.dateTo || "", district: req.query.district || "", tehsil: req.query.tehsil || "" })}`;
   const cached = cachedList(cacheKey);
   if (cached) { res.set("Cache-Control", "public, max-age=20, s-maxage=20, stale-while-revalidate=40"); return res.json(cached); }
-  if (req.query.sahyogId && mongoose.isValidObjectId(req.query.sahyogId)) match.sahyogId = new mongoose.Types.ObjectId(req.query.sahyogId);
+  if (req.query.sahyogId) {
+    if (!mongoose.isValidObjectId(req.query.sahyogId)) return res.status(422).json({ success: false, message: "Invalid Sahyog case" });
+    match.sahyogId = new mongoose.Types.ObjectId(req.query.sahyogId);
+  }
   if (req.query.dateFrom || req.query.dateTo) match.createdAt = { ...(req.query.dateFrom ? { $gte: new Date(req.query.dateFrom) } : {}), ...(req.query.dateTo ? { $lte: new Date(`${req.query.dateTo}T23:59:59.999Z`) } : {}) };
   const pipeline = [{ $match: match }, { $lookup: { from: "sahyogs", localField: "sahyogId", foreignField: "_id", as: "case" } }, { $unwind: "$case" }, { $match: { "case.status": "active", "case.isDeleted": false } }, { $lookup: { from: "users", localField: "donorId", foreignField: "_id", as: "donor" } }, { $unwind: { path: "$donor", preserveNullAndEmptyArrays: true } }, { $lookup: { from: "users", localField: "case.memberId", foreignField: "_id", as: "lateMember" } }, { $unwind: "$lateMember" }];
   if (req.query.district) pipeline.push({ $match: { "donor.address.districtName": String(req.query.district) } }); if (req.query.tehsil) pipeline.push({ $match: { "donor.address.tehsilName": String(req.query.tehsil) } }); if (search) pipeline.push({ $match: { $or: ["$donor.fullName", "$donor.memberId", "$lateMember.fullName"].map((field) => ({ [field]: new RegExp(search, "i") })) } });
   const [result] = await Donation.aggregate([...pipeline, { $sort: { verifiedAt: -1, createdAt: -1, _id: -1 } }, { $facet: { rows: [{ $skip: (page - 1) * limit }, { $limit: limit }, { $project: { amount: 1, createdAt: 1, verifiedAt: 1, isAnonymous: 1, "donor.memberId": 1, "donor.fullName": 1, "donor.address.districtName": 1, "donor.address.tehsilName": 1, "lateMember.fullName": 1, "lateMember.memberId": 1 } }], total: [{ $count: "count" }] } }]);
-  const total = result?.total[0]?.count || 0; const donations = (result?.rows || []).map((d) => ({ _id: d._id, donor: { memberId: d.donor?.memberId || "—", fullName: d.donor?.fullName || "Member", district: d.donor?.address?.districtName || "", tehsil: d.donor?.address?.tehsilName || "" }, lateMember: { fullName: d.lateMember.fullName, memberId: d.lateMember.memberId || "—" }, amount: d.amount, donatedAt: d.verifiedAt || d.createdAt }));
+  const total = result?.total[0]?.count || 0; const donations = (result?.rows || []).map((d) => ({ _id: d._id, donor: { memberId: d.donor?.memberId || "—", fullName: String(d.donor?.fullName || "Member").toUpperCase(), district: d.donor?.address?.districtName || "", tehsil: d.donor?.address?.tehsilName || "" }, lateMember: { fullName: String(d.lateMember.fullName || "Member").toUpperCase(), memberId: d.lateMember.memberId || "—" }, amount: d.amount, donatedAt: d.verifiedAt || d.createdAt }));
   const payload = { success: true, donations, pagination: { page, limit, total, pages: Math.ceil(total / limit) } };
   cacheList(cacheKey, payload);
   res.set("Cache-Control", "public, max-age=20, s-maxage=20, stale-while-revalidate=40");

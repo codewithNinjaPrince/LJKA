@@ -49,6 +49,9 @@ export const userCreateClaim = async (req, res) => {
         message: "Date of death is required",
       });
     }
+    if (dateOfDeath > new Date()) {
+      return res.status(422).json({ success: false, message: "Date of death cannot be in the future" });
+    }
 
     if (nomineeMobile && !/^[6-9]\d{9}$/.test(nomineeMobile)) {
       return res.status(422).json({ success: false, message: "Nominee mobile must be a valid 10-digit number" });

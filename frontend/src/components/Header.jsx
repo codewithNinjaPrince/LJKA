@@ -43,7 +43,7 @@ const Header = () => {
 
               <div className="leading-tight">
                 <h1 className="text-[15px] xl:text-[17px] font-bold text-[var(--ljka-primary)] whitespace-nowrap">
-                  Lakhdaatar Jeevan Kalyan Association
+                  Lakhdatar Jeevan Kalyan Association
                 </h1>
 
                 <p className="text-[10px] xl:text-[11px] text-[var(--ljka-muted)] mt-1">
@@ -148,7 +148,7 @@ const Header = () => {
               </p>
 
               <p className="text-[10px] text-[var(--ljka-muted)]">
-                Lakhdaatar Jeevan Kalyan Association
+                Lakhdatar Jeevan Kalyan Association
               </p>
             </button>
 
@@ -282,7 +282,7 @@ export default Header;
 
 //               <div className="leading-tight">
 //                 <h1 className="text-[16px] sm:text-[18px] font-bold text-[var(--ljka-primary)] whitespace-nowrap">
-//                   Lakhdaatar Jeevan Kalyan Association
+//                   Lakhdatar Jeevan Kalyan Association
 //                 </h1>
 
 //                 <p className="text-[11px] text-[var(--ljka-muted)] mt-1">
@@ -399,7 +399,7 @@ export default Header;
 //               </p>
 
 //               <p className="text-[10px] text-[var(--ljka-muted)]">
-//                 Lakhdaatar Jeevan Kalyan Association
+//                 Lakhdatar Jeevan Kalyan Association
 //               </p>
 //             </button>
 

@@ -13,7 +13,7 @@ const UserLayout = () => {
         aria-hidden="true"
       >
         <img
-          src="/img/Lakhdaatar_Logo.png"
+          src="/img/Lakhdatar_Logo.png"
           alt=""
           className="block h-auto w-full object-contain opacity-[0.07]"
         />

@@ -368,7 +368,7 @@ const Register = () => {
       setLoading(true);
 
       const res = await axios.post(`${backendUrl}/api/user/register`, {
-        fullName: fullName.trim(),
+        fullName: fullName.trim().toUpperCase(),
         email: normalized,
         mobile,
         password,
@@ -481,7 +481,7 @@ const Register = () => {
             </h1>
 
             <p className="mt-5 text-base leading-7 text-[var(--ljka-muted)]">
-              Join Lakhdaatar Jeevan Kalyan Association and become part of a
+              Join Lakhdatar Jeevan Kalyan Association and become part of a
               community built around trust, humanity, cooperation and social
               responsibility.
             </p>
@@ -530,8 +530,8 @@ const Register = () => {
           <div className="mb-6 text-center lg:hidden">
             <div className="mx-auto flex h-15 w-15 items-center justify-center">
               <img
-                src="/img/Lakhdaatar_Logo.png"
-                alt="Lakhdaatar Jeevan Kalyan Association"
+                src="/img/Lakhdatar_Logo.png"
+                alt="Lakhdatar Jeevan Kalyan Association"
                 className="h-15 w-15 object-contain"
               />
             </div>
@@ -1252,7 +1252,7 @@ export default Register;
 //             </h1>
 
 //             <p className="mt-5 text-base leading-7 text-[var(--ljka-muted)]">
-//               Join Lakhdaatar Jeevan Kalyan Association and become part of a
+//               Join Lakhdatar Jeevan Kalyan Association and become part of a
 //               community built around trust, humanity, cooperation and social
 //               responsibility.
 //             </p>
@@ -1286,8 +1286,8 @@ export default Register;
 //           <div className="mb-6 text-center lg:hidden">
 //             <div className="mx-auto flex h-15 w-15 items-center justify-center">
 //               <img
-//                 src="/img/Lakhdaatar_Logo.png"
-//                 alt="Lakhdaatar Jeevan Kalyan Association"
+//                 src="/img/Lakhdatar_Logo.png"
+//                 alt="Lakhdatar Jeevan Kalyan Association"
 //                 className="h-15 w-15 object-contain"
 //               />
 //             </div>

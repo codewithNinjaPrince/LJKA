@@ -16,6 +16,7 @@ router.get("/admins", requireRole("superadmin"), admin.listAdmins);
 router.post("/admins", requireRole("superadmin"), admin.createAdmin);
 router.patch("/admins/:id", requireRole("superadmin"), admin.updateAdmin);
 router.patch("/admins/:id/status", requireRole("superadmin"), admin.setAdminStatus);
+router.delete("/admins/:id", requireRole("superadmin"), admin.deleteAdmin);
 router.post("/admins/:id/reset-password", requireRole("superadmin"), admin.resetAdminPassword);
 router.get("/admins/:id/rights", requireRole("superadmin"), admin.getRights);
 router.put("/admins/:id/rights", requireRole("superadmin"), admin.updateRights);
