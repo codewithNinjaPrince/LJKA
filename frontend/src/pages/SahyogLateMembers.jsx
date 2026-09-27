@@ -183,7 +183,7 @@ const SahyogLateMembers = () => {
       if (!response.ok) {
         throw new Error(
           result?.message ||
-            "Unable to fetch Sahyog cases"
+          "Unable to fetch Sahyog cases"
         );
       }
 
@@ -251,7 +251,7 @@ const SahyogLateMembers = () => {
 
       setError(
         err.message ||
-          "Unable to load Sahyog cases. Please try again."
+        "Unable to load Sahyog cases. Please try again."
       );
     } finally {
       if (requestId === requestIdRef.current) {
@@ -283,49 +283,47 @@ const SahyogLateMembers = () => {
   // ==========================================
 
   const handleSearch = (event) => {
-    event.preventDefault();
+  event.preventDefault();
 
-    const normalizedSearch =
-      searchInput.trim();
+  const normalizedSearch = searchInput.trim();
 
-    setPageInUrl(1, normalizedSearch, filters);
-  };
+  setPageInUrl(
+    1,
+    normalizedSearch,
+    filters
+  );
+};
 
   const setPageInUrl = (
-    nextPage,
-    nextSearch = search,
-    nextFilters = filters
-  ) => {
-    const nextParams = new URLSearchParams();
+  nextPage,
+  nextSearch = search,
+  nextFilters = filters
+) => {
+  const normalizedSearch = String(nextSearch || "").trim();
 
-    nextParams.set(
-      "page",
-      String(nextPage)
-    );
+  // IMPORTANT:
+  // Keep React search state synchronized with URL search.
+  setSearch(normalizedSearch);
 
-    if (nextSearch.trim()) {
-      nextParams.set(
-        "search",
-        nextSearch.trim()
-      );
+  const nextParams = new URLSearchParams();
+
+  nextParams.set("page", String(nextPage));
+
+  if (normalizedSearch) {
+    nextParams.set("search", normalizedSearch);
+  }
+
+  Object.entries(nextFilters).forEach(([key, value]) => {
+    if (
+      typeof value === "string" &&
+      value.trim()
+    ) {
+      nextParams.set(key, value.trim());
     }
+  });
 
-    Object.entries(nextFilters).forEach(
-      ([key, value]) => {
-        if (
-          typeof value === "string" &&
-          value.trim()
-        ) {
-          nextParams.set(
-            key,
-            value.trim()
-          );
-        }
-      }
-    );
-
-    setParams(nextParams);
-  };
+  setParams(nextParams);
+};
 
   // ==========================================
   // CLEAR SEARCH
@@ -628,7 +626,7 @@ const SahyogLateMembers = () => {
                         event.target.value
                       )
                     }
-                    placeholder="Search by deceased member, Member ID..."
+                    placeholder="Search by name, Member ID, phone, email or Sahyog ID..."
                     className="h-11 w-full rounded-lg border border-gray-300 bg-white pl-10 pr-10 text-sm text-gray-900 outline-none transition focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10"
                   />
 
@@ -664,12 +662,11 @@ const SahyogLateMembers = () => {
                       !previous
                   )
                 }
-                className={`flex h-11 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-medium transition ${
-                  showFilters ||
-                  activeFilterCount > 0
+                className={`flex h-11 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-medium transition ${showFilters ||
+                    activeFilterCount > 0
                     ? "border-gray-900 bg-gray-900 text-white"
                     : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-                }`}
+                  }`}
               >
 
                 <Filter size={17} />
@@ -1129,9 +1126,9 @@ const SahyogLateMembers = () => {
 
                     {cases.length
                       ? (pagination.currentPage -
-                          1) *
-                          pagination.perPage +
-                        1
+                        1) *
+                      pagination.perPage +
+                      1
                       : 0}
 
                   </span>
@@ -1142,7 +1139,7 @@ const SahyogLateMembers = () => {
 
                     {Math.min(
                       pagination.currentPage *
-                        pagination.perPage,
+                      pagination.perPage,
                       pagination.totalCases
                     )}
 
@@ -1191,7 +1188,7 @@ const SahyogLateMembers = () => {
                       setPageInUrl(
                         Math.max(
                           pagination.currentPage -
-                            1,
+                          1,
                           1
                         ),
                         search,
@@ -1212,7 +1209,7 @@ const SahyogLateMembers = () => {
                       index
                     ) =>
                       pageNumber ===
-                      "..." ? (
+                        "..." ? (
                         <span
                           key={`ellipsis-${index}`}
                           className="flex h-9 w-9 items-center justify-center text-sm text-gray-400"
@@ -1230,12 +1227,11 @@ const SahyogLateMembers = () => {
                               filters
                             )
                           }
-                          className={`h-9 min-w-9 rounded-lg px-2 text-sm font-medium transition ${
-                            pageNumber ===
-                            pagination.currentPage
+                          className={`h-9 min-w-9 rounded-lg px-2 text-sm font-medium transition ${pageNumber ===
+                              pagination.currentPage
                               ? "bg-gray-900 text-white"
                               : "border border-gray-200 text-gray-600 hover:bg-gray-50"
-                          }`}
+                            }`}
                         >
                           {pageNumber}
                         </button>
@@ -1253,7 +1249,7 @@ const SahyogLateMembers = () => {
                       setPageInUrl(
                         Math.min(
                           pagination.currentPage +
-                            1,
+                          1,
                           pagination.totalPages
                         ),
                         search,

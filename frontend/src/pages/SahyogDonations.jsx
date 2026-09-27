@@ -180,7 +180,35 @@ const SahyogDonations = () => {
                 }
             );
 
+            const contentType =
+                response.headers.get("content-type") || "";
+
+            if (!contentType.includes("application/json")) {
+                const text = await response.text();
+
+                console.error(
+                    "SAHYOG DONATIONS API RETURNED NON-JSON:",
+                    {
+                        status: response.status,
+                        url: response.url,
+                        contentType,
+                        response: text.slice(0, 500),
+                    }
+                );
+
+                throw new Error(
+                    `Donation API returned ${response.status} ${response.statusText}`
+                );
+            }
+
             const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(
+                    result?.message ||
+                    "Unable to fetch donations."
+                );
+            }
 
             if (!response.ok) {
                 throw new Error(
@@ -555,7 +583,7 @@ const SahyogDonations = () => {
                                         onChange={(e) =>
                                             setSearchInput(e.target.value)
                                         }
-                                        placeholder="Search by donor, Member ID or late member..."
+                                        placeholder="Search by name, Member ID, phone or email..."
                                         className="h-11 w-full rounded-lg border border-gray-300 bg-white pl-10 pr-10 text-sm text-gray-900 outline-none transition focus:border-gray-900 focus:ring-2 focus:ring-gray-900/10"
                                     />
 
@@ -590,9 +618,9 @@ const SahyogDonations = () => {
                                     )
                                 }
                                 className={`flex h-11 items-center justify-center gap-2 rounded-lg border px-4 text-sm font-medium transition ${showFilters ||
-                                        activeFilterCount > 0
-                                        ? "border-gray-900 bg-gray-900 text-white"
-                                        : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                                    activeFilterCount > 0
+                                    ? "border-gray-900 bg-gray-900 text-white"
+                                    : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
                                     }`}
                             >
                                 <Filter size={17} />
@@ -1156,9 +1184,9 @@ const SahyogDonations = () => {
                                                         setPage(pageNumber)
                                                     }
                                                     className={`h-9 min-w-9 rounded-lg px-2 text-sm font-medium transition ${pageNumber ===
-                                                            pagination.currentPage
-                                                            ? "bg-gray-900 text-white"
-                                                            : "border border-gray-200 text-gray-600 hover:bg-gray-50"
+                                                        pagination.currentPage
+                                                        ? "bg-gray-900 text-white"
+                                                        : "border border-gray-200 text-gray-600 hover:bg-gray-50"
                                                         }`}
                                                 >
                                                     {pageNumber}

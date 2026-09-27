@@ -144,64 +144,564 @@ export const verifyDonation = async (req, res) => setDonationStatus(req, res, "s
 export const rejectDonation = async (req, res) => setDonationStatus(req, res, "rejected");
 
 export const publicListSahyog = async (req, res) => {
-  const { page, limit } = parsePagination(req);
-  const search = String(req.query.search || "").trim();
-  const state = String(req.query.state || "").trim();
-  const district = String(req.query.district || "").trim();
-  const tehsil = String(req.query.tehsil || "").trim();
-  const cacheKey = `public-cases:${JSON.stringify({ page, limit, search, state, district, tehsil })}`;
-  const cached = cachedList(cacheKey);
-  if (cached) { res.set("Cache-Control", "no-store"); return res.json(cached); }
+  try {
+    const { page, limit } = parsePagination(req);
 
-  const filter = { status: "active", isDeleted: false };
-  const memberQuery = {};
-  if (state) memberQuery["address.stateCode"] = Number(state);
-  if (district) memberQuery["address.districtCode"] = Number(district);
-  if (tehsil) memberQuery["address.tehsilCode"] = Number(tehsil);
-  if (search) {
-    const expression = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
-    memberQuery.$or = [{ fullName: expression }, { memberId: expression }];
-  }
+    const search = String(req.query.search || "").trim();
+    const state = String(req.query.state || "").trim();
+    const district = String(req.query.district || "").trim();
+    const tehsil = String(req.query.tehsil || "").trim();
 
-  if (Object.keys(memberQuery).length) {
-    const members = await User.find(memberQuery).select("_id");
-    const memberIds = members.map((item) => item._id);
-    if (search) {
-      filter.$or = [{ sahyogId: new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i") }, { memberId: { $in: memberIds } }];
-    } else {
-      filter.memberId = { $in: memberIds };
+    const cacheKey = `public-cases:${JSON.stringify({
+      page,
+      limit,
+      search,
+      state,
+      district,
+      tehsil,
+    })}`;
+
+    const cached = cachedList(cacheKey);
+
+    if (cached) {
+      res.set("Cache-Control", "no-store");
+      return res.json(cached);
     }
-  }
 
-  const [total, cases] = await Promise.all([
-    Sahyog.countDocuments(filter),
-    Sahyog.find(filter).populate("memberId", memberFields).sort({ dateOfDeath: -1, _id: -1 }).skip((page - 1) * limit).limit(limit).lean(),
-  ]);
-  const enriched = await decorate(cases);
-  const payload = { success: true, cases: enriched.map(publicCase), pagination: { page, limit, total, pages: Math.ceil(total / limit) } };
-  cacheList(cacheKey, payload);
-  res.set("Cache-Control", "no-store");
-  res.json(payload);
+    // ------------------------------------------------------------
+    // BASE SAHYOG FILTER
+    // ------------------------------------------------------------
+
+    const filter = {
+      status: "active",
+      isDeleted: false,
+    };
+
+    // ------------------------------------------------------------
+    // MEMBER FILTER
+    // ------------------------------------------------------------
+
+    const memberQuery = {};
+
+    if (state) {
+      memberQuery["address.stateCode"] = Number(state);
+    }
+
+    if (district) {
+      memberQuery["address.districtCode"] = Number(district);
+    }
+
+    if (tehsil) {
+      memberQuery["address.tehsilCode"] = Number(tehsil);
+    }
+
+    // ------------------------------------------------------------
+    // SEARCH
+    // ------------------------------------------------------------
+
+    if (search) {
+      const escapedSearch = search.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&"
+      );
+
+      const searchRegex = new RegExp(
+        escapedSearch,
+        "i"
+      );
+
+      memberQuery.$or = [
+        { fullName: searchRegex },
+        { memberId: searchRegex },
+        { mobile: searchRegex },
+        { email: searchRegex },
+      ];
+    }
+
+    // ------------------------------------------------------------
+    // FIND MEMBERS
+    // ------------------------------------------------------------
+
+    if (Object.keys(memberQuery).length > 0) {
+      const members = await User.find(memberQuery)
+        .select("_id")
+        .lean();
+
+      const memberIds = members.map(
+        (member) => member._id
+      );
+
+      if (search) {
+        const escapedSearch = search.replace(
+          /[.*+?^${}()|[\]\\]/g,
+          "\\$&"
+        );
+
+        const searchRegex = new RegExp(
+          escapedSearch,
+          "i"
+        );
+
+        filter.$or = [
+          {
+            sahyogId: searchRegex,
+          },
+          {
+            memberId: {
+              $in: memberIds,
+            },
+          },
+        ];
+      } else {
+        filter.memberId = {
+          $in: memberIds,
+        };
+      }
+    } else if (search) {
+      // Search only by Sahyog ID when no member
+      // location filter is present.
+      const escapedSearch = search.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&"
+      );
+
+      filter.sahyogId = new RegExp(
+        escapedSearch,
+        "i"
+      );
+    }
+
+    // ------------------------------------------------------------
+    // FETCH CASES
+    // ------------------------------------------------------------
+
+    const [total, cases] = await Promise.all([
+      Sahyog.countDocuments(filter),
+
+      Sahyog.find(filter)
+        .populate("memberId", memberFields)
+        .sort({
+          dateOfDeath: -1,
+          _id: -1,
+        })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+    ]);
+
+    // ------------------------------------------------------------
+    // DECORATE RESPONSE
+    // ------------------------------------------------------------
+
+    const enriched = await decorate(cases);
+
+    const payload = {
+      success: true,
+      cases: enriched.map(publicCase),
+
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    };
+
+    cacheList(cacheKey, payload);
+
+    res.set("Cache-Control", "no-store");
+
+    return res.json(payload);
+  } catch (error) {
+    console.error(
+      "PUBLIC SAHYOG LIST ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to fetch Sahyog cases",
+    });
+  }
 };
 export const publicGetSahyog = async (req, res) => { const item = await Sahyog.findOne({ _id: req.params.id, status: "active", isDeleted: false }).populate("memberId", memberFields); if (!item) return res.status(404).json({ success: false, message: "Sahyog case not found" }); res.json({ success: true, sahyog: publicCase((await decorate([item]))[0]) }); };
 export const publicListDonations = async (req, res) => {
-  const { page, limit } = parsePagination(req); const search = String(req.query.search || "").trim(); const match = { paymentStatus: "success" };
-  const cacheKey = `public-donations:${JSON.stringify({ page, limit, search, sahyogId: req.query.sahyogId || "", dateFrom: req.query.dateFrom || "", dateTo: req.query.dateTo || "", district: req.query.district || "", tehsil: req.query.tehsil || "" })}`;
-  const cached = cachedList(cacheKey);
-  if (cached) { res.set("Cache-Control", "public, max-age=20, s-maxage=20, stale-while-revalidate=40"); return res.json(cached); }
-  if (req.query.sahyogId) {
-    if (!mongoose.isValidObjectId(req.query.sahyogId)) return res.status(422).json({ success: false, message: "Invalid Sahyog case" });
-    match.sahyogId = new mongoose.Types.ObjectId(req.query.sahyogId);
+  try {
+    const { page, limit } = parsePagination(req);
+
+    const search = String(req.query.search || "").trim();
+    const sahyogId = String(req.query.sahyogId || "").trim();
+
+    const state = String(req.query.state || "").trim();
+    const district = String(req.query.district || "").trim();
+    const tehsil = String(req.query.tehsil || "").trim();
+
+    const dateFrom = String(req.query.dateFrom || "").trim();
+    const dateTo = String(req.query.dateTo || "").trim();
+
+    const cacheKey = `public-donations:${JSON.stringify({
+      page,
+      limit,
+      search,
+      sahyogId,
+      dateFrom,
+      dateTo,
+      state,
+      district,
+      tehsil,
+    })}`;
+
+    const cached = cachedList(cacheKey);
+
+    if (cached) {
+      res.set(
+        "Cache-Control",
+        "public, max-age=20, s-maxage=20, stale-while-revalidate=40"
+      );
+
+      return res.json(cached);
+    }
+
+    // ============================================================
+    // BASE DONATION FILTER
+    // ============================================================
+
+    const match = {
+      paymentStatus: "success",
+    };
+
+    // ============================================================
+    // SAHYOG CASE FILTER
+    // ============================================================
+
+    if (sahyogId) {
+      if (!mongoose.isValidObjectId(sahyogId)) {
+        return res.status(422).json({
+          success: false,
+          message: "Invalid Sahyog case",
+        });
+      }
+
+      match.sahyogId = new mongoose.Types.ObjectId(sahyogId);
+    }
+
+    // ============================================================
+    // DATE FILTER
+    // ============================================================
+
+    if (dateFrom || dateTo) {
+      match.createdAt = {
+        ...(dateFrom
+          ? {
+            $gte: new Date(dateFrom),
+          }
+          : {}),
+
+        ...(dateTo
+          ? {
+            $lte: new Date(`${dateTo}T23:59:59.999Z`),
+          }
+          : {}),
+      };
+    }
+
+    // ============================================================
+    // ESCAPE SEARCH
+    // ============================================================
+
+    const escapedSearch = search
+      ? search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+      : "";
+
+    // ============================================================
+    // AGGREGATION
+    // ============================================================
+
+    const pipeline = [
+      {
+        $match: match,
+      },
+
+      // ------------------------------------------------------------
+      // SAHYOG CASE
+      // ------------------------------------------------------------
+
+      {
+        $lookup: {
+          from: "sahyogs",
+          localField: "sahyogId",
+          foreignField: "_id",
+          as: "case",
+        },
+      },
+
+      {
+        $unwind: "$case",
+      },
+
+      {
+        $match: {
+          "case.status": "active",
+          "case.isDeleted": false,
+        },
+      },
+
+      // ------------------------------------------------------------
+      // DONOR
+      // ------------------------------------------------------------
+
+      {
+        $lookup: {
+          from: "users",
+          localField: "donorId",
+          foreignField: "_id",
+          as: "donor",
+        },
+      },
+
+      {
+        $unwind: {
+          path: "$donor",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+
+      // ------------------------------------------------------------
+      // LATE MEMBER
+      // ------------------------------------------------------------
+
+      {
+        $lookup: {
+          from: "users",
+          localField: "case.memberId",
+          foreignField: "_id",
+          as: "lateMember",
+        },
+      },
+
+      {
+        $unwind: {
+          path: "$lateMember",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+    ];
+
+    // ============================================================
+    // LOCATION FILTERS
+    // IMPORTANT:
+    // Frontend sends location CODES, not names.
+    // ============================================================
+
+    if (state) {
+      const stateCode = Number(state);
+
+      if (!Number.isNaN(stateCode)) {
+        pipeline.push({
+          $match: {
+            "donor.address.stateCode": stateCode,
+          },
+        });
+      }
+    }
+
+    if (district) {
+      const districtCode = Number(district);
+
+      if (!Number.isNaN(districtCode)) {
+        pipeline.push({
+          $match: {
+            "donor.address.districtCode": districtCode,
+          },
+        });
+      }
+    }
+
+    if (tehsil) {
+      const tehsilCode = Number(tehsil);
+
+      if (!Number.isNaN(tehsilCode)) {
+        pipeline.push({
+          $match: {
+            "donor.address.tehsilCode": tehsilCode,
+          },
+        });
+      }
+    }
+
+    // ============================================================
+    // SEARCH
+    // ============================================================
+
+    if (escapedSearch) {
+      const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(escapedSearch, "i");
+      const searchRegex = new RegExp(escapedSearch, "i");
+
+      pipeline.push({
+        $match: {
+          $or: [
+            { "donor.fullName": regex },
+            { "donor.memberId": regex },
+            { "donor.mobile": regex },
+            { "donor.email": regex },
+
+            { "lateMember.fullName": regex },
+            { "lateMember.memberId": regex },
+            { "lateMember.mobile": regex },
+            { "lateMember.email": regex },
+          ],
+        },
+      });
+    }
+
+    // ============================================================
+    // SORT + PAGINATION
+    // ============================================================
+
+    pipeline.push(
+      {
+        $sort: {
+          verifiedAt: -1,
+          createdAt: -1,
+          _id: -1,
+        },
+      },
+
+      {
+        $facet: {
+          rows: [
+            {
+              $skip: (page - 1) * limit,
+            },
+
+            {
+              $limit: limit,
+            },
+
+            {
+              $project: {
+                amount: 1,
+                createdAt: 1,
+                verifiedAt: 1,
+                isAnonymous: 1,
+
+                "donor.memberId": 1,
+                "donor.fullName": 1,
+                "donor.mobile": 1,
+                "donor.email": 1,
+                "donor.address.districtName": 1,
+                "donor.address.tehsilName": 1,
+
+                "lateMember.fullName": 1,
+                "lateMember.memberId": 1,
+                "lateMember.mobile": 1,
+                "lateMember.email": 1,
+              },
+            },
+          ],
+
+          total: [
+            {
+              $count: "count",
+            },
+          ],
+        },
+      }
+    );
+
+    // ============================================================
+    // RUN AGGREGATION
+    // ============================================================
+
+    const [result] = await Donation.aggregate(pipeline);
+
+    const total = result?.total?.[0]?.count || 0;
+
+    const donations = (result?.rows || []).map((d) => ({
+      _id: d._id,
+
+      donor: {
+        memberId: d.donor?.memberId || "—",
+
+        fullName: String(
+          d.donor?.fullName || "Member"
+        ).toUpperCase(),
+
+        district:
+          d.donor?.address?.districtName || "",
+
+        tehsil:
+          d.donor?.address?.tehsilName || "",
+      },
+
+      lateMember: {
+        fullName: String(
+          d.lateMember?.fullName || "Member"
+        ).toUpperCase(),
+
+        memberId:
+          d.lateMember?.memberId || "—",
+      },
+
+      amount: d.amount,
+
+      donatedAt:
+        d.verifiedAt || d.createdAt,
+    }));
+
+    // ============================================================
+    // RESPONSE
+    // ============================================================
+
+    const payload = {
+      success: true,
+
+      donations,
+
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+
+        // These make it easier for the frontend
+        // to handle pagination consistently.
+        currentPage: page,
+        perPage: limit,
+        totalDonations: total,
+
+        totalPages: Math.ceil(total / limit),
+
+        hasNextPage:
+          page < Math.ceil(total / limit),
+
+        hasPreviousPage:
+          page > 1,
+      },
+    };
+
+    cacheList(cacheKey, payload);
+
+    res.set(
+      "Cache-Control",
+      "public, max-age=20, s-maxage=20, stale-while-revalidate=40"
+    );
+
+    return res.json(payload);
+  } catch (error) {
+    console.error(
+      "PUBLIC SAHYOG DONATIONS ERROR:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message:
+        error?.message ||
+        "Unable to fetch Sahyog donations",
+    });
   }
-  if (req.query.dateFrom || req.query.dateTo) match.createdAt = { ...(req.query.dateFrom ? { $gte: new Date(req.query.dateFrom) } : {}), ...(req.query.dateTo ? { $lte: new Date(`${req.query.dateTo}T23:59:59.999Z`) } : {}) };
-  const pipeline = [{ $match: match }, { $lookup: { from: "sahyogs", localField: "sahyogId", foreignField: "_id", as: "case" } }, { $unwind: "$case" }, { $match: { "case.status": "active", "case.isDeleted": false } }, { $lookup: { from: "users", localField: "donorId", foreignField: "_id", as: "donor" } }, { $unwind: { path: "$donor", preserveNullAndEmptyArrays: true } }, { $lookup: { from: "users", localField: "case.memberId", foreignField: "_id", as: "lateMember" } }, { $unwind: "$lateMember" }];
-  if (req.query.district) pipeline.push({ $match: { "donor.address.districtName": String(req.query.district) } }); if (req.query.tehsil) pipeline.push({ $match: { "donor.address.tehsilName": String(req.query.tehsil) } }); if (search) pipeline.push({ $match: { $or: ["$donor.fullName", "$donor.memberId", "$lateMember.fullName"].map((field) => ({ [field]: new RegExp(search, "i") })) } });
-  const [result] = await Donation.aggregate([...pipeline, { $sort: { verifiedAt: -1, createdAt: -1, _id: -1 } }, { $facet: { rows: [{ $skip: (page - 1) * limit }, { $limit: limit }, { $project: { amount: 1, createdAt: 1, verifiedAt: 1, isAnonymous: 1, "donor.memberId": 1, "donor.fullName": 1, "donor.address.districtName": 1, "donor.address.tehsilName": 1, "lateMember.fullName": 1, "lateMember.memberId": 1 } }], total: [{ $count: "count" }] } }]);
-  const total = result?.total[0]?.count || 0; const donations = (result?.rows || []).map((d) => ({ _id: d._id, donor: { memberId: d.donor?.memberId || "—", fullName: String(d.donor?.fullName || "Member").toUpperCase(), district: d.donor?.address?.districtName || "", tehsil: d.donor?.address?.tehsilName || "" }, lateMember: { fullName: String(d.lateMember.fullName || "Member").toUpperCase(), memberId: d.lateMember.memberId || "—" }, amount: d.amount, donatedAt: d.verifiedAt || d.createdAt }));
-  const payload = { success: true, donations, pagination: { page, limit, total, pages: Math.ceil(total / limit) } };
-  cacheList(cacheKey, payload);
-  res.set("Cache-Control", "public, max-age=20, s-maxage=20, stale-while-revalidate=40");
-  res.json(payload);
 };
 export const publicListCaseDonors = async (req, res) => { req.query.sahyogId = req.params.id; return publicListDonations(req, res); };
 export const initiatePublicDonation = async (req, res) => { const { donorName, donorEmail, donorMobile, amount } = req.body; const item = await Sahyog.findOne({ _id: req.params.id, status: "active", isDeleted: false }); if (!item) return res.status(404).json({ success: false, message: "Sahyog case not found" }); if (!amount || Number(amount) <= 0) return res.status(422).json({ success: false, message: "A valid donation amount is required" }); const donation = await Donation.create({ donationId: makeId("DON"), sahyogId: item._id, donorName, donorEmail, donorMobile, amount: Number(amount), isAnonymous: false, paymentMethod: "unconfigured", paymentStatus: "pending" }); res.status(202).json({ success: true, message: "Donation intent recorded. Payment remains pending until a verified payment provider is configured.", donationId: donation.donationId, paymentStatus: donation.paymentStatus }); };
