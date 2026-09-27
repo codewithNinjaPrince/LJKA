@@ -3,6 +3,7 @@ import express from "express";
 import {
   getMembers,
   getMemberFilterOptions,
+  getPaidVyawasthaMembers,
 } from "../controller/memberController.js";
 
 const memberRouter = express.Router();
@@ -13,6 +14,7 @@ const memberRouter = express.Router();
 // ============================================================
 
 memberRouter.get("/", getMembers);
+memberRouter.get("/vyawastha-paid", getPaidVyawasthaMembers);
 
 
 // ============================================================

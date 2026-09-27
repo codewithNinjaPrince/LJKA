@@ -5,6 +5,7 @@ const router = express.Router();
 router.get("/", sahyog.publicListSahyog);
 router.get("/donations", sahyog.publicListDonations);
 router.get("/:id/donations", sahyog.publicListCaseDonors);
+router.get("/:id/donor-summary", sahyog.publicGetCaseDonorSummary);
 router.get("/:id", sahyog.publicGetSahyog);
 router.post("/:id/donations", sahyog.initiatePublicDonation);
 export default router;

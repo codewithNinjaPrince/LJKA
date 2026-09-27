@@ -22,7 +22,7 @@ import locationData from "../data/india/locationData.json";
 const DIRECTORY_CACHE_TTL_MS = 0;
 const directoryResponseCache = new Map();
 
-const UserList = () => {
+const UserList = ({ paidVyawastha = false }) => {
   const { backendUrl } = useContext(LJKAContext);
 
   // ==========================================
@@ -59,8 +59,8 @@ const UserList = () => {
   const [error, setError] = useState("");
 
   const queryKey = useMemo(
-    () => JSON.stringify({ page, search, filters }),
-    [page, search, filters]
+    () => JSON.stringify({ page, search, filters, paidVyawastha }),
+    [page, search, filters, paidVyawastha]
   );
 
   const formatEmploymentStatus = (value) =>
@@ -186,7 +186,7 @@ const UserList = () => {
       );
 
       const response = await fetch(
-        `${backendUrl}/api/members?${params.toString()}`,
+        `${backendUrl}/api/members${paidVyawastha ? "/vyawastha-paid" : ""}?${params.toString()}`,
         { signal, cache: "no-store" }
       );
 
@@ -195,7 +195,7 @@ const UserList = () => {
       if (!response.ok || !result.success) {
         throw new Error(
           result.message ||
-          "Unable to fetch members"
+          paidVyawastha ? "Unable to fetch paid Vyawastha members" : "Unable to fetch members"
         );
       }
 
@@ -222,7 +222,7 @@ const UserList = () => {
       }
 
       console.error(
-        "FETCH MEMBERS ERROR:",
+        paidVyawastha ? "FETCH PAID VYAWASTHA MEMBERS ERROR:" : "FETCH MEMBERS ERROR:",
         err
       );
 
@@ -230,7 +230,7 @@ const UserList = () => {
 
       setError(
         err.message ||
-        "Unable to load members. Please try again."
+        paidVyawastha ? "Unable to load paid Vyawastha members. Please try again." : "Unable to load members. Please try again."
       );
     } finally {
       if (requestId === requestIdRef.current) {
@@ -482,17 +482,17 @@ const UserList = () => {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-                  Our Members
+                  {paidVyawastha ? "Vyawastha Paid Members" : "Our Members"}
                 </h1>
 
                 <p className="mt-1 text-sm text-gray-500">
-                  Registered LJKA members
+                  {paidVyawastha ? "Members with Vyawastha payment approved by LJKA" : "Registered LJKA members"}
                 </p>
               </div>
 
               {!loading && (
                 <div className="text-sm text-gray-500">
-                  Total Members:{" "}
+                  {paidVyawastha ? "Total Paid Members:" : "Total Members:"}{" "}
                   <span className="font-semibold text-gray-900">
                     {pagination.totalMembers.toLocaleString(
                       "en-IN"
@@ -846,7 +846,7 @@ const UserList = () => {
 
               {/* Loading Text */}
               <p className="mt-5 text-sm font-semibold text-[var(--ljka-primary)]">
-                Loading members
+                {paidVyawastha ? "Loading paid Vyawastha members" : "Loading members"}
                 <span className="inline-flex w-8 justify-start text-left">
                   <span className="animate-bounce [animation-delay:0ms]">.</span>
                   <span className="animate-bounce [animation-delay:150ms]">.</span>
@@ -860,7 +860,7 @@ const UserList = () => {
               </div>
 
               <p className="mt-3 text-xs text-gray-500">
-                Bringing the latest member information into view
+                {paidVyawastha ? "Bringing the latest approved payments into view" : "Bringing the latest member information into view"}
               </p>
             </div>
           </div>
@@ -905,7 +905,7 @@ const UserList = () => {
                   </th>
 
                   <th className="whitespace-nowrap px-4 py-4 text-xs font-semibold uppercase tracking-wide text-gray-600">
-                    Registered On
+                    {paidVyawastha ? "Paid On" : "Registered On"}
                   </th>
 
                 </tr>
@@ -952,7 +952,7 @@ const UserList = () => {
 
                       <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-600">
                         {formatDateTime(
-                          member.registeredAt
+                          paidVyawastha ? member.paidOn : member.registeredAt
                         )}
                       </td>
 
@@ -976,7 +976,7 @@ const UserList = () => {
                           </div>
 
                           <h3 className="text-base font-semibold text-gray-900">
-                            No members found
+                            {paidVyawastha ? "No paid Vyawastha members found" : "No members found"}
                           </h3>
 
                           <p className="mt-1 text-sm text-gray-500">

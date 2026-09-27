@@ -325,6 +325,89 @@ export const publicListSahyog = async (req, res) => {
   }
 };
 export const publicGetSahyog = async (req, res) => { const item = await Sahyog.findOne({ _id: req.params.id, status: "active", isDeleted: false }).populate("memberId", memberFields); if (!item) return res.status(404).json({ success: false, message: "Sahyog case not found" }); res.json({ success: true, sahyog: publicCase((await decorate([item]))[0]) }); };
+export const publicGetCaseDonorSummary = async (req, res) => {
+  const item = await Sahyog.findOne({
+    _id: req.params.id,
+    status: "active",
+    isDeleted: false,
+  })
+    .populate(
+      "memberId",
+      "fullName memberId aadhaar"
+    )
+    .lean();
+
+  if (!item) {
+    return res.status(404).json({
+      success: false,
+      message: "Sahyog case not found",
+    });
+  }
+
+  const [value] = await decorate([item]);
+
+  const member = value.memberId || {};
+  const payment = value.paymentDetails || {};
+
+  const maskedAadhaar = member.aadhaar
+    ? `${String(member.aadhaar).slice(0, 4)}••••••${String(
+        member.aadhaar
+      ).slice(-2)}`
+    : "—";
+
+  return res.json({
+    success: true,
+
+    summary: {
+      /* ================================
+         BENEFICIARY
+      ================================= */
+
+      member: {
+        fullName: member.fullName || "Member",
+        memberId: member.memberId || "—",
+        aadhaar: maskedAadhaar,
+      },
+
+      /* ================================
+         BANK DETAILS
+      ================================= */
+
+      bank: {
+        accountHolderName:
+          payment.accountHolderName || "—",
+
+        accountNumber:
+          payment.accountNumber || "—",
+
+        ifsc:
+          payment.ifsc || "—",
+
+        bankName:
+          payment.bankName || "—",
+
+        branchName:
+          payment.branchName || "—",
+      },
+
+      /* ================================
+         DEATH DATE
+      ================================= */
+
+      dateOfDeath: value.dateOfDeath || null,
+
+      /* ================================
+         DONATION SUMMARY
+      ================================= */
+
+      donationSummary:
+        value.donationSummary || {
+          amount: 0,
+          count: 0,
+        },
+    },
+  });
+};
 export const publicListDonations = async (req, res) => {
   try {
     const { page, limit } = parsePagination(req);

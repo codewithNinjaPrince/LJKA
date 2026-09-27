@@ -1,4 +1,5 @@
 import User from "../models/userModel.js";
+import VyawasthaPayment from "../models/vyawasthaPaymentModel.js";
 
 const MEMBER_CACHE_TTL_MS = 0;
 const MAX_CACHED_MEMBER_QUERIES = 100;
@@ -384,4 +385,74 @@ const getMemberFilterOptions = async (req, res) => {
   }
 };
 
-export { getMembers, getMemberFilterOptions };
+// Public directory of members whose Vyawastha payment has been approved.
+// It deliberately returns the same non-sensitive directory fields as /api/members.
+const getPaidVyawasthaMembers = async (req, res) => {
+  try {
+    const page = Math.max(Number(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 50);
+    const skip = (page - 1) * limit;
+    const search = String(req.query.search || "").trim();
+    const state = Number(req.query.state);
+    const district = Number(req.query.district);
+    const tehsil = Number(req.query.tehsil);
+    const employmentStatus = String(req.query.employmentStatus || "").trim();
+    const escapedSearch = escapeRegex(search);
+
+    const memberMatch = {
+      "member.kycCompleted": true,
+      "member.memberId": { $exists: true, $ne: "" },
+      ...(Number.isFinite(state) && req.query.state !== "" ? { "member.address.stateCode": state } : {}),
+      ...(Number.isFinite(district) && req.query.district !== "" ? { "member.address.districtCode": district } : {}),
+      ...(Number.isFinite(tehsil) && req.query.tehsil !== "" ? { "member.address.tehsilCode": tehsil } : {}),
+      ...(employmentStatus ? { "member.employmentStatus": employmentStatus } : {}),
+    };
+
+    if (escapedSearch) {
+      memberMatch.$or = ["fullName", "memberId", "mobile"].map((field) => ({
+        [`member.${field}`]: new RegExp(escapedSearch, "i"),
+      }));
+    }
+
+    const basePipeline = [
+      { $match: { paymentStatus: "verified" } },
+      { $sort: { verifiedAt: -1, createdAt: -1, _id: -1 } },
+      { $group: { _id: "$userId", payment: { $first: "$$ROOT" } } },
+      { $replaceRoot: { newRoot: "$payment" } },
+      { $lookup: { from: "users", localField: "userId", foreignField: "_id", as: "member" } },
+      { $unwind: "$member" },
+      { $match: memberMatch },
+    ];
+
+    const [result] = await VyawasthaPayment.aggregate([
+      ...basePipeline,
+      { $facet: {
+        rows: [
+          { $sort: { verifiedAt: -1, createdAt: -1, _id: -1 } },
+          { $skip: skip },
+          { $limit: limit },
+          { $project: { verifiedAt: 1, createdAt: 1, "member.memberId": 1, "member.fullName": 1, "member.address": 1, "member.employmentStatus": 1 } },
+        ],
+        total: [{ $count: "count" }],
+      } },
+    ]);
+
+    const totalMembers = result?.total?.[0]?.count || 0;
+    const data = (result?.rows || []).map((row, index) => ({
+      serialNo: skip + index + 1,
+      memberId: row.member.memberId,
+      fullName: String(row.member.fullName || "").toUpperCase(),
+      district: row.member.address?.districtName || "",
+      tehsil: row.member.address?.tehsilName || "",
+      employmentStatus: row.member.employmentStatus || "",
+      paidOn: row.verifiedAt || row.createdAt,
+    }));
+    const totalPages = Math.ceil(totalMembers / limit);
+    return res.json({ success: true, data, pagination: { currentPage: page, perPage: limit, totalMembers, totalPages, hasNextPage: page < totalPages, hasPreviousPage: page > 1 } });
+  } catch (error) {
+    console.error("GET PAID VYAWASTHA MEMBERS ERROR:", error);
+    return res.status(500).json({ success: false, message: "Unable to fetch paid Vyawastha members" });
+  }
+};
+
+export { getMembers, getMemberFilterOptions, getPaidVyawasthaMembers };

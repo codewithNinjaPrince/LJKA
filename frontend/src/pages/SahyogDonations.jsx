@@ -33,6 +33,8 @@ const SahyogDonations = () => {
     // ==========================================
 
     const [donations, setDonations] = useState([]);
+    const [caseSummary, setCaseSummary] = useState(null);
+    const [summaryError, setSummaryError] = useState("");
 
     const [page, setPage] = useState(1);
 
@@ -60,6 +62,40 @@ const SahyogDonations = () => {
     const [error, setError] = useState("");
 
     const requestIdRef = useRef(0);
+
+    useEffect(() => {
+        if (!sahyogId) {
+            setCaseSummary(null);
+            setSummaryError("");
+            return;
+        }
+
+        const controller = new AbortController();
+
+        fetch(
+            `${backendUrl}/api/public/sahyog/${sahyogId}/donor-summary`,
+            { signal: controller.signal, cache: "no-store" }
+        )
+            .then(async (response) => {
+                const result = await response.json();
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || "Unable to load member details.");
+                }
+                return result.summary;
+            })
+            .then((summary) => {
+                setCaseSummary(summary);
+                setSummaryError("");
+            })
+            .catch((err) => {
+                if (err.name !== "AbortError") {
+                    setCaseSummary(null);
+                    setSummaryError(err.message || "Unable to load member details.");
+                }
+            });
+
+        return () => controller.abort();
+    }, [backendUrl, sahyogId]);
 
     // ==========================================
     // QUERY KEY
@@ -543,17 +579,153 @@ const SahyogDonations = () => {
                                 </div>
 
                                 <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-                                    Recent Donations
+                                    {sahyogId ? "Donor's List" : "Recent Donations"}
                                 </h1>
 
                                 <p className="mt-1 text-sm text-gray-500">
-                                    Verified Sahyog contributions from LJKA members
+                                    {sahyogId ? "Verified donations and beneficiary details" : "Verified Sahyog contributions from LJKA members"}
                                 </p>
                             </div>
 
                         </div>
                     </div>
                 </div>
+
+                {sahyogId && caseSummary && (
+                    <section className="mb-6 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+
+                        {/* Header */}
+                        <div className="bg-gradient-to-r from-[var(--ljka-primary-bg)] to-white px-5 py-5 sm:px-6">
+                            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+                                <div>
+                                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--ljka-gold-dark)]">
+                                        Sahyog Details
+                                    </p>
+
+                                    <h2 className="mt-1 text-xl font-bold text-[var(--ljka-primary)] sm:text-2xl">
+                                        {caseSummary.member?.fullName || "Sahyog Case"}
+                                    </h2>
+
+                                    <p className="mt-1 text-sm text-gray-500">
+                                        Sahyog ID:{" "}
+                                        <span className="font-semibold text-gray-700">
+                                            {sahyogId}
+                                        </span>
+                                    </p>
+                                </div>
+
+                                {/* Total Donation */}
+                                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-left sm:min-w-[190px] sm:text-right">
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                                        Total Donation
+                                    </p>
+
+                                    <p className="mt-1 text-2xl font-bold text-emerald-900">
+                                        ₹
+                                        {Number(
+                                            caseSummary.donationSummary?.amount || 0
+                                        ).toLocaleString("en-IN")}
+                                    </p>
+
+                                    <p className="mt-0.5 text-xs text-emerald-700">
+                                        {caseSummary.donationSummary?.count || 0} verified donor
+                                        {caseSummary.donationSummary?.count === 1 ? "" : "s"}
+                                    </p>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        {/* Details */}
+                        <div className="border-t border-gray-100 px-5 py-5 sm:px-6">
+
+                            <div className="grid grid-cols-1 gap-x-10 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+
+                                {/* A/c Holder */}
+                                <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                                        A/c Holder Name
+                                    </p>
+
+                                    <p className="mt-1 font-semibold text-gray-800">
+                                        {caseSummary.bank?.accountHolderName || "—"}
+                                    </p>
+                                </div>
+
+                                {/* Account Number */}
+                                <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                                        A/c No
+                                    </p>
+
+                                    <p className="mt-1 font-semibold tracking-wide text-gray-800">
+                                        {caseSummary.bank?.accountNumber || "—"}
+                                    </p>
+                                </div>
+
+                                {/* IFSC */}
+                                <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                                        IFSC Code
+                                    </p>
+
+                                    <p className="mt-1 font-semibold text-gray-800">
+                                        {caseSummary.bank?.ifsc || "—"}
+                                    </p>
+                                </div>
+
+                                {/* Bank Name */}
+                                <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                                        Bank Name
+                                    </p>
+
+                                    <p className="mt-1 font-semibold text-gray-800">
+                                        {caseSummary.bank?.bankName || "—"}
+                                    </p>
+                                </div>
+
+                                {/* Branch */}
+                                <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                                        Branch Name
+                                    </p>
+
+                                    <p className="mt-1 font-semibold text-gray-800">
+                                        {caseSummary.bank?.branchName || "—"}
+                                    </p>
+                                </div>
+
+                                {/* Death Date */}
+                                <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                                        Death Date
+                                    </p>
+
+                                    <p className="mt-1 font-semibold text-gray-800">
+                                        {caseSummary.dateOfDeath
+                                            ? new Date(
+                                                caseSummary.dateOfDeath
+                                            ).toLocaleDateString("en-IN", {
+                                                timeZone: "UTC",
+                                                day: "2-digit",
+                                                month: "short",
+                                                year: "numeric",
+                                            })
+                                            : "—"}
+                                    </p>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </section>
+                )}
+
+                {sahyogId && summaryError && (
+                    <p className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{summaryError}</p>
+                )}
 
                 {/* =====================================
             SEARCH + FILTER BAR
