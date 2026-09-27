@@ -72,6 +72,12 @@ export const MODULES = [
             "update",
         ],
     },
+
+    {
+        key: "vyawastha-payments",
+        label: "Vywastha Payments",
+        actions: ["view", "approve", "reject"]
+    },
 ];
 
 
@@ -138,11 +144,11 @@ const normalizedPermissions = (
                         (action) =>
                             action !== "view"
                     ) &&
-                    !valid.includes("view")
+                        !valid.includes("view")
                         ? [
-                              ...valid,
-                              "view",
-                          ]
+                            ...valid,
+                            "view",
+                        ]
                         : valid,
             };
         }
@@ -375,21 +381,21 @@ export const listAdmins = async (
 
         ...(query
             ? {
-                  $or: [
-                      "fullName",
-                      "email",
-                      "username",
-                      "mobile",
-                  ].map(
-                      (field) => ({
-                          [field]:
-                              new RegExp(
-                                  query,
-                                  "i"
-                              ),
-                      })
-                  ),
-              }
+                $or: [
+                    "fullName",
+                    "email",
+                    "username",
+                    "mobile",
+                ].map(
+                    (field) => ({
+                        [field]:
+                            new RegExp(
+                                query,
+                                "i"
+                            ),
+                    })
+                ),
+            }
             : {}),
     };
 
@@ -887,21 +893,21 @@ export const listManagedMembers = async (
 
     const filter = search
         ? {
-              $or: [
-                  "fullName",
-                  "email",
-                  "memberId",
-                  "mobile",
-              ].map(
-                  (field) => ({
-                      [field]:
-                          new RegExp(
-                              search,
-                              "i"
-                          ),
-                  })
-              ),
-          }
+            $or: [
+                "fullName",
+                "email",
+                "memberId",
+                "mobile",
+            ].map(
+                (field) => ({
+                    [field]:
+                        new RegExp(
+                            search,
+                            "i"
+                        ),
+                })
+            ),
+        }
         : {};
 
     res.json({
@@ -1263,7 +1269,7 @@ export const createReferral = async (
 
                 label: String(
                     req.body.label ||
-                        ""
+                    ""
                 ).trim(),
 
                 email,

@@ -23,6 +23,7 @@ const NAV_LINKS = [
 const MEMBER_NAV_LINKS = [
   ["/user/view-profile", "View Profile"],
   ["/user/id-card", "ID Card"],
+  ["/user/vyawastha-shulk", "Vywastha Shulk"],
   ["/user/upload-sahyog", "Upload Sahyog"],
   ["/user/all-sahyog", "View All Sahyog"],
   ["/user/raise-claim", "Raise Claim"],

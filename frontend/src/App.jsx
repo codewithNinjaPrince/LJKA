@@ -1,10 +1,5 @@
 import { useContext, useEffect } from "react";
-import {
-  Routes,
-  Route,
-  useLocation,
-  Navigate,
-} from "react-router-dom";
+import { Routes, Route, useLocation, Navigate, } from "react-router-dom";
 import { LJKAContext } from "./context/LJKAContext";
 import PublicLayout from "./layouts/PublicLayout";
 import UserLayout from "./layouts/UserLayout";
@@ -32,6 +27,7 @@ import UploadKanyadan from "./pages/user/UploadKanyadan";
 import ViewAllSahyog from "./pages/user/ViewAllSahyog";
 import UploadSahyog from "./pages/user/UploadSahyog";
 import RaiseClaim from "./pages/user/RaiseClaim";
+import VyawasthaShulk from "./pages/user/VyawasthaShulk";
 
 const AuthRoute = ({ children }) => {
   const { token, user, appLoading } = useContext(LJKAContext);
@@ -166,6 +162,8 @@ const App = () => {
         <Route path="all-sahyog" element={<ViewAllSahyog />} />
         <Route path="upload-sahyog" element={<UploadSahyog />} />
         <Route path="raise-claim" element={<RaiseClaim />} />
+        <Route path="/user/vyawastha-shulk" element={<VyawasthaShulk />} />
+
       </Route>
     </Routes>
   );

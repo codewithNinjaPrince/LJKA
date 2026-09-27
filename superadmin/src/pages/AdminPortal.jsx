@@ -19,6 +19,7 @@ import {
   Code2,
   FileText,
   HandHeart,
+  Landmark,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -37,6 +38,7 @@ import ClaimsReview from "../components/ClaimsReview.jsx";
 import ContactMessages from "../components/ContactMessages.jsx";
 import SahyogAlerts from "../components/SahyogAlerts.jsx";
 import SahyogCrudPortal from "./SahyogCrudPortal.jsx";
+import VyawasthaPayments from "../components/VyawasthaPayments.jsx";
 
 const apiUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -54,6 +56,7 @@ const moduleIcons = {
   referrals: Code2,
   sahyog: HandHeart,
   "sahyog-donations": HandHeart,
+  "vyawastha-payments": Landmark,
   "sahyog-alerts": Activity,
   contacts: Activity,
   claims: FileText,
@@ -193,7 +196,7 @@ function AdminShell() {
       .filter(
         (m) =>
           allowed(m.key) &&
-          ["members", "member-update-requests", "sahyog-alerts", "contacts", "sahyog"].includes(m.key)
+          ["members", "member-update-requests", "sahyog-alerts", "contacts", "sahyog", "vyawastha-payments"].includes(m.key)
       )
       .map((m) => ({
         to: `${root}/${m.key}`,
@@ -388,6 +391,19 @@ function AdminShell() {
                     token={token}
                     isSuperadmin={isSuper}
                     canUpdate={allowed("contacts", "update")}
+                  />
+                ) : <Navigate to="../dashboard" replace />
+              }
+            />
+
+            <Route
+              path="vyawastha-payments"
+              element={
+                allowed("vyawastha-payments") ? (
+                  <VyawasthaPayments
+                    token={token}
+                    canApprove={allowed("vyawastha-payments", "approve")}
+                    canReject={allowed("vyawastha-payments", "reject")}
                   />
                 ) : <Navigate to="../dashboard" replace />
               }

@@ -3,6 +3,7 @@ import rateLimit from "express-rate-limit";
 import { adminAuth, requirePermission, requireRole } from "../middleware/adminAuth.js";
 import * as admin from "../controller/adminController.js";
 import * as claims from "../controller/claimController.js";
+import {listVyawasthaPayments, verifyVyawasthaPayment, rejectVyawasthaPayment,} from "../controller/vyawasthaPaymentController.js";
 import sahyogRouter from "./sahyogRoute.js";
 
 const router = express.Router();
@@ -23,8 +24,6 @@ router.put("/admins/:id/rights", requireRole("superadmin"), admin.updateRights);
 router.get("/members", requirePermission("members", "view"), admin.listManagedMembers);
 router.post("/members", requirePermission("members", "create"), admin.createManagedMember);
 router.patch("/members/:id", requirePermission("members", "update"), admin.updateManagedMember);
-// Member records are never deleted from the management portal.
-// Referral-code management is a superadmin-only responsibility.
 router.get("/referrals", requireRole("superadmin"), admin.listReferrals);
 router.get("/referrals/:id/users", requireRole("superadmin"), admin.listReferralUsers);
 router.post("/referrals", requireRole("superadmin"), admin.createReferral);
@@ -41,5 +40,8 @@ router.patch("/sahyog-alerts/:id", requirePermission("sahyog-alerts", "update"),
 router.delete("/sahyog-alerts/:id", requirePermission("sahyog-alerts", "delete"), admin.deleteSahyogAlert);
 router.get("/claims", requireRole("superadmin"), claims.adminListClaims);
 router.patch("/claims/:id", requireRole("superadmin"), claims.adminUpdateClaim);
+router.get("/vyawastha-payments", requirePermission("vyawastha-payments", "view"), listVyawasthaPayments);
+router.patch("/vyawastha-payments/:id/verify", requirePermission("vyawastha-payments", "approve"), verifyVyawasthaPayment);
+router.patch("/vyawastha-payments/:id/reject", requirePermission("vyawastha-payments", "reject"), rejectVyawasthaPayment);
 router.use("/", sahyogRouter);
 export default router;

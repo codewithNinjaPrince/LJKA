@@ -11,6 +11,7 @@ import memberUpdateRequestRouter from "./routes/memberUpdateRequestRoute.js";
 import adminMemberUpdateRouter from "./routes/adminMemberUpdateRoute.js";
 import adminRouter from "./routes/adminRoute.js";
 import publicSahyogRouter from "./routes/publicSahyogRoute.js";
+import vyawasthaPaymentRoute from "./routes/vyawasthaPaymentRoute.js";
 
 
 const app = express();
@@ -32,6 +33,7 @@ app.use("/api/contact", contactRouter);
 app.use("/api/members", memberRouter);
 app.use("/api/sahyog-alert", sahyogAlertRouter);
 app.use("/api/public/sahyog", publicSahyogRouter);
+app.use("/api/user/vyawastha",vyawasthaPaymentRoute);
 app.use(
   "/api/member-update-request",
   memberUpdateRequestRouter
