@@ -1065,6 +1065,10 @@ const SahyogDonations = () => {
                                     </th>
 
                                     <th className="whitespace-nowrap px-4 py-4 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                                        Amount Donated
+                                    </th>
+
+                                    <th className="whitespace-nowrap px-4 py-4 text-xs font-semibold uppercase tracking-wide text-gray-600">
                                         Date Donated
                                     </th>
 
@@ -1140,12 +1144,17 @@ const SahyogDonations = () => {
                                                     {lateMember?.fullName || "-"}
                                                 </td>
 
+                                                {/* Amount Donated */}
+
+                                                <td className="whitespace-nowrap px-4 py-4 text-sm font-semibold text-emerald-700">
+                                                    ₹
+                                                    {Number(row.amount || 0).toLocaleString("en-IN")}
+                                                </td>
+
                                                 {/* Donated At */}
 
                                                 <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-600">
-                                                    {formatDateTime(
-                                                        row.donatedAt
-                                                    )}
+                                                    {formatDateTime(row.donatedAt)}
                                                 </td>
 
                                             </tr>
@@ -1159,7 +1168,7 @@ const SahyogDonations = () => {
                                     !error && (
                                         <tr>
                                             <td
-                                                colSpan="7">
+                                                colSpan="8">
                                                 <div className="flex min-h-[320px] items-center justify-center px-6 py-12">
                                                     <div className="max-w-sm text-center">
 
