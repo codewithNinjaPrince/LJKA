@@ -1065,7 +1065,7 @@ const SahyogDonations = () => {
                                     </th>
 
                                     <th className="whitespace-nowrap px-4 py-4 text-xs font-semibold uppercase tracking-wide text-gray-600">
-                                        Amount Donated
+                                        Amount
                                     </th>
 
                                     <th className="whitespace-nowrap px-4 py-4 text-xs font-semibold uppercase tracking-wide text-gray-600">
