@@ -188,7 +188,7 @@ const Footer = () => {
 
                 <FooterLink
                   to="/vyawastha-list"
-                  text="Vyawastha"
+                  text="Varshik Sahayata"
                 />
 
               </div>

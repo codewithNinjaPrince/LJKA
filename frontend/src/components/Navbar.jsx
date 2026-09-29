@@ -247,11 +247,11 @@ const Navbar = ({ memberPortal = false }) => {
             </p>
 
             <p className="mt-1 text-sm font-bold text-[var(--ljka-primary)]">
-              {memberPortal ? "Your LJKA Member Portal" : "First 11,000 Members"}
+              {memberPortal ? "Your LJKA Member Portal" : "Registration is Free"}
             </p>
 
             <p className="mt-0.5 text-xs font-bold text-[var(--ljka-primary)]">
-              {memberPortal ? "Manage your membership" : "Registration is FREE"}
+              {memberPortal ? "Manage your membership" : "Annual Varshik Sahayata Shulk: ₹365"}
             </p>
           </div>
 

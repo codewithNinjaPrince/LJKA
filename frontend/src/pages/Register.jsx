@@ -506,14 +506,14 @@ const Register = () => {
 
             <div className="mt-4 flex items-center gap-3 rounded-2xl bg-[var(--ljka-primary)] px-5 py-4 text-white shadow-sm">
               <div className="text-2xl font-bold text-[var(--ljka-gold)]">
-                11,000
+                ₹0
               </div>
 
               <div>
-                <p className="text-sm font-semibold">First Members</p>
+                <p className="text-sm font-semibold">Registration Fee</p>
 
                 <p className="text-xs text-white/65">
-                  Registration currently FREE
+                  Free registration · Annual Varshik Sahayata Shulk: ₹365
                 </p>
               </div>
             </div>

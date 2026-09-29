@@ -278,7 +278,7 @@ const Home = () => {
 
 
       {/* =========================================================
-          11,000 MEMBERS
+          MEMBERSHIP FEES
           ========================================================= */}
 
       <section className="bg-[var(--ljka-bg)] py-20 sm:py-24 lg:py-28">
@@ -297,18 +297,19 @@ const Home = () => {
                   <FaStar className="text-[10px] text-[var(--ljka-gold-dark)]" />
 
                   <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--ljka-text)]">
-                    Founding Membership Initiative
+                  Clear Membership Fees
                   </span>
                 </div>
 
                 <h2 className="mt-6 text-4xl font-bold tracking-tight text-[var(--ljka-text)] sm:text-5xl">
-                  First
-                  <span className="text-[var(--ljka-primary)]"> 11,000 Members</span>
+                  Registration is
+                  <span className="text-[var(--ljka-primary)]"> Free</span>
                 </h2>
 
                 <p className="mt-5 max-w-2xl text-sm leading-7 text-[var(--ljka-muted)] sm:text-base">
-                  Registration is currently free for the first 11,000 members
-                  as LJKA begins building its initial responsible community.
+                  There is no registration fee. After KYC, members pay the
+                  annual <strong>Varshik Sahayata Shulk of ₹365</strong> to
+                  maintain their membership.
                 </p>
 
                 <button
@@ -334,11 +335,11 @@ const Home = () => {
                 <div className="relative text-center">
 
                   <p className="text-6xl font-bold tracking-tighter text-[var(--ljka-primary)] sm:text-7xl">
-                    11K
+                    ₹365
                   </p>
 
                   <p className="mt-3 text-xs font-bold uppercase tracking-[0.2em] text-[var(--ljka-muted)]">
-                    Founding Members
+                    Annual Varshik Sahayata Shulk
                   </p>
 
                   <div className="mx-auto mt-5 h-1 w-16 rounded-full bg-[var(--ljka-gold)]" />
