@@ -173,7 +173,7 @@ const Header = () => {
             </p>
 
             <p className="text-xs text-[var(--ljka-gold)] font-semibold">
-              Annual Varshik Sahayata Shulk: ₹365
+              Varshik Sahayata Shulk: ₹365
             </p>
           </div>
 

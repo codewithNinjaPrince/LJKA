@@ -308,7 +308,7 @@ const Home = () => {
 
                 <p className="mt-5 max-w-2xl text-sm leading-7 text-[var(--ljka-muted)] sm:text-base">
                   There is no registration fee. After KYC, members pay the
-                  annual <strong>Varshik Sahayata Shulk of ₹365</strong> to
+                  <strong>Varshik Sahayata Shulk of ₹365</strong> to
                   maintain their membership.
                 </p>
 
@@ -339,7 +339,7 @@ const Home = () => {
                   </p>
 
                   <p className="mt-3 text-xs font-bold uppercase tracking-[0.2em] text-[var(--ljka-muted)]">
-                    Annual Varshik Sahayata Shulk
+                    Varshik Sahayata Shulk
                   </p>
 
                   <div className="mx-auto mt-5 h-1 w-16 rounded-full bg-[var(--ljka-gold)]" />
