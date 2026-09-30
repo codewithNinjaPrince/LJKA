@@ -316,7 +316,7 @@ const ViewProfile = () => {
         <Detail label="Nominee Name" value={user.nominee?.name} />
         <Detail label="Relationship" value={formatRelationship(user.nominee?.relationship)} />
         <Detail label="Mobile" value={user.nominee?.mobile} />
-        <Detail label="Email" value={user.nominee?.email} />
+        <Detail label="Aadhaar" value={maskAadhaar(user.nominee?.aadhaar)} />
       </ProfileSection>
 
       <ProfileSection title="KYC & Account Details">

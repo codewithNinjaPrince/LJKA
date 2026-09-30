@@ -188,7 +188,7 @@ const PrivacyPolicy = () => {
 
               <p className="mt-3">
                 If you provide nominee information, we may collect the
-                nominee's name, mobile number, email address and relationship
+                nominee's name, mobile number, Aadhaar number and relationship
                 with you for membership, support, claim or related
                 administrative purposes.
               </p>
@@ -471,7 +471,7 @@ const PrivacyPolicy = () => {
 
                 <p className="mt-2 text-sm leading-7 text-[var(--ljka-muted)]">
                   Where a member provides nominee information, LJKA may collect
-                  the nominee's name, mobile number, email address and
+                  the nominee's name, mobile number, Aadhaar number and
                   relationship with the member. This information may be used
                   for membership administration, support, claim processing,
                   communication or other legitimate association-related

@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import userModel from "../models/userModel.js";
 import EmailOtp from "../models/emailOtpModel.js";
+import { isValidAadhaar } from "../utils/aadhaar.js";
 
 const createToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "2d" });
@@ -640,7 +641,7 @@ const updateUserProfile = async (req, res) => {
       return res.status(400).json({ success: false, message: "Please complete all required address details" });
     }
 
-    if (!employmentStatus || !occupation?.trim() || !nominee?.name?.trim() || !/^[6-9]\d{9}$/.test(nominee.mobile || "") || !nominee.relationship?.trim()) {
+    if (!employmentStatus || !occupation?.trim() || !nominee?.name?.trim() || !/^[6-9]\d{9}$/.test(nominee.mobile || "") || !isValidAadhaar(nominee.aadhaar) || !nominee.relationship?.trim()) {
       return res.status(400).json({ success: false, message: "Please complete all required membership details" });
     }
 
@@ -676,7 +677,7 @@ const updateUserProfile = async (req, res) => {
     user.nominee = {
       name: nominee.name.trim(),
       mobile: nominee.mobile.trim(),
-      email: nominee.email?.trim().toLowerCase() || "",
+      aadhaar: nominee.aadhaar.trim(),
       relationship: nominee.relationship.trim(),
     };
 

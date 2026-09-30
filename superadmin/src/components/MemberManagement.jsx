@@ -25,10 +25,12 @@ const emptyForm = {
   referralCode: "",
   nomineeName: "",
   nomineeMobile: "",
-  nomineeEmail: "",
+  nomineeAadhaar: "",
   nomineeRelationship: "",
   accountStatus: "active",
 };
+
+const maskAadhaar = (value) => value ? `••••••••${String(value).slice(-4)}` : "";
 
 const statusClass = (value) =>
   ({
@@ -115,7 +117,7 @@ export default function MemberManagement({ token, canCreate, canUpdate }) {
       referralCode: member.referralCode || "",
       nomineeName: member.nominee?.name || "",
       nomineeMobile: member.nominee?.mobile || "",
-      nomineeEmail: member.nominee?.email || "",
+      nomineeAadhaar: member.nominee?.aadhaar || "",
       nomineeRelationship: member.nominee?.relationship || "",
       accountStatus: member.accountStatus || "active",
     });
@@ -152,7 +154,7 @@ export default function MemberManagement({ token, canCreate, canUpdate }) {
       nominee: {
         name: form.nomineeName.trim(),
         mobile: form.nomineeMobile,
-        email: form.nomineeEmail.trim(),
+        aadhaar: form.nomineeAadhaar,
         relationship: form.nomineeRelationship.trim(),
       },
       accountStatus: form.accountStatus,
@@ -252,7 +254,7 @@ export default function MemberManagement({ token, canCreate, canUpdate }) {
             {field("Referral code", <input required={!editingId} value={form.referralCode} onChange={(event) => set("referralCode", event.target.value.toUpperCase())} className="mt-1 w-full rounded-lg border p-3" />)}
             {field("Nominee name", <input required value={form.nomineeName} onChange={(event) => set("nomineeName", event.target.value)} className="mt-1 w-full rounded-lg border p-3" />)}
             {field("Nominee mobile", <input required inputMode="numeric" maxLength={10} value={form.nomineeMobile} onChange={(event) => set("nomineeMobile", event.target.value.replace(/\D/g, "").slice(0, 10))} className="mt-1 w-full rounded-lg border p-3" />)}
-            {field("Nominee email", <input type="email" value={form.nomineeEmail} onChange={(event) => set("nomineeEmail", event.target.value)} className="mt-1 w-full rounded-lg border p-3" />)}
+            {field("Nominee Aadhaar", <input required inputMode="numeric" maxLength={12} value={form.nomineeAadhaar} onChange={(event) => set("nomineeAadhaar", event.target.value.replace(/\D/g, "").slice(0, 12))} className="mt-1 w-full rounded-lg border p-3" />)}
             {field("Nominee relationship", <input required value={form.nomineeRelationship} onChange={(event) => set("nomineeRelationship", event.target.value)} className="mt-1 w-full rounded-lg border p-3" />)}
             {editingId && field("Account status", <select value={form.accountStatus} onChange={(event) => set("accountStatus", event.target.value)} className="mt-1 w-full rounded-lg border p-3"><option value="active">Active</option><option value="disabled">Disabled</option><option value="deceased">Deceased</option></select>)}
           </div>
@@ -273,7 +275,7 @@ export default function MemberManagement({ token, canCreate, canUpdate }) {
             <Detail label="Member ID" value={selectedMember.memberId} /><Detail label="Account status" value={selectedMember.accountStatus} /><Detail label="Email" value={selectedMember.email} /><Detail label="Mobile" value={selectedMember.mobile} /><Detail label="KYC status" value={selectedMember.kycCompleted ? "Completed" : "Pending"} /><Detail label="Referral code" value={selectedMember.referralCode} /><Detail label="Father / Husband name" value={selectedMember.fatherHusbandName} /><Detail label="Date of birth" value={selectedMember.dob ? new Date(selectedMember.dob).toLocaleDateString("en-IN") : "—"} /><Detail label="Gender" value={selectedMember.gender} /><Detail label="Occupation" value={selectedMember.occupation} /><Detail label="Employment status" value={selectedMember.employmentStatus} /><Detail label="Registered" value={selectedMember.createdAt ? new Date(selectedMember.createdAt).toLocaleString("en-IN") : "—"} />
           </div>
           <section className="mt-6 rounded-xl bg-slate-50 p-4"><h4 className="font-bold text-[#5a0615]">Address</h4><p className="mt-2 text-sm leading-6">{[selectedMember.address?.address, selectedMember.address?.townVillage, selectedMember.address?.tehsilName, selectedMember.address?.districtName, selectedMember.address?.stateName, selectedMember.address?.pincode].filter(Boolean).join(", ") || "—"}</p></section>
-          <section className="mt-4 rounded-xl bg-slate-50 p-4"><h4 className="font-bold text-[#5a0615]">Nominee</h4><p className="mt-2 text-sm leading-6">{selectedMember.nominee?.name || "—"} · {selectedMember.nominee?.relationship || "—"}<br />{selectedMember.nominee?.mobile || "—"}{selectedMember.nominee?.email ? ` · ${selectedMember.nominee.email}` : ""}</p></section>
+          <section className="mt-4 rounded-xl bg-slate-50 p-4"><h4 className="font-bold text-[#5a0615]">Nominee</h4><p className="mt-2 text-sm leading-6">{selectedMember.nominee?.name || "—"} · {selectedMember.nominee?.relationship || "—"}<br />{selectedMember.nominee?.mobile || "—"}{selectedMember.nominee?.aadhaar ? ` · Aadhaar: ${maskAadhaar(selectedMember.nominee.aadhaar)}` : ""}</p></section>
           <p className="mt-5 text-xs text-slate-500">Aadhaar is intentionally protected and is never displayed in the management portal.</p>
         </section>
       </div>

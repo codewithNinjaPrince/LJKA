@@ -1,4 +1,5 @@
 import User from "../models/userModel.js";
+import { isValidAadhaar } from "../utils/aadhaar.js";
 import generateMemberId from "../utils/generateMemberId.js";
 import ReferralCode from "../models/referralCodeModel.js";
 import { ensureLegacyReferralCodes } from "../utils/legacyReferrals.js";
@@ -301,6 +302,13 @@ const submitKYC = async (req, res) => {
             });
         }
 
+        if (!isValidAadhaar(nominee.aadhaar)) {
+            return res.status(400).json({
+                success: false,
+                message: "Please enter a valid nominee Aadhaar number",
+            });
+        }
+
         if (!nominee.relationship?.trim()) {
             return res.status(400).json({
                 success: false,
@@ -380,7 +388,7 @@ const submitKYC = async (req, res) => {
         user.nominee = {
             name: nominee.name.trim(),
             mobile: nominee.mobile,
-            email: nominee.email?.trim().toLowerCase() || "",
+            aadhaar: nominee.aadhaar.trim(),
             relationship: nominee.relationship.trim(),
         };
 

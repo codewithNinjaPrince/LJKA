@@ -70,7 +70,7 @@ const exportUsers = async () => {
       // NOMINEE
       Nominee_Name: user.nominee?.name || "",
       Nominee_Mobile: user.nominee?.mobile || "",
-      Nominee_Email: user.nominee?.email || "",
+      Nominee_Aadhaar: user.nominee?.aadhaar || "",
       Nominee_Relationship: user.nominee?.relationship || "",
 
       // REFERRAL

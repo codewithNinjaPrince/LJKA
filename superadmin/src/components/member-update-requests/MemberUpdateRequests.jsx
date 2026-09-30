@@ -23,7 +23,7 @@ const labels = {
 
   "nominee.name": "Nominee Name",
   "nominee.mobile": "Nominee Mobile",
-  "nominee.email": "Nominee Email",
+  "nominee.aadhaar": "Nominee Aadhaar Number",
   "nominee.relationship": "Nominee Relationship",
 };
 

@@ -2,7 +2,7 @@ import userModel from "../models/userModel.js";
 import MemberUpdateRequest from "../models/memberUpdateRequestModel.js";
 import { validateMemberDetails } from "../utils/memberDetails.js";
 
-const FIELDS = ["fullName", "mobile", "fatherHusbandName", "aadhaar", "dob", "gender", "occupation", "employmentStatus", "address.stateName", "address.districtName", "address.tehsilName", "address.townVillage", "address.address", "address.pincode", "nominee.name", "nominee.mobile", "nominee.email", "nominee.relationship"];
+const FIELDS = ["fullName", "mobile", "fatherHusbandName", "aadhaar", "dob", "gender", "occupation", "employmentStatus", "address.stateName", "address.districtName", "address.tehsilName", "address.townVillage", "address.address", "address.pincode", "nominee.name", "nominee.mobile", "nominee.aadhaar", "nominee.relationship"];
 const employmentStatusMap = { government: "government", govt: "government", private: "private", "private-sector": "private", business: "business", "self-employed": "business", "self employed": "business", selfemployed: "business", other: "others", others: "others" };
 const get = (object, path) => path.split(".").reduce((value, key) => value?.[key], object);
 const has = (object, path) => path.split(".").every((key) => {

@@ -2,6 +2,7 @@ import validator from "validator";
 import ReferralCode from "../models/referralCodeModel.js";
 import { ageFromCalendarDate, parseCalendarDate } from "./calendarDate.js";
 import { ensureLegacyReferralCodes } from "./legacyReferrals.js";
+import { isValidAadhaar } from "./aadhaar.js";
 
 const EMPLOYMENT = ["government", "private", "business", "others"];
 const GENDERS = ["male", "female", "other"];
@@ -33,7 +34,7 @@ export const validateMemberDetails = async (body, { requirePassword = false, req
   const nominee = {
     name: String(body.nominee?.name || "").trim(),
     mobile: String(body.nominee?.mobile || "").trim(),
-    email: String(body.nominee?.email || "").trim().toLowerCase(),
+    aadhaar: String(body.nominee?.aadhaar || "").trim(),
     relationship: String(body.nominee?.relationship || "").trim(),
   };
 
@@ -70,7 +71,7 @@ export const validateMemberDetails = async (body, { requirePassword = false, req
 
   if (!nominee.name) return { error: "Nominee name is required" };
   if (!/^[6-9]\d{9}$/.test(nominee.mobile)) return { error: "A valid nominee mobile number is required" };
-  if (nominee.email && !validator.isEmail(nominee.email)) return { error: "Nominee email is invalid" };
+  if (!isValidAadhaar(nominee.aadhaar)) return { error: "A valid nominee Aadhaar number is required" };
   if (!nominee.relationship) return { error: "Nominee relationship is required" };
 
   if (requirePassword) {

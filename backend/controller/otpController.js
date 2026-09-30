@@ -155,15 +155,12 @@ const sendOtp = async (req, res) => {
 
               <div style="text-align: center;">
 
-                <h1
-                  style="
-                    margin: 0;
-                    color: #1f2937;
-                    font-size: 28px;
-                  "
-                >
-                  LJKA
-                </h1>
+                <img
+  src="https://www.ljka.in/img/Lakhdatar_Logo.png"
+  alt="LJKA Logo"
+  width="100"
+  style="display:block; margin:0 auto; width:100px; height:auto;"
+/>
 
                 <p
                   style="

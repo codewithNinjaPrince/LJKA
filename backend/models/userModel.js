@@ -89,7 +89,7 @@ const userSchema = new mongoose.Schema({
   nominee: {
     name: { type: String, trim: true, uppercase: true },
     mobile: { type: String, trim: true },
-    email: { type: String, trim: true },
+    aadhaar: { type: String, trim: true, minlength: 12, maxlength: 12 },
     relationship: { type: String, trim: true },
   },
 
