@@ -452,7 +452,7 @@ const DownloadIdCard = () => {
                   Member Address
                 </p>
 
-                <p className="mt-1 text-[9px] font-semibold leading-4 text-gray-700">
+                <p className="mt-1 text-[9px] font-semibold capitalize leading-4 text-gray-700">
                   {user.address?.address || "—"}
                   {user.address?.townVillage
                     ? `, ${user.address.townVillage}`
@@ -473,7 +473,7 @@ const DownloadIdCard = () => {
                     Occupation
                   </p>
 
-                  <p className="text-[9px] font-semibold text-gray-700">
+                  <p className="text-[9px] font-semibold capitalize text-gray-700">
                     {user.occupation || "—"}
                   </p>
                 </div>
@@ -506,7 +506,7 @@ const DownloadIdCard = () => {
                   {user.nominee?.name || "—"}
                 </p>
 
-                <p className="text-[9px] font-semibold text-gray-600">
+                <p className="text-[9px] font-semibold capitalize text-gray-600">
                   {user.nominee?.relationship || "—"}
                 </p>
               </div>
