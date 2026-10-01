@@ -276,40 +276,34 @@ const Home = () => {
         </div>
       </section>
 
-
-      {/* =========================================================
-          MEMBERSHIP FEES
+         {/* =========================================================
+          KANYADAN SAHYOG SAHAYTA
           ========================================================= */}
+      <section className="relative overflow-hidden bg-[var(--ljka-primary-bg)] py-14 sm:py-16 lg:py-20">
+        <div className="pointer-events-none absolute -left-16 top-1/2 h-64 w-64 -translate-y-1/2 rounded-full bg-[var(--ljka-gold)]/10 blur-3xl" />
 
-      <section className="bg-[var(--ljka-bg)] py-20 sm:py-24 lg:py-28">
-
-        <div className="mx-auto max-w-[1450px] px-5 sm:px-8 lg:px-12">
-
-          <div className="overflow-hidden rounded-[30px] border border-[var(--ljka-border)] bg-white shadow-[var(--ljka-shadow-sm)]">
-
-            <div className="grid items-center lg:grid-cols-[1.2fr_.8fr]">
-
-              {/* CONTENT */}
-
-              <div className="p-7 sm:p-10 lg:p-14">
-
-                <div className="inline-flex items-center gap-2 rounded-full bg-[var(--ljka-gold-light)]/60 px-3 py-1.5">
-                  <FaStar className="text-[10px] text-[var(--ljka-gold-dark)]" />
-
-                  <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--ljka-text)]">
-                  Clear Membership Fees
-                  </span>
+        <div className="relative mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8">
+          <div className="overflow-hidden rounded-[var(--ljka-radius-lg)] border border-[var(--ljka-border)] bg-white shadow-[var(--ljka-shadow-md)]">
+            <div className="grid lg:grid-cols-[1.15fr_.85fr]">
+              <div className="p-6 sm:p-9 lg:p-11">
+                <div className="inline-flex items-center gap-2 rounded-full bg-[var(--ljka-gold-light)] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--ljka-primary)]">
+                  <FaHandHoldingHeart className="text-[var(--ljka-gold-dark)]" />
+                  Collective support initiative
                 </div>
 
-                <h2 className="mt-6 text-4xl font-bold tracking-tight text-[var(--ljka-text)] sm:text-5xl">
-                  Registration is
-                  <span className="text-[var(--ljka-primary)]"> Free</span>
+                <h2 className="mt-5 text-3xl font-bold tracking-tight text-[var(--ljka-primary)] sm:text-4xl">
+                  Kanyadan Sahyog Sahayta
                 </h2>
 
-                <p className="mt-5 max-w-2xl text-sm leading-7 text-[var(--ljka-muted)] sm:text-base">
-                  There is no registration fee. After KYC, members pay the
-                  <strong>Varshik Sahayata Shulk of ₹365</strong> to
-                  maintain their membership.
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-[var(--ljka-text)] sm:text-base sm:leading-8">
+                  Once the LJKA community reaches <strong>25,000 members</strong>,
+                  Kanyadan Sahayata will begin. During the marriage of any Kanya,
+                  every member will contribute <strong>₹20</strong> as collective
+                  Sahyog.
+                </p>
+
+                <p className="mt-4 text-sm font-semibold text-[var(--ljka-gold-dark)] sm:text-base">
+                  सेवा परमो धर्मः
                 </p>
 
                 <button
@@ -317,44 +311,30 @@ const Home = () => {
                   onClick={() => navigate("/register")}
                   className="group mt-7 inline-flex items-center gap-2 rounded-lg bg-[var(--ljka-primary)] px-5 py-3 text-sm font-bold text-white transition hover:bg-[var(--ljka-primary-dark)]"
                 >
-                  Become a Member
+                  Join the LJKA Community
                   <FaArrowRight className="transition-transform group-hover:translate-x-1" />
                 </button>
-
               </div>
 
-
-              {/* NUMBER PANEL */}
-
-              <div className="relative flex min-h-[280px] items-center justify-center border-t border-[var(--ljka-border-light)] bg-[var(--ljka-primary-bg)] p-8 lg:min-h-[400px] lg:border-l lg:border-t-0">
-
-                <div className="absolute h-52 w-52 rounded-full border border-[var(--ljka-gold)]/30" />
-
-                <div className="absolute h-72 w-72 rounded-full border border-[var(--ljka-primary)]/10" />
-
-                <div className="relative text-center">
-
-                  <p className="text-6xl font-bold tracking-tighter text-[var(--ljka-primary)] sm:text-7xl">
-                    ₹365
+              <div className="flex items-center justify-center border-t border-[var(--ljka-border-light)] bg-[var(--ljka-primary)] p-7 text-center lg:border-l lg:border-t-0 sm:p-10">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70">
+                    Support from each member
                   </p>
-
-                  <p className="mt-3 text-xs font-bold uppercase tracking-[0.2em] text-[var(--ljka-muted)]">
-                    Varshik Sahayata Shulk
+                  <p className="mt-3 text-6xl font-bold tracking-tighter text-[var(--ljka-gold-light)] sm:text-7xl">
+                    ₹20
                   </p>
-
-                  <div className="mx-auto mt-5 h-1 w-16 rounded-full bg-[var(--ljka-gold)]" />
-
+                  <div className="mx-auto mt-5 h-px w-20 bg-[var(--ljka-gold)]/60" />
+                  <p className="mx-auto mt-5 max-w-xs text-sm leading-6 text-white/85">
+                    Small individual support, meaningful help for a Kanya&apos;s marriage.
+                  </p>
                 </div>
-
               </div>
-
             </div>
-
           </div>
-
         </div>
-
       </section>
+
 
 
       {/* =========================================================

@@ -12,13 +12,19 @@ const AnnouncementBar = () => {
     </>,
 
     <>
-      For the first{" "}
+      <span className="font-bold text-[var(--ljka-primary)]">
+        Kanyadan Sahyog Sahayta
+      </span>{" "}
+      will begin after the LJKA community reaches{" "}
       <span className="font-bold text-[var(--ljka-gold-dark)]">
-        1100 Members
+        25,000 members
       </span>
-      , Varshik Shayata Shulk is{" "}
+    </>,
+
+    <>
+      For a Kanya&apos;s marriage, every member will extend{" "}
       <span className="font-extrabold text-[var(--ljka-primary)]">
-        FREE
+        ₹20 Sahyog
       </span>
     </>,
 
