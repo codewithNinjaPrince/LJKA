@@ -11,6 +11,21 @@ const AnnouncementBar = () => {
 
     </>,
 
+
+    <>
+      First <span className="font-extrabold text-[var(--ljka-primary)]">
+        1,100 Members
+      </span>{" "}
+      can join LJKA with an annual membership fee of just{" "}
+      <span className="font-extrabold text-[var(--ljka-gold-dark)]">
+        ₹251
+      </span>
+      {" "}— thereafter, the annual membership fee will be{" "}
+      <span className="font-extrabold text-[var(--ljka-primary)]">
+        ₹365
+      </span>
+    </>,
+
     <>
       <span className="font-bold text-[var(--ljka-primary)]">
         Kanyadan Sahyog Sahayta

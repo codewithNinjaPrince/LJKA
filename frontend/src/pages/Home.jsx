@@ -92,6 +92,39 @@ const Home = () => {
         </div>
       </section>
 
+      {/* MEMBERSHIP FEE POSTER */}
+      <section className="relative overflow-hidden bg-[var(--ljka-primary-bg)] py-10 sm:py-14">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full bg-[var(--ljka-gold)]/20 blur-3xl" />
+        <div className="relative mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8">
+          <div className="overflow-hidden rounded-[var(--ljka-radius-lg)] border border-[var(--ljka-border)] bg-white shadow-[var(--ljka-shadow-md)]">
+            <div className="grid lg:grid-cols-[1.1fr_.9fr]">
+              <div className="p-6 sm:p-9 lg:p-10">
+                <div className="inline-flex items-center gap-2 rounded-full bg-[var(--ljka-gold-light)] px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[var(--ljka-primary)]">
+                  <FaStar className="text-[var(--ljka-gold-dark)]" /> Limited member benefit
+                </div>
+                <h2 className="mt-5 text-3xl font-extrabold text-[var(--ljka-primary)] sm:text-4xl">पहले 1,100 सदस्यों के लिए विशेष शुल्क</h2>
+                <p className="mt-4 max-w-2xl text-sm leading-7 text-[var(--ljka-muted)] sm:text-base">Become one of the first 1,100 LJKA members and pay the special annual membership fee of ₹251.</p>
+                <button type="button" onClick={() => navigate("/register")} className="group mt-7 inline-flex items-center gap-2 rounded-lg bg-[var(--ljka-primary)] px-5 py-3 text-sm font-bold text-white transition hover:bg-[var(--ljka-primary-dark)]">
+                  Become a Member <FaArrowRight className="transition-transform group-hover:translate-x-1" />
+                </button>
+              </div>
+              <div className="grid grid-cols-2 bg-[var(--ljka-primary)] text-center text-white">
+                <div className="flex flex-col justify-center border-r border-white/20 p-5 sm:p-8">
+                  <p className="text-xs font-bold uppercase tracking-wider text-white/70">First 1,100 members</p>
+                  <p className="mt-3 text-5xl font-extrabold text-[var(--ljka-gold-light)] sm:text-6xl">₹251</p>
+                  <p className="mt-2 text-xs text-white/80">Annual fee</p>
+                </div>
+                <div className="flex flex-col justify-center p-5 sm:p-8">
+                  <p className="text-xs font-bold uppercase tracking-wider text-white/70">After 1,100 members</p>
+                  <p className="mt-3 text-5xl font-extrabold text-white sm:text-6xl">₹365</p>
+                  <p className="mt-2 text-xs text-white/80">Annual fee</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* =========================================================
     SAHYOG ALERT
     ========================================================= */}

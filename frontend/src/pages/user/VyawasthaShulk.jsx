@@ -185,6 +185,7 @@ const VyawasthaShulk = () => {
 
     const membershipStatus = paymentInfo?.paymentStatus;
     const existingPayment = paymentInfo?.existingPayment;
+    const paymentHistory = paymentInfo?.paymentHistory || [];
 
     const hasSubmittedPayment = Boolean(existingPayment);
 
@@ -242,6 +243,14 @@ const VyawasthaShulk = () => {
                     </p>
 
                 </div>
+
+                <section className="mb-6 flex flex-col gap-3 rounded-2xl border border-[#efd997] bg-[#fffaf0] p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--ljka-gold-dark)]">Annual membership fee</p>
+                        <p className="mt-1 text-sm font-semibold text-[var(--ljka-primary)]">पहले 1,100 सदस्यों के लिए ₹251। उसके बाद नए सदस्यों के लिए ₹365 वार्षिक शुल्क।</p>
+                    </div>
+                    <span className="w-fit shrink-0 rounded-full bg-[var(--ljka-primary)] px-3 py-1.5 text-xs font-bold text-white">₹251 → ₹365</span>
+                </section>
 
 
                 {/* ====================================================
@@ -380,6 +389,41 @@ const VyawasthaShulk = () => {
                     </div>
                 )}
 
+                {paymentHistory.length > 0 && (
+                    <section className="mb-6 overflow-hidden rounded-2xl border border-[var(--ljka-border-light)] bg-white shadow-sm">
+                        <div className="border-b border-[var(--ljka-border-light)] bg-[var(--ljka-primary-bg)] px-5 py-4">
+                            <h2 className="font-bold text-[var(--ljka-primary)]">Payment History</h2>
+                            <p className="mt-1 text-sm text-[var(--ljka-muted)]">Your submitted Vywastha Shulk payments and their verification status.</p>
+                        </div>
+                        <div className="divide-y divide-[var(--ljka-border-light)]">
+                            {paymentHistory.map((payment) => {
+                                const statusClass = payment.paymentStatus === "verified"
+                                    ? "bg-green-100 text-green-800"
+                                    : payment.paymentStatus === "rejected"
+                                        ? "bg-red-100 text-red-800"
+                                        : "bg-amber-100 text-amber-800";
+                                const statusLabel = payment.paymentStatus === "verified"
+                                    ? "Approved"
+                                    : payment.paymentStatus === "rejected"
+                                        ? "Rejected"
+                                        : "Pending";
+                                return (
+                                    <div key={payment.id} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                                        <div>
+                                            <p className="font-semibold text-[var(--ljka-primary)]">UTR: {payment.utrNumber}</p>
+                                            <p className="mt-1 text-xs text-[var(--ljka-muted)]">Submitted {new Date(payment.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })} · ₹{payment.amount}</p>
+                                            {payment.paymentStatus === "rejected" && payment.rejectionReason && (
+                                                <p className="mt-2 text-sm text-red-700">Reason: {payment.rejectionReason}</p>
+                                            )}
+                                        </div>
+                                        <span className={`w-fit rounded-full px-3 py-1 text-xs font-bold ${statusClass}`}>{statusLabel}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </section>
+                )}
+
 
                 <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
 
@@ -412,7 +456,7 @@ const VyawasthaShulk = () => {
                         <div className="mt-6 flex justify-center rounded-2xl border bg-white p-5">
 
                             <img
-                                src="/img/365 QR.jpeg"
+                                src="/img/265 QR.jpeg"
                                 alt="Vywastha Shulk Payment QR Code"
                                 className="h-64 w-64 object-contain sm:h-72 sm:w-72"
                             />
@@ -436,7 +480,7 @@ const VyawasthaShulk = () => {
 
 
                         <a
-                            href="/img/365 QR.jpeg"
+                            href="/img/265 QR.jpeg"
                             download="LJKA-Vywastha-Shulk-QR.jpeg"
                             className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--ljka-primary)] px-5 py-3 text-sm font-bold text-white transition hover:bg-[var(--ljka-primary-dark)]"
                         >

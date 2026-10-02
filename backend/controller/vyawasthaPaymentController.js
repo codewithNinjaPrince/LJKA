@@ -42,12 +42,23 @@ export const getVyawasthaPaymentInfo = async (req, res) => {
       });
     }
 
-    const existingPayment = await VyawasthaPayment.findOne({
+    const payments = await VyawasthaPayment.find({
       userId: user._id,
       financialYear: "2026-27",
     })
       .sort({ createdAt: -1 })
       .lean();
+    const existingPayment = payments[0] || null;
+    const paymentHistory = payments.map((payment) => ({
+      id: payment._id,
+      payerName: payment.payerName,
+      utrNumber: payment.utrNumber,
+      amount: payment.amount,
+      paymentStatus: payment.paymentStatus,
+      createdAt: payment.createdAt,
+      verifiedAt: payment.verifiedAt,
+      rejectionReason: payment.rejectionReason || "",
+    }));
 
     return res.json({
       success: true,
@@ -63,19 +74,8 @@ export const getVyawasthaPaymentInfo = async (req, res) => {
         membershipExpiresAt:
           user.membershipExpiresAt || null,
 
-        existingPayment: existingPayment
-          ? {
-              id: existingPayment._id,
-              payerName: existingPayment.payerName,
-              utrNumber: existingPayment.utrNumber,
-              amount: existingPayment.amount,
-              paymentStatus: existingPayment.paymentStatus,
-              createdAt: existingPayment.createdAt,
-              verifiedAt: existingPayment.verifiedAt,
-              rejectionReason:
-                existingPayment.rejectionReason || "",
-            }
-          : null,
+        existingPayment: paymentHistory[0] || null,
+        paymentHistory,
       },
 
       user: {
@@ -193,6 +193,23 @@ export const submitVyawasthaPayment = async (req, res) => {
           "Your annual Vywastha Shulk is already verified.",
         membershipExpiresAt:
           user.membershipExpiresAt,
+      });
+    }
+
+    // A verified payment is final for this financial year. This keeps the
+    // rule intact even if a membership status is later corrected separately.
+    const verifiedPayment = await VyawasthaPayment.findOne({
+      userId: user._id,
+      financialYear: "2026-27",
+      paymentStatus: "verified",
+    }).lean();
+
+    if (verifiedPayment) {
+      return res.status(409).json({
+        success: false,
+        code: "ALREADY_PAID",
+        message: "Your annual Vywastha Shulk is already verified.",
+        membershipExpiresAt: verifiedPayment.membershipExpiresAt || null,
       });
     }
 

@@ -473,6 +473,18 @@ const UserList = ({ paidVyawastha = false }) => {
 
       <section className="mx-auto w-full max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
 
+        {paidVyawastha && (
+          <section className="mb-6 overflow-hidden rounded-2xl border border-[#efd997] bg-white shadow-sm">
+            <div className="flex flex-col gap-3 border-l-4 border-[var(--ljka-gold)] bg-[#fffaf0] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--ljka-gold-dark)]">Annual membership fee</p>
+                <p className="mt-1 text-sm font-semibold text-[var(--ljka-primary)]">पहले 1,100 सदस्यों के लिए ₹251। उसके बाद नए सदस्यों के लिए ₹365 वार्षिक शुल्क।</p>
+              </div>
+              <span className="shrink-0 rounded-full bg-[var(--ljka-primary)] px-3 py-1.5 text-xs font-bold text-white">₹251 → ₹365</span>
+            </div>
+          </section>
+        )}
+
         {/* =====================================
             HEADER
         ===================================== */}
