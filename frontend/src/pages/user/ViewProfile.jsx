@@ -217,7 +217,7 @@ const ViewProfile = () => {
         <section className="mb-6 flex flex-col gap-4 rounded-2xl border border-[#b8e2d1] bg-[#f0fbf6] p-5 shadow-[var(--ljka-shadow-sm)] sm:flex-row sm:items-center sm:justify-between sm:p-6">
           <div>
             <h2 className="text-lg font-bold text-[var(--ljka-primary)]">Join the official WhatsApp Channel</h2>
-            <p className="mt-1 max-w-2xl text-sm leading-6 text-[var(--ljka-muted)]">WhatsApp does not allow the association to add members automatically. You can join the official channel now or return to this page later.</p>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-[var(--ljka-muted)]">You can join the official channel for all the communication and latest information</p>
           </div>
           <a
             href="https://whatsapp.com/channel/0029Vb9RkLj29757RHY52m39"
