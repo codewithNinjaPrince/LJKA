@@ -190,6 +190,9 @@ const VyawasthaShulk = () => {
     const hasSubmittedPayment = Boolean(existingPayment);
 
     const isPaid = membershipStatus === "paid";
+    const firstVyawasthaShulkWaived = Boolean(
+        paymentInfo?.firstVyawasthaShulkWaived
+    );
 
     const isPending =
         existingPayment?.paymentStatus === "pending";
@@ -267,12 +270,15 @@ const VyawasthaShulk = () => {
                             <div>
 
                                 <h2 className="font-bold text-green-800">
-                                    Vywastha Shulk Verified
+                                    {firstVyawasthaShulkWaived
+                                        ? "First Vywastha Shulk Waived"
+                                        : "Vywastha Shulk Verified"}
                                 </h2>
 
                                 <p className="mt-1 text-sm text-green-700">
-                                    Your annual membership payment has
-                                    been verified successfully.
+                                    {firstVyawasthaShulkWaived
+                                        ? "Your valid referral code waived your first Vywastha Shulk. Your membership is active from the day your KYC was completed."
+                                        : "Your annual membership payment has been verified successfully."}
                                 </p>
 
                                 {paymentInfo.membershipExpiresAt && (

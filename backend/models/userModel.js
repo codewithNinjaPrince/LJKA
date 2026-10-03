@@ -104,6 +104,20 @@ const userSchema = new mongoose.Schema({
     default: "pending",
   },
 
+  // A valid active referral code ending in 1100 waives the member's first
+  // Vyawastha Shulk at KYC completion. This remains separate from an actual
+  // payment record so the waiver can be identified later.
+  firstVyawasthaShulkWaived: {
+    type: Boolean,
+    default: false,
+  },
+
+  membershipStatus: {
+    type: String,
+    enum: ["pending", "active", "expired"],
+    default: "pending",
+  },
+
   // KYC CONSENT
   kycConsentAcceptedAt: {
     type: Date,

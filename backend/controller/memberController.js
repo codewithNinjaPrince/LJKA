@@ -385,8 +385,9 @@ const getMemberFilterOptions = async (req, res) => {
   }
 };
 
-// Public directory of members whose Vyawastha payment has been approved.
-// It deliberately returns the same non-sensitive directory fields as /api/members.
+// Public directory of members with an active Vyawastha membership. This includes
+// verified payments as well as first-fee waivers granted at KYC for valid
+// referral codes ending in 1100.
 const getPaidVyawasthaMembers = async (req, res) => {
   try {
     const page = Math.max(Number(req.query.page) || 1, 1);
@@ -400,38 +401,38 @@ const getPaidVyawasthaMembers = async (req, res) => {
     const escapedSearch = escapeRegex(search);
 
     const memberMatch = {
-      "member.kycCompleted": true,
-      "member.memberId": { $exists: true, $ne: "" },
-      ...(Number.isFinite(state) && req.query.state !== "" ? { "member.address.stateCode": state } : {}),
-      ...(Number.isFinite(district) && req.query.district !== "" ? { "member.address.districtCode": district } : {}),
-      ...(Number.isFinite(tehsil) && req.query.tehsil !== "" ? { "member.address.tehsilCode": tehsil } : {}),
-      ...(employmentStatus ? { "member.employmentStatus": employmentStatus } : {}),
+      kycCompleted: true,
+      memberId: { $exists: true, $ne: "" },
+      // Payment-approved members and members with the referral-based first
+      // fee waiver are both active membership holders.
+      $or: [
+        { membershipPaymentStatus: "paid" },
+        { membershipStatus: "active" },
+      ],
+      ...(Number.isFinite(state) && req.query.state !== "" ? { "address.stateCode": state } : {}),
+      ...(Number.isFinite(district) && req.query.district !== "" ? { "address.districtCode": district } : {}),
+      ...(Number.isFinite(tehsil) && req.query.tehsil !== "" ? { "address.tehsilCode": tehsil } : {}),
+      ...(employmentStatus ? { employmentStatus } : {}),
     };
 
     if (escapedSearch) {
       memberMatch.$or = ["fullName", "memberId", "mobile"].map((field) => ({
-        [`member.${field}`]: new RegExp(escapedSearch, "i"),
+        [field]: new RegExp(escapedSearch, "i"),
       }));
     }
 
     const basePipeline = [
-      { $match: { paymentStatus: "verified" } },
-      { $sort: { verifiedAt: -1, createdAt: -1, _id: -1 } },
-      { $group: { _id: "$userId", payment: { $first: "$$ROOT" } } },
-      { $replaceRoot: { newRoot: "$payment" } },
-      { $lookup: { from: "users", localField: "userId", foreignField: "_id", as: "member" } },
-      { $unwind: "$member" },
       { $match: memberMatch },
     ];
 
-    const [result] = await VyawasthaPayment.aggregate([
+    const [result] = await User.aggregate([
       ...basePipeline,
       { $facet: {
         rows: [
-          { $sort: { verifiedAt: -1, createdAt: -1, _id: -1 } },
+          { $sort: { membershipStartDate: -1, kycCompletedAt: -1, _id: -1 } },
           { $skip: skip },
           { $limit: limit },
-          { $project: { verifiedAt: 1, createdAt: 1, "member.memberId": 1, "member.fullName": 1, "member.address": 1, "member.employmentStatus": 1 } },
+          { $project: { memberId: 1, fullName: 1, address: 1, employmentStatus: 1, membershipStartDate: 1, kycCompletedAt: 1 } },
         ],
         total: [{ $count: "count" }],
       } },
@@ -440,12 +441,12 @@ const getPaidVyawasthaMembers = async (req, res) => {
     const totalMembers = result?.total?.[0]?.count || 0;
     const data = (result?.rows || []).map((row, index) => ({
       serialNo: skip + index + 1,
-      memberId: row.member.memberId,
-      fullName: String(row.member.fullName || "").toUpperCase(),
-      district: row.member.address?.districtName || "",
-      tehsil: row.member.address?.tehsilName || "",
-      employmentStatus: row.member.employmentStatus || "",
-      paidOn: row.verifiedAt || row.createdAt,
+      memberId: row.memberId,
+      fullName: String(row.fullName || "").toUpperCase(),
+      district: row.address?.districtName || "",
+      tehsil: row.address?.tehsilName || "",
+      employmentStatus: row.employmentStatus || "",
+      paidOn: row.membershipStartDate || row.kycCompletedAt,
     }));
     const totalPages = Math.ceil(totalMembers / limit);
     return res.json({ success: true, data, pagination: { currentPage: page, perPage: limit, totalMembers, totalPages, hasNextPage: page < totalPages, hasPreviousPage: page > 1 } });

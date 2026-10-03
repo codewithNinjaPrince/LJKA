@@ -494,17 +494,17 @@ const UserList = ({ paidVyawastha = false }) => {
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-                  {paidVyawastha ? "Vyawastha Paid Members" : "Our Members"}
+                  {paidVyawastha ? "Active Members" : "Our Members"}
                 </h1>
 
                 <p className="mt-1 text-sm text-gray-500">
-                  {paidVyawastha ? "Members with Vyawastha payment approved by LJKA" : "Registered LJKA members"}
+                  {paidVyawastha ? "Members with a verified Vyawastha payment" : "Registered LJKA members"}
                 </p>
               </div>
 
               {!loading && (
                 <div className="text-sm text-gray-500">
-                  {paidVyawastha ? "Total Paid Members:" : "Total Members:"}{" "}
+                  {paidVyawastha ? "Total Active Members:" : "Total Members:"}{" "}
                   <span className="font-semibold text-gray-900">
                     {pagination.totalMembers.toLocaleString(
                       "en-IN"
@@ -917,7 +917,7 @@ const UserList = ({ paidVyawastha = false }) => {
                   </th>
 
                   <th className="whitespace-nowrap px-4 py-4 text-xs font-semibold uppercase tracking-wide text-gray-600">
-                    {paidVyawastha ? "Paid On" : "Registered On"}
+                    {paidVyawastha ? "Active Since" : "Registered On"}
                   </th>
 
                 </tr>

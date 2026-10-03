@@ -31,7 +31,7 @@ export const getVyawasthaPaymentInfo = async (req, res) => {
   try {
     const user = await User.findById(req.userId)
       .select(
-        "fullName memberId email mobile membershipPaymentStatus membershipExpiresAt"
+        "fullName memberId email mobile membershipPaymentStatus membershipExpiresAt firstVyawasthaShulkWaived"
       )
       .lean();
 
@@ -70,6 +70,9 @@ export const getVyawasthaPaymentInfo = async (req, res) => {
 
         paymentStatus:
           user.membershipPaymentStatus || "pending",
+
+        firstVyawasthaShulkWaived:
+          Boolean(user.firstVyawasthaShulkWaived),
 
         membershipExpiresAt:
           user.membershipExpiresAt || null,

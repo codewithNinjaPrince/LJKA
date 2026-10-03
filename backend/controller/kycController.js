@@ -2,7 +2,6 @@ import User from "../models/userModel.js";
 import { isValidAadhaar } from "../utils/aadhaar.js";
 import generateMemberId from "../utils/generateMemberId.js";
 import ReferralCode from "../models/referralCodeModel.js";
-import { ensureLegacyReferralCodes } from "../utils/legacyReferrals.js";
 
 const submitKYC = async (req, res) => {
     try {
@@ -55,10 +54,10 @@ const submitKYC = async (req, res) => {
             });
         }
 
-        if (!/^\d{12}$/.test(aadhaar)) {
+        if (!isValidAadhaar(aadhaar)) {
             return res.status(400).json({
                 success: false,
-                message: "Aadhaar number must be exactly 12 digits",
+                message: "Please enter a valid Aadhaar number",
             });
         }
 
@@ -257,25 +256,42 @@ const submitKYC = async (req, res) => {
             });
         }
 
+
         let finalReferralCode = String(referralCode || "")
             .trim()
             .toUpperCase();
 
-        // An unknown or omitted referral must never block legitimate KYC.
-        // AY92 is used silently as the association fallback.
-        if (!finalReferralCode) finalReferralCode = "AY92";
+        // Look up the actual active referral code in MongoDB.
+        const referral = finalReferralCode
+            ? await ReferralCode.findOne({
+                code: finalReferralCode,
+                isActive: true,
+            }).select("_id code")
+            : null;
 
-        await ensureLegacyReferralCodes();
-        const referral = await ReferralCode.findOne({
-            code: finalReferralCode,
-            isActive: true,
-        }).select("_id");
+        // Keep the existing fallback for KYC processing,
+        // but do not let the fallback activate membership.
+        const validReferralCode = Boolean(referral);
+        const qualifiesForMembership = Boolean(
+            referral?.code?.endsWith("1100")
+        );
 
-        if (!referral) {
+        if (!validReferralCode) {
             finalReferralCode = "AY92";
-            const defaultReferral = await ReferralCode.findOne({ code: finalReferralCode, isActive: true }).select("_id");
-            if (!defaultReferral) return res.status(500).json({ success: false, message: "Default referral configuration is unavailable" });
+
+            const defaultReferral = await ReferralCode.findOne({
+                code: finalReferralCode,
+                isActive: true,
+            }).select("_id code");
+
+            if (!defaultReferral) {
+                return res.status(500).json({
+                    success: false,
+                    message: "Default referral configuration is unavailable",
+                });
+            }
         }
+
 
         // ==========================================
         // NOMINEE
@@ -396,14 +412,31 @@ const submitKYC = async (req, res) => {
         // MARK KYC COMPLETE
         // ==========================================
 
+
         user.kycCompleted = true;
         user.kycCompletedAt = new Date();
 
-        user.membershipStartDate = user.kycCompletedAt;
-        user.membershipExpiresAt = new Date(
-            user.kycCompletedAt.getTime() + 365 * 24 * 60 * 60 * 1000
-        );
-        user.membershipRenewalReminderSentAt = null;
+        if (qualifiesForMembership) {
+            // A valid, active code ending in 1100 activates membership on
+            // the KYC completion date and waives the first Vyawastha Shulk.
+            user.membershipStatus = "active";
+            user.membershipPaymentStatus = "paid";
+            user.firstVyawasthaShulkWaived = true;
+            user.membershipStartDate = user.kycCompletedAt;
+            user.membershipExpiresAt = new Date(
+                user.kycCompletedAt.getTime() +
+                365 * 24 * 60 * 60 * 1000
+            );
+            user.membershipRenewalReminderSentAt = null;
+        } else {
+            // KYC can complete, but membership remains pending.
+            user.membershipStatus = "pending";
+            user.membershipPaymentStatus = "pending";
+            user.firstVyawasthaShulkWaived = false;
+            user.membershipStartDate = null;
+            user.membershipExpiresAt = null;
+            user.membershipRenewalReminderSentAt = null;
+        }
 
         user.kycConsentAcceptedAt = new Date();
         user.kycConsentTermsVersion = "1.0";
@@ -418,20 +451,24 @@ const submitKYC = async (req, res) => {
 
         await user.save();
 
-        // ==========================================
-        // RESPONSE
-        // ==========================================
-
         return res.status(200).json({
             success: true,
-            message: "KYC completed successfully",
+            message: qualifiesForMembership
+                ? "KYC completed successfully. Membership activated."
+                : "KYC completed successfully. Membership is pending activation.",
             user: {
                 id: user._id,
                 fullName: user.fullName,
                 email: user.email,
                 memberId: user.memberId,
+                referralCode: user.referralCode,
                 kycCompleted: user.kycCompleted,
-            }
+                membershipStatus: user.membershipStatus,
+                membershipPaymentStatus: user.membershipPaymentStatus,
+                firstVyawasthaShulkWaived: user.firstVyawasthaShulkWaived,
+                membershipStartDate: user.membershipStartDate,
+                membershipExpiresAt: user.membershipExpiresAt,
+            },
         });
 
     } catch (error) {
