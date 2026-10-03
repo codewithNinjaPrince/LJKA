@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import User from "../models/userModel.js";
 import VyawasthaPayment from "../models/vyawasthaPaymentModel.js";
+import { getMembershipExpiryAt } from "../utils/membershipExpiry.js";
 
 // ============================================================
 // CONFIGURATION
@@ -9,11 +10,6 @@ import VyawasthaPayment from "../models/vyawasthaPaymentModel.js";
 // Put your actual annual Vywastha Shulk here.
 const ANNUAL_VYAWASTHA_AMOUNT = Number(
   process.env.VYAWASTHA_ANNUAL_AMOUNT || 0
-);
-
-// Current annual membership expiry requested by LJKA.
-const MEMBERSHIP_EXPIRY = new Date(
-  "2027-10-18T23:59:59+05:30"
 );
 
 // UTR/reference number validation.
@@ -31,7 +27,7 @@ export const getVyawasthaPaymentInfo = async (req, res) => {
   try {
     const user = await User.findById(req.userId)
       .select(
-        "fullName memberId email mobile membershipPaymentStatus membershipExpiresAt firstVyawasthaShulkWaived"
+        "fullName memberId email mobile address membershipPaymentStatus membershipExpiresAt firstVyawasthaShulkWaived"
       )
       .lean();
 
@@ -86,6 +82,7 @@ export const getVyawasthaPaymentInfo = async (req, res) => {
         memberId: user.memberId,
         email: user.email,
         mobile: user.mobile,
+        address: user.address || {},
       },
     });
   } catch (error) {
@@ -379,11 +376,16 @@ export const verifyVyawasthaPayment = async (
     // MARK PAYMENT VERIFIED
     // --------------------------------------------------------
 
+    const verifiedAt = new Date();
+    // The member's payment date determines the membership term. This means a
+    // UTR submitted during the launch period retains the 18 Oct 2027 expiry
+    // even if an administrator verifies it shortly afterwards.
+    const membershipExpiresAt = getMembershipExpiryAt(payment.createdAt);
+
     payment.paymentStatus = "verified";
-    payment.verifiedAt = new Date();
+    payment.verifiedAt = verifiedAt;
     payment.verifiedBy = req.admin._id;
-    payment.membershipExpiresAt =
-      MEMBERSHIP_EXPIRY;
+    payment.membershipExpiresAt = membershipExpiresAt;
 
     await payment.save();
 
@@ -392,8 +394,9 @@ export const verifyVyawasthaPayment = async (
     // --------------------------------------------------------
 
     user.membershipPaymentStatus = "paid";
-    user.membershipExpiresAt =
-      MEMBERSHIP_EXPIRY;
+    user.membershipStatus = "active";
+    user.membershipStartDate = verifiedAt;
+    user.membershipExpiresAt = membershipExpiresAt;
 
     await user.save();
 

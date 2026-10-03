@@ -2,6 +2,7 @@ import User from "../models/userModel.js";
 import { isValidAadhaar } from "../utils/aadhaar.js";
 import generateMemberId from "../utils/generateMemberId.js";
 import ReferralCode from "../models/referralCodeModel.js";
+import { getMembershipExpiryAt } from "../utils/membershipExpiry.js";
 
 const submitKYC = async (req, res) => {
     try {
@@ -423,10 +424,7 @@ const submitKYC = async (req, res) => {
             user.membershipPaymentStatus = "paid";
             user.firstVyawasthaShulkWaived = true;
             user.membershipStartDate = user.kycCompletedAt;
-            user.membershipExpiresAt = new Date(
-                user.kycCompletedAt.getTime() +
-                365 * 24 * 60 * 60 * 1000
-            );
+            user.membershipExpiresAt = getMembershipExpiryAt(user.kycCompletedAt);
             user.membershipRenewalReminderSentAt = null;
         } else {
             // KYC can complete, but membership remains pending.

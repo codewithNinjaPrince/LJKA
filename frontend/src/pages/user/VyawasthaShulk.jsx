@@ -12,6 +12,7 @@ import {
     FaClock,
     FaTimesCircle,
 } from "react-icons/fa";
+import { jsPDF } from "jspdf";
 
 import { LJKAContext } from "../../context/LJKAContext";
 
@@ -25,6 +26,9 @@ const VyawasthaShulk = () => {
 
     const [paymentInfo, setPaymentInfo] =
         useState(null);
+
+    const [memberInfo, setMemberInfo] =
+        useState({});
 
     const [form, setForm] = useState({
         payerName: "",
@@ -79,6 +83,7 @@ const VyawasthaShulk = () => {
             }
 
             setPaymentInfo(data.payment);
+            setMemberInfo(data.user || {});
 
         } catch (error) {
             setMessage(
@@ -97,6 +102,117 @@ const VyawasthaShulk = () => {
             loadPaymentInfo();
         }
     }, [backendUrl, token]);
+
+    const formatReceiptDate = (value) => value
+        ? new Date(value).toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+        })
+        : "-";
+
+    const getAddress = () => {
+        const address = memberInfo?.address || {};
+        return [address.address, address.townVillage, address.tehsilName, address.districtName, address.stateName, address.pincode]
+            .filter(Boolean)
+            .join(", ") || "-";
+    };
+
+    const downloadReceipt = async (payment) => {
+        try {
+            const document = new jsPDF({ unit: "mm", format: "a4" });
+            const logoResponse = await fetch("/img/Lakhdatar_Logo.png");
+            const logoBlob = await logoResponse.blob();
+            const logoDataUrl = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(logoBlob);
+            });
+
+            document.setFillColor(120, 8, 28);
+            document.rect(0, 0, 210, 35, "F");
+            document.addImage(logoDataUrl, "PNG", 14, 6, 22, 22);
+            document.setTextColor(255, 255, 255);
+            document.setFont("helvetica", "bold");
+            document.setFontSize(17);
+            document.text("LAKHDATAR JEEVAN KALYAN ASSOCIATION", 42, 17);
+            document.setFontSize(10);
+            document.setFont("helvetica", "normal");
+            document.text("Vyawastha Shulk Payment Receipt", 42, 24);
+
+            document.saveGraphicsState();
+            document.setGState(new document.GState({ opacity: 0.08 }));
+            document.addImage(logoDataUrl, "PNG", 55, 82, 100, 100);
+            document.restoreGraphicsState();
+
+            document.setTextColor(40, 40, 40);
+            document.setFont("helvetica", "bold");
+            document.setFontSize(15);
+            document.text("PAYMENT RECEIPT", 105, 49, { align: "center" });
+
+            const details = [
+                ["Receipt reference", String(payment.id || "-")],
+                ["Payment made to", "Lakhdatar Jeevan Kalyan Association (LJKA)"],
+                ["Payment purpose", "Annual Vyawastha Shulk"],
+                ["Amount received", `INR ${Number(payment.amount || 0).toLocaleString("en-IN")}`],
+                ["UTR / transaction reference", payment.utrNumber || "-"],
+                ["Paid by", payment.payerName || memberInfo.fullName || "-"],
+                ["Verified on", formatReceiptDate(payment.verifiedAt)],
+                ["Membership valid until", formatReceiptDate(payment.membershipExpiresAt)],
+            ];
+
+            let y = 60;
+            details.forEach(([label, value], index) => {
+                document.setFillColor(index % 2 ? 255 : 253, index % 2 ? 255 : 247, index % 2 ? 255 : 240);
+                document.roundedRect(15, y - 6, 180, 11, 1.5, 1.5, "F");
+                document.setTextColor(105, 80, 80);
+                document.setFont("helvetica", "bold");
+                document.setFontSize(9);
+                document.text(label, 19, y);
+                document.setTextColor(35, 35, 35);
+                document.setFont("helvetica", "normal");
+                document.text(String(value), 92, y, { maxWidth: 98 });
+                y += 13;
+            });
+
+            y += 5;
+            document.setTextColor(120, 8, 28);
+            document.setFont("helvetica", "bold");
+            document.setFontSize(11);
+            document.text("Member details", 15, y);
+            y += 8;
+            const memberDetails = [
+                ["Name", memberInfo.fullName || "-"],
+                ["Member ID", memberInfo.memberId || "-"],
+                ["Mobile", memberInfo.mobile || "-"],
+                ["Email", memberInfo.email || "-"],
+                ["Address", getAddress()],
+            ];
+            memberDetails.forEach(([label, value]) => {
+                document.setTextColor(105, 80, 80);
+                document.setFont("helvetica", "bold");
+                document.setFontSize(9);
+                document.text(label, 19, y);
+                document.setTextColor(35, 35, 35);
+                document.setFont("helvetica", "normal");
+                const lines = document.splitTextToSize(String(value), 120);
+                document.text(lines, 65, y);
+                y += Math.max(7, lines.length * 5 + 2);
+            });
+
+            document.setDrawColor(216, 177, 90);
+            document.line(15, 274, 195, 274);
+            document.setTextColor(100, 100, 100);
+            document.setFontSize(8);
+            document.text("This is a system-generated LJKA receipt. No signature is required.", 105, 281, { align: "center" });
+            document.save(`LJKA-Vyawastha-Receipt-${payment.utrNumber || payment.id}.pdf`);
+        } catch (error) {
+            console.error("Receipt download error:", error);
+            setMessage("Unable to generate the receipt. Please try again.");
+            setMessageType("error");
+        }
+    };
 
 
     // ==========================================================
@@ -422,7 +538,18 @@ const VyawasthaShulk = () => {
                                                 <p className="mt-2 text-sm text-red-700">Reason: {payment.rejectionReason}</p>
                                             )}
                                         </div>
-                                        <span className={`w-fit rounded-full px-3 py-1 text-xs font-bold ${statusClass}`}>{statusLabel}</span>
+                                        <div className="flex items-center gap-3">
+                                            <span className={`w-fit rounded-full px-3 py-1 text-xs font-bold ${statusClass}`}>{statusLabel}</span>
+                                            {payment.paymentStatus === "verified" && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => downloadReceipt(payment)}
+                                                    className="inline-flex items-center gap-2 rounded-lg bg-[var(--ljka-primary)] px-3 py-2 text-xs font-bold text-white transition hover:bg-[var(--ljka-primary-dark)]"
+                                                >
+                                                    <FaDownload /> Download receipt
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 );
                             })}
