@@ -5,6 +5,7 @@ import User from "../models/userModel.js";
 import ReferralCode from "../models/referralCodeModel.js";
 import VyawasthaPayment from "../models/vyawasthaPaymentModel.js";
 import { getMembershipExpiryAt, LAUNCH_GRACE_PERIOD_END } from "../utils/membershipExpiry.js";
+import { ensureLegacyReferralCodes } from "../utils/legacyReferrals.js";
 
 dotenv.config();
 
@@ -17,28 +18,73 @@ const run = async () => {
     await mongoose.connect(process.env.MONGODB_URI);
 
     const launchExpiry = getMembershipExpiryAt(LAUNCH_GRACE_PERIOD_END);
-    const referralCodes = await ReferralCode.find({
+    await ensureLegacyReferralCodes();
+    const qualifyingReferralCodes = await ReferralCode.find({
       isActive: true,
       code: /1100$/,
     }).distinct("code");
+    const qualifyingMembers = await User.find({
+      kycCompleted: true,
+      referralCode: { $in: qualifyingReferralCodes },
+    }).select("_id kycCompletedAt membershipStartDate").lean();
 
-    // Bring already completed qualifying KYC records in line with the launch
-    // policy. This is safe to run more than once.
-    const referralResult = await User.updateMany(
-      {
-        kycCompleted: true,
-        kycCompletedAt: { $lte: LAUNCH_GRACE_PERIOD_END },
-        referralCode: { $in: referralCodes },
-      },
-      {
-        $set: {
-          membershipStatus: "active",
-          membershipPaymentStatus: "paid",
-          firstVyawasthaShulkWaived: true,
-          membershipExpiresAt: launchExpiry,
+    // Backfill previously completed members only when their *1100 code is
+    // currently active in the referral-code administration list.
+    const referralUpdates = qualifyingMembers.map((member) => {
+      const membershipStartDate = member.membershipStartDate || member.kycCompletedAt;
+      return {
+        updateOne: {
+          filter: { _id: member._id },
+          update: {
+            $set: {
+              membershipStatus: "active",
+              membershipPaymentStatus: "paid",
+              firstVyawasthaShulkWaived: true,
+              membershipStartDate,
+              membershipExpiresAt: getMembershipExpiryAt(membershipStartDate),
+            },
+          },
         },
-      }
+      };
+    });
+
+    const referralResult = referralUpdates.length
+      ? await User.bulkWrite(referralUpdates)
+      : { modifiedCount: 0 };
+
+    // Undo a waiver incorrectly granted to an unregistered *1100 code. A
+    // verified payment always remains valid and is never changed here.
+    const invalidWaiverCandidates = await User.find({
+      $and: [
+        { referralCode: /1100$/i },
+        { referralCode: { $nin: qualifyingReferralCodes } },
+      ],
+      firstVyawasthaShulkWaived: true,
+    }).select("_id").lean();
+    const invalidCandidateIds = invalidWaiverCandidates.map((member) => member._id);
+    const invalidPaidUserIds = await VyawasthaPayment.distinct("userId", {
+      userId: { $in: invalidCandidateIds },
+      paymentStatus: "verified",
+    });
+    const invalidUnpaidIds = invalidCandidateIds.filter(
+      (id) => !invalidPaidUserIds.some((paidId) => String(paidId) === String(id))
     );
+    const invalidWaiverResult = invalidUnpaidIds.length
+      ? await User.updateMany(
+        { _id: { $in: invalidUnpaidIds } },
+        {
+          $set: {
+            referralCode: "AY92",
+            membershipStatus: "pending",
+            membershipPaymentStatus: "pending",
+            firstVyawasthaShulkWaived: false,
+            membershipStartDate: null,
+            membershipExpiresAt: null,
+            membershipRenewalReminderSentAt: null,
+          },
+        }
+      )
+      : { modifiedCount: 0 };
 
     const launchPayments = await VyawasthaPayment.find({
       paymentStatus: "verified",
@@ -66,6 +112,7 @@ const run = async () => {
     ]);
 
     console.log(`Referral memberships updated: ${referralResult.modifiedCount}`);
+    console.log(`Invalid referral waivers removed: ${invalidWaiverResult.modifiedCount}`);
     console.log(`Verified launch payments updated: ${paymentResult.modifiedCount}`);
     console.log(`Payment memberships updated: ${paymentUserResult.modifiedCount}`);
   } finally {

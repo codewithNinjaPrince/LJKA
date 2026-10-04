@@ -3,6 +3,7 @@ import { isValidAadhaar } from "../utils/aadhaar.js";
 import generateMemberId from "../utils/generateMemberId.js";
 import ReferralCode from "../models/referralCodeModel.js";
 import { getMembershipExpiryAt } from "../utils/membershipExpiry.js";
+import { ensureLegacyReferralCodes } from "../utils/legacyReferrals.js";
 
 const submitKYC = async (req, res) => {
     try {
@@ -262,7 +263,9 @@ const submitKYC = async (req, res) => {
             .trim()
             .toUpperCase();
 
-        // Look up the actual active referral code in MongoDB.
+        // Retain referral codes from the pre-admin referral system, then look
+        // up the actual active code in MongoDB.
+        await ensureLegacyReferralCodes();
         const referral = finalReferralCode
             ? await ReferralCode.findOne({
                 code: finalReferralCode,
@@ -270,11 +273,11 @@ const submitKYC = async (req, res) => {
             }).select("_id code")
             : null;
 
-        // Keep the existing fallback for KYC processing,
-        // but do not let the fallback activate membership.
+        // Only an active code created in the referral-code administration
+        // list can grant the *1100 first-year membership benefit.
         const validReferralCode = Boolean(referral);
         const qualifiesForMembership = Boolean(
-            referral?.code?.endsWith("1100")
+            validReferralCode && referral.code.endsWith("1100")
         );
 
         if (!validReferralCode) {

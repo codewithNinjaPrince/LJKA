@@ -65,7 +65,8 @@ export const validateMemberDetails = async (body, { requirePassword = false, req
     if (!referralCode) referralCode = "AY92";
     await ensureLegacyReferralCodes();
     const referral = await ReferralCode.findOne({ code: referralCode, isActive: true }).select("_id");
-    // Unknown referral codes are deliberately accepted under the default code.
+    // Unknown referral codes, including an unregistered *1100 code, are
+    // deliberately stored under the default AY92 code and receive no waiver.
     if (!referral) referralCode = "AY92";
   }
 
