@@ -978,30 +978,48 @@ const VyawasthaShulk = () => {
                 throw new Error("LJKA logo was not found. Check the exact filename in public/img.");
             }
 
-            document.setFillColor(120, 8, 28);
-            document.rect(0, 0, 210, 35, "F");
-            // White backing keeps the full logo visible against the dark header.
-            document.setFillColor(255, 255, 255);
-            document.roundedRect(12, 4, 26, 26, 2, 2, "F");
+            const maroon = [126, 5, 30];
+            const cream = [253, 248, 241];
+            const ink = [45, 43, 43];
+            const muted = [105, 92, 92];
+            const gold = [214, 169, 63];
             const logoFormat = String(logoDataUrl).startsWith("data:image/jpeg") ? "JPEG" : "PNG";
-            document.addImage(logoDataUrl, logoFormat, 14, 6, 22, 22, undefined, "FAST");
+            const hideContact = (value, visible = 2) => {
+                const text = String(value || "");
+                return text.length > visible * 2 ? `${text.slice(0, visible)}${"*".repeat(Math.max(4, text.length - visible * 2))}${text.slice(-visible)}` : text || "-";
+            };
+            const hideEmail = (value) => {
+                const [name, domain] = String(value || "").split("@");
+                return name && domain ? `${name.slice(0, 2)}${"*".repeat(Math.max(3, name.length - 2))}@${domain}` : "-";
+            };
+
+            // Branded header, following the approved LJKA receipt format.
+            document.setFillColor(...maroon);
+            document.rect(0, 0, 210, 39, "F");
+            document.setFillColor(255, 255, 255);
+            document.roundedRect(13, 6, 27, 27, 2, 2, "F");
+            document.addImage(logoDataUrl, logoFormat, 15, 8, 23, 23, undefined, "FAST");
             document.setTextColor(255, 255, 255);
             document.setFont("helvetica", "bold");
-            document.setFontSize(17);
-            document.text("LAKHDATAR JEEVAN KALYAN ASSOCIATION", 42, 17);
-            document.setFontSize(10);
-            document.setFont("helvetica", "normal");
-            document.text("Vyawastha Shulk Payment Receipt", 42, 24);
-
-            document.setTextColor(40, 40, 40);
-            document.setFont("helvetica", "bold");
             document.setFontSize(15);
-            document.text("PAYMENT RECEIPT", 105, 49, { align: "center" });
+            document.text("LAKHDATAR JEEVAN KALYAN", 47, 18);
+            document.text("ASSOCIATION", 47, 24);
+            document.setFont("helvetica", "normal");
+            document.setFontSize(8.5);
+            document.text("Membership Fee Donation Receipt", 47, 30);
+
+            document.setTextColor(...ink);
+            document.setFont("helvetica", "bold");
+            document.setFontSize(17);
+            document.text("DONATION RECEIPT", 105, 52, { align: "center" });
+            document.setDrawColor(...gold);
+            document.setLineWidth(0.6);
+            document.line(75, 55, 135, 55);
 
             const details = [
                 ["Receipt reference", String(payment.id || "-")],
-                ["Payment made to", "Lakhdatar Jeevan Kalyan Association (LJKA)"],
-                ["Payment purpose", "Annual Vyawastha Shulk"],
+                ["Donation made to", "Lakhdatar Jeevan Kalyan Association (LJKA)"],
+                ["Donation purpose", "Annual Membership Fee"],
                 ["Amount received", `INR ${Number(payment.amount || 0).toLocaleString("en-IN")}`],
                 ["UTR / transaction reference", payment.utrNumber || "-"],
                 ["Paid by", payment.payerName || memberInfo.fullName || "-"],
@@ -1010,53 +1028,62 @@ const VyawasthaShulk = () => {
                 ["Membership valid until", getMembershipExpiry(payment) ? formatReceiptDate(getMembershipExpiry(payment)) : "Active (expiry date not provided)"],
             ];
 
-            let y = 60;
+            let y = 64;
             details.forEach(([label, value], index) => {
-                document.setFillColor(index % 2 ? 255 : 253, index % 2 ? 255 : 247, index % 2 ? 255 : 240);
-                document.roundedRect(15, y - 6, 180, 11, 1.5, 1.5, "F");
-                document.setTextColor(105, 80, 80);
+                const valueLines = document.splitTextToSize(String(value), 100);
+                const rowHeight = Math.max(12, valueLines.length * 4.8 + 5);
+                document.setFillColor(...(index % 2 === 0 ? cream : [255, 255, 255]));
+                document.roundedRect(14, y, 182, rowHeight, 1.5, 1.5, "F");
+                document.setTextColor(...muted);
                 document.setFont("helvetica", "bold");
-                document.setFontSize(9);
-                document.text(label, 19, y);
-                document.setTextColor(35, 35, 35);
+                document.setFontSize(8.6);
+                document.text(label, 20, y + 7);
+                document.setTextColor(...ink);
                 document.setFont("helvetica", "normal");
-                document.text(String(value), 92, y, { maxWidth: 98 });
-                y += 13;
+                document.text(valueLines, 91, y + 7);
+                y += rowHeight + 2;
             });
 
             y += 5;
-            document.setTextColor(120, 8, 28);
+            document.setTextColor(...maroon);
             document.setFont("helvetica", "bold");
-            document.setFontSize(11);
+            document.setFontSize(12);
             document.text("Member details", 15, y);
             y += 8;
             const memberDetails = [
                 ["Name", memberInfo.fullName || "-"],
                 ["Member ID", memberInfo.memberId || "-"],
-                ["Mobile", memberInfo.mobile || "-"],
-                ["Email", memberInfo.email || "-"],
+                ["Mobile", hideContact(memberInfo.mobile)],
+                ["Email", hideEmail(memberInfo.email)],
                 ["Address", getAddress()],
             ];
             memberDetails.forEach(([label, value]) => {
-                document.setTextColor(105, 80, 80);
+                document.setTextColor(...muted);
                 document.setFont("helvetica", "bold");
                 document.setFontSize(9);
                 document.text(label, 19, y);
-                document.setTextColor(35, 35, 35);
+                document.setTextColor(...ink);
                 document.setFont("helvetica", "normal");
                 const lines = document.splitTextToSize(String(value), 120);
                 document.text(lines, 65, y);
                 y += Math.max(7, lines.length * 5 + 2);
             });
 
-            // The logo is shown clearly in the header only. Do not place a
-            // large watermark over the receipt details, so all text stays readable.
+            const noticeY = Math.min(Math.max(y + 7, 220), 245);
+            document.setFillColor(28, 28, 28);
+            document.roundedRect(36, noticeY, 138, 25, 3, 3, "F");
+            document.setTextColor(255, 255, 255);
+            document.setFont("helvetica", "normal");
+            document.setFontSize(9.5);
+            const notice = "Payment of the annual membership fee does not guarantee any financial return or benefit under any scheme.";
+            document.text(document.splitTextToSize(notice, 120), 105, noticeY + 9, { align: "center" });
 
-            document.setDrawColor(216, 177, 90);
-            document.line(15, 274, 195, 274);
+            document.setDrawColor(...gold);
+            document.setLineWidth(0.35);
+            document.line(15, 278, 195, 278);
             document.setTextColor(100, 100, 100);
             document.setFontSize(8);
-            document.text("This is a system-generated LJKA receipt. No signature is required.", 105, 281, { align: "center" });
+            document.text("This is a system-generated LJKA receipt. No signature is required.", 105, 285, { align: "center" });
             document.save(`LJKA-Vyawastha-Receipt-${payment.utrNumber || payment.id}.pdf`);
         } catch (error) {
             console.error("Receipt download error:", error);
