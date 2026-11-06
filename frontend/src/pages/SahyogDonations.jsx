@@ -717,6 +717,16 @@ const SahyogDonations = () => {
                                     </p>
                                 </div>
 
+                                <div className="sm:col-span-2">
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                                        Death Reason
+                                    </p>
+
+                                    <p className="mt-1 whitespace-pre-wrap font-semibold text-gray-800">
+                                        {caseSummary.causeOfDeath || "—"}
+                                    </p>
+                                </div>
+
                             </div>
                         </div>
 

@@ -57,7 +57,7 @@ const loginUser = async (req, res) => {
       });
     }
 
-    if (user.accountStatus !== "active") {
+    if (user.accountStatus === "disabled") {
       return res.status(403).json({
         success: false,
         message: "This account has been disabled. Please contact LJKA.",

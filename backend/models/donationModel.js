@@ -11,7 +11,8 @@ const donationSchema = new mongoose.Schema({
   amount: { type: Number, required: true, min: 1 },
   paymentStatus: { type: String, enum: ["pending", "success", "failed", "rejected", "refunded"], default: "pending", index: true },
   transactionId: { type: String, trim: true, default: "" },
-  paymentMethod: { type: String, trim: true, default: "" },
+  paymentMethod: { type: String, trim: true, enum: ["bank_transfer", "upi", ""], default: "" },
+  paymentProof: { type: String, default: "" },
   verifiedAt: { type: Date, default: null },
   verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin", default: null },
 }, { timestamps: true });

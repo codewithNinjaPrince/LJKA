@@ -35,7 +35,19 @@ const publicMember = (member) => ({
   district: member?.address?.districtName || "—",
   tehsil: member?.address?.tehsilName || "—",
 });
-const publicCase = (item) => ({ _id: item._id, sahyogId: item.sahyogId, photoUrl: item.photoUrl, dateOfDeath: item.dateOfDeath, familyInfo: item.familyInfo, description: item.description, targetAmount: item.targetAmount, minimumDonationAmount: item.minimumDonationAmount, status: item.status, publicPayment: item.publicPayment, createdAt: item.createdAt, member: publicMember(item.memberId), donationSummary: item.donationSummary });
+const publicCase = (item) => ({
+  _id: item._id, sahyogId: item.sahyogId, photoUrl: item.photoUrl, dateOfDeath: item.dateOfDeath, causeOfDeath: item.causeOfDeath,
+  familyInfo: item.familyInfo, description: item.description, targetAmount: item.targetAmount,
+  minimumDonationAmount: item.minimumDonationAmount, status: item.status, publicPayment: item.publicPayment,
+  paymentDetails: {
+    bankName: item.paymentDetails?.bankName || "",
+    accountHolderName: item.paymentDetails?.accountHolderName || "",
+    accountNumber: item.paymentDetails?.accountNumber || "",
+    ifsc: item.paymentDetails?.ifsc || "",
+    branchName: item.paymentDetails?.branchName || "",
+  },
+  createdAt: item.createdAt, member: publicMember(item.memberId), donationSummary: item.donationSummary,
+});
 const totalsFor = async (ids) => Donation.aggregate([{ $match: { sahyogId: { $in: ids }, paymentStatus: "success" } }, { $group: { _id: "$sahyogId", amount: { $sum: "$amount" }, count: { $sum: 1 } } }]);
 const decorate = async (cases) => {
   const totals = await totalsFor(cases.map((item) => item._id));
@@ -44,6 +56,7 @@ const decorate = async (cases) => {
 };
 const parsePagination = (req) => ({ page: Math.max(1, Number(req.query.page) || 1), limit: Math.min(100, Math.max(1, Number(req.query.limit) || 20)) });
 const validateSahyogInput = (value) => {
+  if (value.causeOfDeath !== undefined && !String(value.causeOfDeath || "").trim()) return "Death reason is required";
   if (value.dateOfDeath) {
     const parsed = parseCalendarDate(value.dateOfDeath);
     if (!parsed) return "Date of death is invalid";
@@ -72,8 +85,10 @@ export const listSahyog = async (req, res) => {
 
 export const getSahyog = async (req, res) => { const item = await Sahyog.findOne({ _id: req.params.id, isDeleted: false }).populate("memberId", memberFields); if (!item) return res.status(404).json({ success: false, message: "Sahyog case not found" }); res.json({ success: true, sahyog: (await decorate([item]))[0] }); };
 export const listEligibleSahyogMembers = async (req, res) => {
+  const existingCaseMemberIds = await Sahyog.distinct("memberId");
   const members = await User.find({
     kycCompleted: true,
+    _id: { $nin: existingCaseMemberIds },
     $or: [
       { accountStatus: "active" },
       { accountStatus: { $exists: false } },
@@ -89,8 +104,10 @@ export const createSahyog = async (req, res) => {
   const { memberId, status = "active", targetAmount } = req.body;
   const dateOfDeath = parseCalendarDate(req.body.dateOfDeath);
   if (!memberId || !dateOfDeath) return res.status(422).json({ success: false, message: "Member and date of death are required" });
+  if (!String(req.body.causeOfDeath || "").trim()) return res.status(422).json({ success: false, message: "Death reason is required" });
   if (!req.body.contactName?.trim() || !req.body.contactMobile?.trim() || !req.body.address?.trim()) return res.status(422).json({ success: false, message: "Family contact person, mobile and address are required" });
   if (!mongoose.isValidObjectId(memberId)) return res.status(400).json({ success: false, message: "Invalid member" });
+  if (await Sahyog.exists({ memberId })) return res.status(409).json({ success: false, message: "A Sahyog case has already been created for this member" });
   const validationError = validateSahyogInput(req.body); if (validationError) return res.status(422).json({ success: false, message: validationError });
   const member = await User.findOne({
     _id: memberId,
@@ -102,19 +119,18 @@ export const createSahyog = async (req, res) => {
   });
   if (!member) return res.status(422).json({ success: false, message: "Only active members with completed KYC can be selected" });
   const item = await Sahyog.create({
-    sahyogId: makeId("SHG"), memberId: member._id, dateOfDeath, description: String(req.body.description || "").trim(), status,
+    sahyogId: makeId("SHG"), memberId: member._id, dateOfDeath, causeOfDeath: String(req.body.causeOfDeath).trim(), description: String(req.body.description || "").trim(), status,
     targetAmount: targetAmount === "" ? null : targetAmount, minimumDonationAmount: req.body.minimumDonationAmount === "" ? null : req.body.minimumDonationAmount, photoUrl: req.body.photoUrl, familyInfo: req.body.familyInfo,
     address: req.body.address, contactName: req.body.contactName, contactMobile: req.body.contactMobile,
     paymentDetails: req.body.paymentDetails, publicPayment: req.body.publicPayment,
     createdBy: req.admin._id, updatedBy: req.admin._id,
   });
-  if (member.accountStatus !== "deceased") { member.accountStatus = "deceased"; await member.save(); }
   clearListCache();
   await audit(req, { action: "sahyog_created", module: "sahyog", resourceId: item._id, metadata: { sahyogId: item.sahyogId, memberId: member.memberId } });
   res.status(201).json({ success: true, sahyog: item });
 };
 export const updateSahyog = async (req, res) => {
-  const allowed = ["photoUrl", "dateOfDeath", "familyInfo", "description", "address", "contactName", "contactMobile", "targetAmount", "minimumDonationAmount", "status", "paymentDetails", "publicPayment"];
+  const allowed = ["photoUrl", "dateOfDeath", "causeOfDeath", "familyInfo", "description", "address", "contactName", "contactMobile", "targetAmount", "minimumDonationAmount", "status", "paymentDetails", "publicPayment"];
   const changes = Object.fromEntries(allowed.filter((key) => req.body[key] !== undefined).map((key) => [key, req.body[key]]));
   if (changes.dateOfDeath !== undefined) {
     const parsed = parseCalendarDate(changes.dateOfDeath);
@@ -395,6 +411,8 @@ export const publicGetCaseDonorSummary = async (req, res) => {
       ================================= */
 
       dateOfDeath: value.dateOfDeath || null,
+
+      causeOfDeath: value.causeOfDeath || "—",
 
       /* ================================
          DONATION SUMMARY
@@ -789,7 +807,7 @@ export const publicListDonations = async (req, res) => {
 export const publicListCaseDonors = async (req, res) => { req.query.sahyogId = req.params.id; return publicListDonations(req, res); };
 export const initiatePublicDonation = async (req, res) => { const { donorName, donorEmail, donorMobile, amount } = req.body; const item = await Sahyog.findOne({ _id: req.params.id, status: "active", isDeleted: false }); if (!item) return res.status(404).json({ success: false, message: "Sahyog case not found" }); if (!amount || Number(amount) <= 0) return res.status(422).json({ success: false, message: "A valid donation amount is required" }); const donation = await Donation.create({ donationId: makeId("DON"), sahyogId: item._id, donorName, donorEmail, donorMobile, amount: Number(amount), isAnonymous: false, paymentMethod: "unconfigured", paymentStatus: "pending" }); res.status(202).json({ success: true, message: "Donation intent recorded. Payment remains pending until a verified payment provider is configured.", donationId: donation.donationId, paymentStatus: donation.paymentStatus }); };
 export const userListSahyog = publicListSahyog;
-export const userGetSahyog = async (req, res) => { const item = await Sahyog.findOne({ _id: req.params.id, status: "active", isDeleted: false }).populate("memberId", memberFields); if (!item) return res.status(404).json({ success: false, message: "Sahyog case not found" }); const value = (await decorate([item]))[0]; res.json({ success: true, sahyog: { ...publicCase(value), paymentDetails: value.paymentDetails } }); };
+export const userGetSahyog = async (req, res) => { const item = await Sahyog.findOne({ _id: req.params.id, status: "active", isDeleted: false }).populate("memberId", memberFields); if (!item) return res.status(404).json({ success: false, message: "Sahyog case not found" }); const value = (await decorate([item]))[0]; res.json({ success: true, sahyog: publicCase(value) }); };
 export const userCreateDonation = async (req, res) => {
   const item = await Sahyog.findOne({ _id: req.params.id, status: "active", isDeleted: false });
   if (!item) return res.status(404).json({ success: false, message: "Sahyog case not found" });
@@ -803,6 +821,24 @@ export const userCreateDonation = async (req, res) => {
   }
   const donor = await User.findById(req.userId).select("fullName email mobile");
   if (!donor) return res.status(401).json({ success: false, message: "Member account not found" });
+  const paymentMethod = String(req.body.paymentMethod || "").trim();
+  if (!["bank_transfer", "upi"].includes(paymentMethod)) {
+    return res.status(422).json({ success: false, message: "Select Bank transfer or UPI as the payment method" });
+  }
+  const existingDonation = await Donation.exists({
+    sahyogId: item._id,
+    donorId: donor._id,
+    paymentStatus: { $ne: "rejected" },
+  });
+  if (existingDonation) {
+    return res.status(409).json({ success: false, message: "You already have a donation submitted for this member. A new donation is allowed only after the previous one is rejected." });
+  }
+  const paymentProof = String(req.body.paymentProof || "");
+  if (paymentProof) {
+    if (!/^data:image\/(png|jpeg|webp);base64,/i.test(paymentProof) || Buffer.byteLength(paymentProof, "utf8") > 2.8 * 1024 * 1024) {
+      return res.status(422).json({ success: false, message: "Payment proof must be a PNG, JPG, or WEBP image smaller than 2 MB" });
+    }
+  }
   const donation = await Donation.create({
     donationId: makeId("DON"),
     sahyogId: item._id,
@@ -813,7 +849,8 @@ export const userCreateDonation = async (req, res) => {
     amount,
     isAnonymous: false,
     transactionId,
-    paymentMethod: String(req.body.paymentMethod || "manual").trim(),
+    paymentMethod,
+    paymentProof,
     paymentStatus: "pending",
   });
   clearListCache();
@@ -840,6 +877,7 @@ export const userListMyDonations = async (req, res) => {
       paymentStatus: donation.paymentStatus,
       paymentMethod: donation.paymentMethod,
       transactionId: donation.transactionId,
+      paymentProof: donation.paymentProof || "",
       createdAt: donation.createdAt,
       verifiedAt: donation.verifiedAt,
       lateMember: {

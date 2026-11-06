@@ -40,14 +40,16 @@ const profileWithApprovedChanges = (user, request, additionalFields = []) => {
 
 const getPendingMemberUpdateRequests = async (req, res) => {
   try {
-    const requests = await MemberUpdateRequest.find({ status: "pending" }).populate("userId", "fullName email memberId mobile").sort({ submittedAt: -1 }).lean();
+    const memberFields = req.admin.role === "superadmin" ? "fullName email memberId mobile aadhaar" : "fullName email memberId mobile";
+    const requests = await MemberUpdateRequest.find({ status: "pending" }).populate("userId", memberFields).sort({ submittedAt: -1 }).lean();
     return res.json({ success: true, requests: requests.map((request) => ({ ...request, changedFields: changedFields(request) })) });
   } catch (error) { console.error("GET PENDING MEMBER UPDATE REQUESTS ERROR:", error); return res.status(500).json({ success: false, message: "Unable to fetch update requests" }); }
 };
 
 const getMemberUpdateRequestById = async (req, res) => {
   try {
-    const request = await MemberUpdateRequest.findById(req.params.requestId).populate("userId", "-password").lean();
+    const memberFields = req.admin.role === "superadmin" ? "-password" : "-password -aadhaar";
+    const request = await MemberUpdateRequest.findById(req.params.requestId).populate("userId", memberFields).lean();
     if (!request) return res.status(404).json({ success: false, message: "Update request not found" });
     return res.json({ success: true, request: { ...request, changedFields: changedFields(request) } });
   } catch (error) { console.error("GET MEMBER UPDATE REQUEST ERROR:", error); return res.status(500).json({ success: false, message: "Unable to fetch update request" }); }

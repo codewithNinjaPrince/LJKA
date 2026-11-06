@@ -30,8 +30,6 @@ const emptyForm = {
   accountStatus: "active",
 };
 
-const maskAadhaar = (value) => value ? `••••••••${String(value).slice(-4)}` : "";
-
 const statusClass = (value) =>
   ({
     active: "bg-emerald-100 text-emerald-800",
@@ -104,6 +102,7 @@ export default function MemberManagement({ token, canCreate, canUpdate }) {
       email: member.email || "",
       mobile: member.mobile || "",
       fatherHusbandName: member.fatherHusbandName || "",
+      aadhaar: member.aadhaar || "",
       dob: dateInputValue(member.dob),
       gender: member.gender || "",
       state: member.address?.stateCode ? String(member.address.stateCode) : "",
@@ -196,7 +195,7 @@ export default function MemberManagement({ token, canCreate, canUpdate }) {
     <div className="mb-7 flex flex-wrap items-end justify-between gap-3">
       <div>
         <h2 className="text-2xl font-bold text-[#5a0615]">Members</h2>
-        <p className="mt-1 text-sm text-slate-500">Create and edit members with the same KYC details used on the member portal. Aadhaar is never returned after save.</p>
+        <p className="mt-1 text-sm text-slate-500">Create and edit members with the same KYC details used on the member portal. Aadhaar is visible to Super Admin only.</p>
       </div>
       <div className="flex gap-3">
         {canCreate && <button onClick={openCreate} className="inline-flex items-center gap-2 rounded-lg bg-[#78081c] px-3 py-2 text-sm font-semibold text-white"><Plus size={15} />Create member</button>}
@@ -229,7 +228,7 @@ export default function MemberManagement({ token, canCreate, canUpdate }) {
           <div className="flex items-start justify-between gap-4">
             <div>
               <h3 className="text-xl font-bold text-[#5a0615]">{editingId ? "Edit member" : "Create member"}</h3>
-              <p className="mt-1 text-sm text-slate-500">{editingId ? "Email cannot be changed. Leave Aadhaar blank to keep the existing value." : "Fill every KYC field so the member can be created as a completed member."}</p>
+              <p className="mt-1 text-sm text-slate-500">{editingId ? "Email cannot be changed. Aadhaar is visible to Super Admin only." : "Fill every KYC field so the member can be created as a completed member."}</p>
             </div>
             <button type="button" onClick={close} className="rounded-lg border px-3 py-1.5 text-sm"><X size={16} /></button>
           </div>
@@ -240,7 +239,7 @@ export default function MemberManagement({ token, canCreate, canUpdate }) {
             {!editingId && field("Email", <input required type="email" value={form.email} onChange={(event) => set("email", event.target.value)} className="mt-1 w-full rounded-lg border p-3" />)}
             {!editingId && field("Temporary password", <input required minLength={6} type="password" value={form.password} onChange={(event) => set("password", event.target.value)} className="mt-1 w-full rounded-lg border p-3" />)}
             {field("Father / Husband name", <input required value={form.fatherHusbandName} onChange={(event) => set("fatherHusbandName", event.target.value)} className="mt-1 w-full rounded-lg border p-3" />)}
-            {field(editingId ? "Aadhaar (leave blank to keep)" : "Aadhaar", <input required={!editingId} inputMode="numeric" maxLength={12} value={form.aadhaar} onChange={(event) => set("aadhaar", event.target.value.replace(/\D/g, "").slice(0, 12))} className="mt-1 w-full rounded-lg border p-3" />)}
+            {field("Aadhaar", <input required={!editingId} inputMode="numeric" maxLength={12} value={form.aadhaar} onChange={(event) => set("aadhaar", event.target.value.replace(/\D/g, "").slice(0, 12))} className="mt-1 w-full rounded-lg border p-3" />)}
             {field("Date of birth", <input required type="date" value={form.dob} onChange={(event) => set("dob", event.target.value)} className="mt-1 w-full rounded-lg border p-3" />)}
             {field("Gender", <select required value={form.gender} onChange={(event) => set("gender", event.target.value)} className="mt-1 w-full rounded-lg border p-3"><option value="">Select gender</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select>)}
             {field("State", <select required value={form.state} onChange={(event) => set("state", event.target.value)} className="mt-1 w-full rounded-lg border p-3"><option value="">Select state</option>{stateOptions.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}</select>)}
@@ -272,11 +271,11 @@ export default function MemberManagement({ token, canCreate, canUpdate }) {
         <section className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
           <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-wide text-[#78081c]">Member details</p><h3 className="mt-1 text-xl font-bold text-slate-800">{selectedMember.fullName}</h3></div><button onClick={() => setSelectedMember(null)} className="rounded-lg border px-3 py-1.5 text-sm font-semibold">Back</button></div>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <Detail label="Member ID" value={selectedMember.memberId} /><Detail label="Account status" value={selectedMember.accountStatus} /><Detail label="Email" value={selectedMember.email} /><Detail label="Mobile" value={selectedMember.mobile} /><Detail label="KYC status" value={selectedMember.kycCompleted ? "Completed" : "Pending"} /><Detail label="Referral code" value={selectedMember.referralCode} /><Detail label="Father / Husband name" value={selectedMember.fatherHusbandName} /><Detail label="Date of birth" value={selectedMember.dob ? new Date(selectedMember.dob).toLocaleDateString("en-IN") : "—"} /><Detail label="Gender" value={selectedMember.gender} /><Detail label="Occupation" value={selectedMember.occupation} /><Detail label="Employment status" value={selectedMember.employmentStatus} /><Detail label="Registered" value={selectedMember.createdAt ? new Date(selectedMember.createdAt).toLocaleString("en-IN") : "—"} />
+            <Detail label="Member ID" value={selectedMember.memberId} /><Detail label="Account status" value={selectedMember.accountStatus} /><Detail label="Email" value={selectedMember.email} /><Detail label="Mobile" value={selectedMember.mobile} /><Detail label="Aadhaar" value={selectedMember.aadhaar} /><Detail label="KYC status" value={selectedMember.kycCompleted ? "Completed" : "Pending"} /><Detail label="Referral code" value={selectedMember.referralCode} /><Detail label="Father / Husband name" value={selectedMember.fatherHusbandName} /><Detail label="Date of birth" value={selectedMember.dob ? new Date(selectedMember.dob).toLocaleDateString("en-IN") : "—"} /><Detail label="Gender" value={selectedMember.gender} /><Detail label="Occupation" value={selectedMember.occupation} /><Detail label="Employment status" value={selectedMember.employmentStatus} /><Detail label="Registered" value={selectedMember.createdAt ? new Date(selectedMember.createdAt).toLocaleString("en-IN") : "—"} />
           </div>
           <section className="mt-6 rounded-xl bg-slate-50 p-4"><h4 className="font-bold text-[#5a0615]">Address</h4><p className="mt-2 text-sm leading-6">{[selectedMember.address?.address, selectedMember.address?.townVillage, selectedMember.address?.tehsilName, selectedMember.address?.districtName, selectedMember.address?.stateName, selectedMember.address?.pincode].filter(Boolean).join(", ") || "—"}</p></section>
-          <section className="mt-4 rounded-xl bg-slate-50 p-4"><h4 className="font-bold text-[#5a0615]">Nominee</h4><p className="mt-2 text-sm leading-6">{selectedMember.nominee?.name || "—"} · {selectedMember.nominee?.relationship || "—"}<br />{selectedMember.nominee?.mobile || "—"}{selectedMember.nominee?.aadhaar ? ` · Aadhaar: ${maskAadhaar(selectedMember.nominee.aadhaar)}` : ""}</p></section>
-          <p className="mt-5 text-xs text-slate-500">Aadhaar is intentionally protected and is never displayed in the management portal.</p>
+          <section className="mt-4 rounded-xl bg-slate-50 p-4"><h4 className="font-bold text-[#5a0615]">Nominee</h4><p className="mt-2 text-sm leading-6">{selectedMember.nominee?.name || "—"} · {selectedMember.nominee?.relationship || "—"}<br />{selectedMember.nominee?.mobile || "—"}{selectedMember.nominee?.aadhaar ? ` · Aadhaar: ${selectedMember.nominee.aadhaar}` : ""}</p></section>
+          <p className="mt-5 text-xs text-slate-500">Aadhaar details are visible only in the Super Admin portal.</p>
         </section>
       </div>
     )}

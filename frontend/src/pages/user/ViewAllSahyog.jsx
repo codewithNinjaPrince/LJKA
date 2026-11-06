@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
-import { FaClock, FaHandsHelping, FaShieldAlt } from "react-icons/fa";
+import { FaClock, FaDownload, FaHandsHelping, FaShieldAlt } from "react-icons/fa";
 import { LJKAContext } from "../../context/LJKAContext";
+import { downloadSahyogReceipt } from "./UploadSahyog";
 
 const statusLabel = {
   pending: "Awaiting verification",
@@ -85,6 +86,15 @@ const ViewAllSahyog = () => {
                     <dd className="font-semibold">{donation.transactionId || "—"}</dd>
                   </div>
                 </dl>
+                {donation.paymentStatus === "success" && (
+                  <button
+                    type="button"
+                    onClick={() => downloadSahyogReceipt(donation)}
+                    className="mt-5 inline-flex items-center gap-2 rounded-lg bg-[var(--ljka-primary)] px-4 py-2 text-sm font-bold text-white"
+                  >
+                    <FaDownload /> Download receipt
+                  </button>
+                )}
               </article>
             ))}
           </div>

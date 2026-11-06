@@ -408,6 +408,16 @@ export default function MemberUpdateRequests({
                           </>
                         )}
 
+                        {request.userId?.aadhaar && (
+                          <>
+                            <span>•</span>
+
+                            <span>
+                              Aadhaar: {request.userId.aadhaar}
+                            </span>
+                          </>
+                        )}
+
                       </div>
                     </div>
                   </div>

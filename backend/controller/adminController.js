@@ -918,7 +918,9 @@ export const listManagedMembers = async (
                 filter
             )
                 .select(
-                    "-password -aadhaar"
+                    req.admin.role === "superadmin"
+                        ? "-password"
+                        : "-password -aadhaar"
                 )
                 .sort({
                     createdAt: -1,
@@ -1027,10 +1029,17 @@ export const updateManagedMember = async (
         return res.status(404).json({ success: false, message: "Member not found" });
     }
 
+    // Keep the stored Aadhaar when the edit form does not supply a new one.
+    // This also prevents an empty Aadhaar query from accidentally matching an
+    // unrelated member and producing a false "already registered" error.
+    const requestedAadhaar = String(req.body.aadhaar || "").trim();
+    const effectiveAadhaar = requestedAadhaar || existing.aadhaar || "";
+
     const { error, data } = await validateMemberDetails(
         {
             ...req.body,
             email: existing.email,
+            aadhaar: effectiveAadhaar,
             referralCode: req.body.referralCode || existing.referralCode || "",
         },
         {
@@ -1048,7 +1057,9 @@ export const updateManagedMember = async (
     // response instead of a late database duplicate-key error.
     const [mobileOwner, aadhaarOwner] = await Promise.all([
         User.findOne({ mobile: data.mobile, _id: { $ne: existing._id } }).select("_id"),
-        User.findOne({ aadhaar: data.aadhaar, _id: { $ne: existing._id } }).select("_id"),
+        requestedAadhaar && requestedAadhaar !== existing.aadhaar
+            ? User.findOne({ aadhaar: requestedAadhaar, _id: { $ne: existing._id } }).select("_id")
+            : null,
     ]);
     if (mobileOwner) {
         return res.status(409).json({ success: false, message: "Mobile number is already registered" });
@@ -1070,8 +1081,8 @@ export const updateManagedMember = async (
         accountStatus: data.accountStatus,
     };
 
-    if (req.body.aadhaar && /^\d{12}$/.test(String(req.body.aadhaar))) {
-        changes.aadhaar = String(req.body.aadhaar).trim();
+    if (requestedAadhaar) {
+        changes.aadhaar = requestedAadhaar;
     }
 
     if (data.referralCode) changes.referralCode = data.referralCode;
