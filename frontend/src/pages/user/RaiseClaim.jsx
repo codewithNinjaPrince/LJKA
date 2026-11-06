@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { FaClipboardCheck } from "react-icons/fa";
 import { LJKAContext } from "../../context/LJKAContext";
+import { toastError, toastSuccess } from "../../utils/toast";
 
 const emptyForm = {
   dateOfDeath: "",
@@ -15,7 +16,6 @@ const RaiseClaim = () => {
   const { backendUrl, token } = useContext(LJKAContext);
   const [form, setForm] = useState(emptyForm);
   const [claims, setClaims] = useState([]);
-  const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
 
@@ -25,7 +25,7 @@ const RaiseClaim = () => {
     fetch(`${backendUrl}/api/user/claims`, { headers })
       .then((response) => (response.ok ? response.json() : Promise.reject()))
       .then((data) => setClaims(data.claims || []))
-      .catch(() => setMessage("Unable to load your previous claims."));
+      .catch(() => toastError("Unable to load your previous claims."));
   };
 
   useEffect(() => {
@@ -36,9 +36,29 @@ const RaiseClaim = () => {
 
   const submit = async (event) => {
     event.preventDefault();
-    setMessage("");
+
+    if (!form.dateOfDeath) {
+      toastError("Date of death is required.");
+      return;
+    }
+
+    if (new Date(`${form.dateOfDeath}T00:00:00`) > new Date()) {
+      toastError("Date of death cannot be in the future.");
+      return;
+    }
+
+    if (form.nomineeMobile && !/^[6-9]\d{9}$/.test(form.nomineeMobile)) {
+      toastError("Nominee mobile must be a valid 10-digit number.");
+      return;
+    }
+
+    if (form.contactMobile && !/^[6-9]\d{9}$/.test(form.contactMobile)) {
+      toastError("Your contact mobile must be a valid 10-digit number.");
+      return;
+    }
+
     if (!confirmed) {
-      setMessage("Please confirm the claim details before submitting.");
+      toastError("Please confirm the claim details before submitting.");
       return;
     }
     setSaving(true);
@@ -48,14 +68,14 @@ const RaiseClaim = () => {
         headers,
         body: JSON.stringify({ ...form, confirmed: true }),
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || "Unable to submit claim.");
       setForm(emptyForm);
       setConfirmed(false);
-      setMessage(data.message);
+      toastSuccess("Claim is submitted successfully. Waiting for approval.");
       load();
     } catch (error) {
-      setMessage(error.message || "Unable to submit claim.");
+      toastError(error.message || "Unable to submit claim.");
     } finally {
       setSaving(false);
     }
@@ -76,18 +96,16 @@ const RaiseClaim = () => {
             </div>
           </div>
 
-          <form onSubmit={submit} className="mt-8 grid gap-4 sm:grid-cols-2">
-            <label className="text-sm font-semibold">Date of death<input required type="date" max={new Date().toISOString().slice(0, 10)} value={form.dateOfDeath} onChange={(event) => set("dateOfDeath", event.target.value)} className="mt-2 w-full rounded-lg border p-3" /></label>
+          <form noValidate onSubmit={submit} className="mt-8 grid gap-4 sm:grid-cols-2">
+            <label className="text-sm font-semibold">Date of death<input type="date" max={new Date().toISOString().slice(0, 10)} value={form.dateOfDeath} onChange={(event) => set("dateOfDeath", event.target.value)} className="mt-2 w-full rounded-lg border p-3" /></label>
             <label className="text-sm font-semibold">Cause of death<input value={form.causeOfDeath} onChange={(event) => set("causeOfDeath", event.target.value)} className="mt-2 w-full rounded-lg border p-3" /></label>
             <label className="text-sm font-semibold">Place of death<input value={form.placeOfDeath} onChange={(event) => set("placeOfDeath", event.target.value)} className="mt-2 w-full rounded-lg border p-3" /></label>
             <label className="text-sm font-semibold">Nominee mobile<input inputMode="numeric" maxLength={10} value={form.nomineeMobile} onChange={(event) => set("nomineeMobile", event.target.value.replace(/\D/g, "").slice(0, 10))} className="mt-2 w-full rounded-lg border p-3" /></label>
             <label className="text-sm font-semibold">Your contact mobile<input inputMode="numeric" maxLength={10} value={form.contactMobile} onChange={(event) => set("contactMobile", event.target.value.replace(/\D/g, "").slice(0, 10))} className="mt-2 w-full rounded-lg border p-3" /></label>
             <label className="text-sm font-semibold sm:col-span-2">Current address<textarea value={form.address} onChange={(event) => set("address", event.target.value)} className="mt-2 min-h-20 w-full rounded-lg border p-3" /></label>
-            <label className="flex items-start gap-3 rounded-xl border border-[var(--ljka-border-light)] bg-[var(--ljka-primary-bg)] p-4 text-sm font-medium sm:col-span-2"><input required type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} className="mt-1" />I confirm that I am submitting this claim from the affected member’s own LJKA account and that the information is correct.</label>
-            <button disabled={saving || !confirmed} className="rounded-lg bg-[var(--ljka-primary)] px-5 py-3 text-sm font-bold text-white sm:col-span-2 disabled:opacity-60">{saving ? "Submitting…" : "Submit claim"}</button>
+            <label className="flex items-start gap-3 rounded-xl border border-[var(--ljka-border-light)] bg-[var(--ljka-primary-bg)] p-4 text-sm font-medium sm:col-span-2"><input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} className="mt-1" />I confirm that I am submitting this claim from the affected member’s own LJKA account and that the information is correct.</label>
+            <button disabled={saving} className="rounded-lg bg-[var(--ljka-primary)] px-5 py-3 text-sm font-bold text-white sm:col-span-2 disabled:opacity-60">{saving ? "Submitting…" : "Submit claim"}</button>
           </form>
-
-          {message && <p className="mt-5 rounded-xl bg-[var(--ljka-bg)] p-4 text-sm">{message}</p>}
 
           <h2 className="mt-10 text-lg font-bold text-[var(--ljka-primary)]">Your submitted claims</h2>
           <div className="mt-4 grid gap-3">
