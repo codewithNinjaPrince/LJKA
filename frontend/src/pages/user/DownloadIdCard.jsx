@@ -531,7 +531,7 @@ const DownloadIdCard = () => {
           <div className="absolute inset-x-0 bottom-0 h-[10%] bg-[var(--ljka-gold)] px-5">
             <div className="flex h-full items-center justify-between">
               <p className="text-[7px] font-bold text-[var(--ljka-primary)]">
-                www.ljka.org
+                www.ljka.in
               </p>
 
               <p className="text-[7px] font-bold text-[var(--ljka-primary)]">

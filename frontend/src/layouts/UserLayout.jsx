@@ -3,7 +3,7 @@ import { Outlet } from "react-router-dom";
 
 import Navbar from "../components/Navbar";
 
-const UserLayout = () => {
+const UserLayout = ({ kycLocked = false }) => {
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-[var(--ljka-bg)] text-[var(--ljka-text)]">
@@ -20,7 +20,7 @@ const UserLayout = () => {
       </div>
 
       <div className="fixed inset-x-0 top-0 z-[100]">
-        <Navbar memberPortal />
+        <Navbar memberPortal kycLocked={kycLocked} />
       </div>
 
       {/* Individual member pages own their horizontal gutters, matching the

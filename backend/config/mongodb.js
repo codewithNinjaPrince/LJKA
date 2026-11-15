@@ -17,6 +17,7 @@
 // export default connectDB;
 
 
+
 import mongoose from "mongoose";
 
 const cache =
@@ -35,10 +36,10 @@ const connectDB = async () => {
 
   if (mongoose.connection.readyState === 1) {
     cache.connection = mongoose.connection;
+    console.log("✅ MongoDB already connected successfully");
     return cache.connection;
   }
 
-  // A disconnected warm Vercel instance must start a fresh connection attempt.
   if (mongoose.connection.readyState === 0) {
     cache.connection = null;
     cache.promise = null;
@@ -52,10 +53,19 @@ const connectDB = async () => {
         serverSelectionTimeoutMS: 10000,
         socketTimeoutMS: 45000,
       })
-      .then(() => mongoose.connection)
+      .then(() => {
+        console.log("✅ MongoDB connected successfully");
+        console.log(`📦 Database: ${mongoose.connection.name}`);
+        console.log(`🌐 Host: ${mongoose.connection.host}`);
+
+        return mongoose.connection;
+      })
       .catch((error) => {
         cache.connection = null;
         cache.promise = null;
+
+        console.error("❌ MongoDB connection failed:", error.message);
+
         throw error;
       });
   }

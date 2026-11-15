@@ -161,38 +161,48 @@
 //                 throw new Error("LJKA logo was not found. Check the exact filename in public/img.");
 //             }
 
-//             document.setFillColor(120, 8, 28);
-//             document.rect(0, 0, 210, 35, "F");
-//             // White backing keeps the full logo visible against the dark header.
-//             document.setFillColor(255, 255, 255);
-//             document.roundedRect(12, 4, 26, 26, 2, 2, "F");
+//             const maroon = [126, 5, 30];
+//             const cream = [253, 248, 241];
+//             const ink = [45, 43, 43];
+//             const muted = [105, 92, 92];
+//             const gold = [214, 169, 63];
 //             const logoFormat = String(logoDataUrl).startsWith("data:image/jpeg") ? "JPEG" : "PNG";
-//             document.addImage(logoDataUrl, logoFormat, 14, 6, 22, 22, undefined, "FAST");
+//             const hideContact = (value, visible = 2) => {
+//                 const text = String(value || "");
+//                 return text.length > visible * 2 ? `${text.slice(0, visible)}${"*".repeat(Math.max(4, text.length - visible * 2))}${text.slice(-visible)}` : text || "-";
+//             };
+//             const hideEmail = (value) => {
+//                 const [name, domain] = String(value || "").split("@");
+//                 return name && domain ? `${name.slice(0, 2)}${"*".repeat(Math.max(3, name.length - 2))}@${domain}` : "-";
+//             };
+
+//             // Branded header, following the approved LJKA receipt format.
+//             document.setFillColor(...maroon);
+//             document.rect(0, 0, 210, 39, "F");
+//             document.setFillColor(255, 255, 255);
+//             document.roundedRect(13, 6, 27, 27, 2, 2, "F");
+//             document.addImage(logoDataUrl, logoFormat, 15, 8, 23, 23, undefined, "FAST");
 //             document.setTextColor(255, 255, 255);
 //             document.setFont("helvetica", "bold");
-//             document.setFontSize(17);
-//             document.text("LAKHDATAR JEEVAN KALYAN ASSOCIATION", 42, 17);
-//             document.setFontSize(10);
-//             document.setFont("helvetica", "normal");
-//             document.text("Vyawastha Shulk Payment Receipt", 42, 24);
-
-//             // Large, centered watermark behind the receipt content. The rows
-//             // and text are drawn afterward, so the logo remains visible mainly
-//             // through the gaps while keeping all receipt details readable.
-//             document.saveGraphicsState();
-//             document.setGState(new document.GState({ opacity: 0.09 }));
-//             document.addImage(logoDataUrl, logoFormat, 35, 58, 140, 140, undefined, "FAST");
-//             document.restoreGraphicsState();
-
-//             document.setTextColor(40, 40, 40);
-//             document.setFont("helvetica", "bold");
 //             document.setFontSize(15);
-//             document.text("PAYMENT RECEIPT", 105, 49, { align: "center" });
+//             document.text("LAKHDATAR JEEVAN KALYAN", 47, 18);
+//             document.text("ASSOCIATION", 47, 24);
+//             document.setFont("helvetica", "normal");
+//             document.setFontSize(8.5);
+//             document.text("Membership Fee Donation Receipt", 47, 30);
+
+//             document.setTextColor(...ink);
+//             document.setFont("helvetica", "bold");
+//             document.setFontSize(17);
+//             document.text("DONATION RECEIPT", 105, 52, { align: "center" });
+//             document.setDrawColor(...gold);
+//             document.setLineWidth(0.6);
+//             document.line(75, 55, 135, 55);
 
 //             const details = [
 //                 ["Receipt reference", String(payment.id || "-")],
-//                 ["Payment made to", "Lakhdatar Jeevan Kalyan Association (LJKA)"],
-//                 ["Payment purpose", "Annual Vyawastha Shulk"],
+//                 ["Donation made to", "Lakhdatar Jeevan Kalyan Association (LJKA)"],
+//                 ["Donation purpose", "Annual Membership Fee"],
 //                 ["Amount received", `INR ${Number(payment.amount || 0).toLocaleString("en-IN")}`],
 //                 ["UTR / transaction reference", payment.utrNumber || "-"],
 //                 ["Paid by", payment.payerName || memberInfo.fullName || "-"],
@@ -201,50 +211,62 @@
 //                 ["Membership valid until", getMembershipExpiry(payment) ? formatReceiptDate(getMembershipExpiry(payment)) : "Active (expiry date not provided)"],
 //             ];
 
-//             let y = 60;
+//             let y = 64;
 //             details.forEach(([label, value], index) => {
-//                 document.setFillColor(index % 2 ? 255 : 253, index % 2 ? 255 : 247, index % 2 ? 255 : 240);
-//                 document.roundedRect(15, y - 6, 180, 11, 1.5, 1.5, "F");
-//                 document.setTextColor(105, 80, 80);
+//                 const valueLines = document.splitTextToSize(String(value), 100);
+//                 const rowHeight = Math.max(12, valueLines.length * 4.8 + 5);
+//                 document.setFillColor(...(index % 2 === 0 ? cream : [255, 255, 255]));
+//                 document.roundedRect(14, y, 182, rowHeight, 1.5, 1.5, "F");
+//                 document.setTextColor(...muted);
 //                 document.setFont("helvetica", "bold");
-//                 document.setFontSize(9);
-//                 document.text(label, 19, y);
-//                 document.setTextColor(35, 35, 35);
+//                 document.setFontSize(8.6);
+//                 document.text(label, 20, y + 7);
+//                 document.setTextColor(...ink);
 //                 document.setFont("helvetica", "normal");
-//                 document.text(String(value), 92, y, { maxWidth: 98 });
-//                 y += 13;
+//                 document.text(valueLines, 91, y + 7);
+//                 y += rowHeight + 2;
 //             });
 
 //             y += 5;
-//             document.setTextColor(120, 8, 28);
+//             document.setTextColor(...maroon);
 //             document.setFont("helvetica", "bold");
-//             document.setFontSize(11);
+//             document.setFontSize(12);
 //             document.text("Member details", 15, y);
 //             y += 8;
 //             const memberDetails = [
 //                 ["Name", memberInfo.fullName || "-"],
 //                 ["Member ID", memberInfo.memberId || "-"],
-//                 ["Mobile", memberInfo.mobile || "-"],
-//                 ["Email", memberInfo.email || "-"],
+//                 ["Mobile", hideContact(memberInfo.mobile)],
+//                 ["Email", hideEmail(memberInfo.email)],
 //                 ["Address", getAddress()],
 //             ];
 //             memberDetails.forEach(([label, value]) => {
-//                 document.setTextColor(105, 80, 80);
+//                 document.setTextColor(...muted);
 //                 document.setFont("helvetica", "bold");
 //                 document.setFontSize(9);
 //                 document.text(label, 19, y);
-//                 document.setTextColor(35, 35, 35);
+//                 document.setTextColor(...ink);
 //                 document.setFont("helvetica", "normal");
 //                 const lines = document.splitTextToSize(String(value), 120);
 //                 document.text(lines, 65, y);
 //                 y += Math.max(7, lines.length * 5 + 2);
 //             });
 
-//             document.setDrawColor(216, 177, 90);
-//             document.line(15, 274, 195, 274);
+//             const noticeY = Math.min(Math.max(y + 7, 220), 245);
+//             document.setFillColor(28, 28, 28);
+//             document.roundedRect(36, noticeY, 138, 25, 3, 3, "F");
+//             document.setTextColor(255, 255, 255);
+//             document.setFont("helvetica", "normal");
+//             document.setFontSize(9.5);
+//             const notice = "Payment of the annual membership fee does not guarantee any financial return or benefit under any scheme.";
+//             document.text(document.splitTextToSize(notice, 120), 105, noticeY + 9, { align: "center" });
+
+//             document.setDrawColor(...gold);
+//             document.setLineWidth(0.35);
+//             document.line(15, 278, 195, 278);
 //             document.setTextColor(100, 100, 100);
 //             document.setFontSize(8);
-//             document.text("This is a system-generated LJKA receipt. No signature is required.", 105, 281, { align: "center" });
+//             document.text("This is a system-generated LJKA receipt. No signature is required.", 105, 285, { align: "center" });
 //             document.save(`LJKA-Vyawastha-Receipt-${payment.utrNumber || payment.id}.pdf`);
 //         } catch (error) {
 //             console.error("Receipt download error:", error);
@@ -814,7 +836,6 @@
 
 // export default VyawasthaShulk;
 
-
 import React, {
     useContext,
     useEffect,
@@ -830,9 +851,98 @@ import {
     FaTimesCircle,
 } from "react-icons/fa";
 import { jsPDF } from "jspdf";
+import { FaFilePdf, FaEye, FaTrash } from "react-icons/fa";
 
 import { LJKAContext } from "../../context/LJKAContext";
+import { toastError, toastInfo, toastSuccess } from "../../utils/toast";
+import { uploadToCloudinaryWithProgress } from "../../utils/cloudinaryUpload";
 
+
+
+const MAX_PROOF_SIZE = 1024 * 1024;
+const ALLOWED_PROOF_FORMATS = ["jpg", "jpeg", "png", "webp", "pdf"];
+const ALLOWED_IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+const getProofFormat = (file) => {
+    const extension = file.name.split(".").pop()?.toLowerCase();
+    if (extension === "jpeg") return "jpg";
+    return extension || "";
+};
+
+const compressPaymentImage = async (file) => {
+    if (typeof createImageBitmap !== "function") {
+        throw new Error("Your browser cannot process this image. Please use a modern browser.");
+    }
+
+    const bitmap = await createImageBitmap(file);
+    try {
+        let width = bitmap.width;
+        let height = bitmap.height;
+        const initialMaxDimension = 2400;
+
+        if (Math.max(width, height) > initialMaxDimension) {
+            const scale = initialMaxDimension / Math.max(width, height);
+            width = Math.round(width * scale);
+            height = Math.round(height * scale);
+        }
+
+        let bestFile = null;
+
+        // Reduce quality gradually first, then dimensions if needed.
+        for (let dimensionAttempt = 0; dimensionAttempt < 7; dimensionAttempt += 1) {
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+
+            const context = canvas.getContext("2d");
+            if (!context) {
+                throw new Error("Unable to process the selected image.");
+            }
+
+            // Bank screenshots with transparent pixels should remain readable.
+            context.fillStyle = "#ffffff";
+            context.fillRect(0, 0, width, height);
+            context.drawImage(bitmap, 0, 0, width, height);
+
+            for (let quality = 0.92; quality >= 0.68; quality -= 0.06) {
+                const blob = await new Promise((resolve) => {
+                    canvas.toBlob(resolve, "image/jpeg", quality);
+                });
+
+                if (!blob) continue;
+
+                const compressed = new File(
+                    [blob],
+                    `${file.name.replace(/\.[^.]+$/, "")}.jpg`,
+                    { type: "image/jpeg", lastModified: Date.now() }
+                );
+
+                if (!bestFile || compressed.size < bestFile.size) {
+                    bestFile = compressed;
+                }
+
+                if (compressed.size <= MAX_PROOF_SIZE) {
+                    return compressed.size <= file.size ? compressed : file;
+                }
+            }
+
+            width = Math.round(width * 0.82);
+            height = Math.round(height * 0.82);
+
+            if (Math.max(width, height) < 900) break;
+        }
+
+        if (file.size <= MAX_PROOF_SIZE) return file;
+
+        if (bestFile && bestFile.size <= MAX_PROOF_SIZE) return bestFile;
+
+        throw new Error(
+            "This image could not be compressed below 1 MB while keeping it readable. Please choose another screenshot."
+        );
+    } finally {
+        bitmap.close?.();
+    }
+};
 
 const VyawasthaShulk = () => {
     const {
@@ -858,12 +968,17 @@ const VyawasthaShulk = () => {
     const [submitting, setSubmitting] =
         useState(false);
 
-    const [message, setMessage] =
-        useState("");
+    const [selectedProof, setSelectedProof] = useState(null);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [proofPreparing, setProofPreparing] = useState(false);
 
-    const [messageType, setMessageType] =
-        useState("info");
-
+    useEffect(() => {
+        return () => {
+            if (selectedProof?.previewUrl) {
+                URL.revokeObjectURL(selectedProof.previewUrl);
+            }
+        };
+    }, [selectedProof]);
 
     const headers = {
         Authorization: `Bearer ${token}`,
@@ -879,7 +994,6 @@ const VyawasthaShulk = () => {
     const loadPaymentInfo = async () => {
         try {
             setLoading(true);
-            setMessage("");
 
             const response = await fetch(
                 `${backendUrl}/api/user/vyawastha/payment`,
@@ -903,11 +1017,7 @@ const VyawasthaShulk = () => {
             setMemberInfo(data.user || {});
 
         } catch (error) {
-            setMessage(
-                error.message ||
-                "Unable to load Vywastha payment."
-            );
-            setMessageType("error");
+            toastError(error.message || "Unable to load Vywastha payment.");
         } finally {
             setLoading(false);
         }
@@ -1087,9 +1197,87 @@ const VyawasthaShulk = () => {
             document.save(`LJKA-Vyawastha-Receipt-${payment.utrNumber || payment.id}.pdf`);
         } catch (error) {
             console.error("Receipt download error:", error);
-            setMessage("Unable to generate the receipt. Please try again.");
-            setMessageType("error");
+            toastError("Unable to generate the receipt. Please try again.");
         }
+    };
+
+
+    // ==========================================================
+    // PAYMENT PROOF SELECTION AND PREPARATION
+    // ==========================================================
+
+    const handleProofSelection = async (event) => {
+        const file = event.target.files?.[0];
+        event.target.value = "";
+
+        if (!file) return;
+
+        // Do not keep an older preview visible while a new file is being checked.
+        setSelectedProof(null);
+        setProofPreparing(true);
+        setUploadProgress(0);
+
+        try {
+            const format = getProofFormat(file);
+
+            if (!ALLOWED_PROOF_FORMATS.includes(format)) {
+                throw new Error("Only JPG, JPEG, PNG, WEBP and PDF files are allowed. Word and other document files are not accepted.");
+            }
+
+            // Reject oversized originals immediately. Never preview or compress a file
+            // that is already larger than the permitted 1 MB upload limit.
+            if (file.size > MAX_PROOF_SIZE) {
+                throw new Error("File size must be 1 MB or less. Please choose a smaller file.");
+            }
+
+            let finalFile = file;
+
+            if (format === "pdf") {
+                if (file.type !== "application/pdf") {
+                    throw new Error("Please select a valid PDF file.");
+                }
+            } else {
+                if (!ALLOWED_IMAGE_MIME_TYPES.includes(file.type)) {
+                    throw new Error("Please select a valid JPG, JPEG, PNG or WEBP image.");
+                }
+
+                // Keep the existing image preparation step for smaller images.
+                finalFile = await compressPaymentImage(file);
+
+                if (finalFile.size > MAX_PROOF_SIZE) {
+                    throw new Error("File size must be 1 MB or less. Please choose a smaller image.");
+                }
+            }
+
+            const finalFormat = getProofFormat(finalFile);
+
+            if (!ALLOWED_PROOF_FORMATS.includes(finalFormat)) {
+                throw new Error("The prepared file format is not supported.");
+            }
+
+            // Give the user a brief visible checking animation even for a small PDF.
+            await new Promise((resolve) => window.setTimeout(resolve, 180));
+
+            setSelectedProof({
+                file: finalFile,
+                format: finalFormat,
+                originalFilename: file.name,
+                previewUrl: URL.createObjectURL(finalFile),
+                isPdf: finalFormat === "pdf",
+            });
+
+            toastSuccess(finalFormat === "pdf" ? "PDF ready to upload." : "Image ready to upload.");
+        } catch (error) {
+            setSelectedProof(null);
+            toastError(error.message || "Unable to prepare payment proof.");
+        } finally {
+            setProofPreparing(false);
+        }
+    };
+
+    const removeSelectedProof = () => {
+        setSelectedProof(null);
+        setUploadProgress(0);
     };
 
 
@@ -1104,10 +1292,47 @@ const VyawasthaShulk = () => {
 
         try {
             setSubmitting(true);
-            setMessage("");
 
             const payerName = form.payerName.trim().toUpperCase();
             const utrNumber = form.utrNumber.trim().toUpperCase();
+
+            if (!selectedProof) {
+                throw new Error("Please upload your payment screenshot or receipt.");
+            }
+
+            toastInfo("Preparing secure upload...");
+
+            // Ask the authenticated backend to sign this exact file format.
+            const signatureResponse = await fetch(
+                `${backendUrl}/api/user/vyawastha/proof/sign`,
+                {
+                    method: "POST",
+                    headers,
+                    body: JSON.stringify({
+                        format: selectedProof.format,
+                    }),
+                }
+            );
+
+            const signatureData = await signatureResponse.json();
+
+            if (!signatureResponse.ok || !signatureData?.upload) {
+                throw new Error(
+                    signatureData.message || "Unable to authorize payment proof upload."
+                );
+            }
+
+            const cloudinaryResult = await uploadToCloudinaryWithProgress(
+                signatureData.upload,
+                selectedProof.file,
+                setUploadProgress
+            );
+
+            if (!cloudinaryResult?.public_id) {
+                throw new Error("Cloudinary did not return a valid file reference.");
+            }
+
+            toastSuccess("Payment proof uploaded successfully.");
 
             const response = await fetch(
                 `${backendUrl}/api/user/vyawastha/payment`,
@@ -1115,16 +1340,18 @@ const VyawasthaShulk = () => {
                     method: "POST",
                     headers,
                     body: JSON.stringify({
-                        payerName:
-                            form.payerName.trim(),
-                        utrNumber:
-                            form.utrNumber.trim().toUpperCase(),
+                        payerName,
+                        utrNumber,
+                        paymentProof: {
+                            publicId: cloudinaryResult.public_id,
+                            originalFilename: selectedProof.originalFilename,
+                            format: selectedProof.format,
+                        },
                     }),
                 }
             );
 
-            const data =
-                await response.json();
+            const data = await response.json();
 
             if (!response.ok) {
                 throw new Error(
@@ -1133,26 +1360,19 @@ const VyawasthaShulk = () => {
                 );
             }
 
-            setMessage(
-                data.message ||
-                "Payment submitted for verification."
-            );
-
-            setMessageType("success");
+            toastSuccess(data.message || "Payment submitted for verification.");
 
             setForm((current) => ({
                 ...current,
                 utrNumber: "",
             }));
 
+            setSelectedProof(null);
+            setUploadProgress(0);
+
             await loadPaymentInfo();
         } catch (error) {
-            setMessage(
-                error.message ||
-                "Unable to submit payment."
-            );
-
-            setMessageType("error");
+            toastError(error.message || "Unable to submit payment.");
         } finally {
             setSubmitting(false);
         }
@@ -1210,6 +1430,8 @@ const VyawasthaShulk = () => {
     const canSubmit =
         validName &&
         validUtr &&
+        Boolean(selectedProof) &&
+        !proofPreparing &&
         !submitting &&
         !isPaid &&
         !isPending;
@@ -1217,7 +1439,6 @@ const VyawasthaShulk = () => {
 
     return (
         <main className="min-h-screen bg-[var(--ljka-bg)] px-4 py-10 sm:px-6 lg:py-14">
-
             <section className="mx-auto max-w-5xl">
 
                 {/* ====================================================
@@ -1347,7 +1568,7 @@ const VyawasthaShulk = () => {
 
                                 <p className="mt-1 text-sm text-amber-700">
                                     Your payment details have been submitted and
-                                    are currently waiting for admin verification.
+                                    are currently waiting for verification.
                                 </p>
 
                                 {existingPayment?.utrNumber && (
@@ -1438,6 +1659,7 @@ const VyawasthaShulk = () => {
                 )}
 
 
+                {!isPaid && !isPending && (
                 <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
 
 
@@ -1541,6 +1763,11 @@ const VyawasthaShulk = () => {
                         {!isPaid && !isPending && (
                             <form
                                 onSubmit={submitPayment}
+                                onKeyDown={(event) => {
+                                    // Keep the form click-to-submit only. Mobile keyboards and
+                                    // barcode/UTR entry can emit Enter while the member is typing.
+                                    if (event.key === "Enter") event.preventDefault();
+                                }}
                                 className="mt-7 space-y-5"
                             >
                                 {/* NAME */}
@@ -1589,6 +1816,125 @@ const VyawasthaShulk = () => {
                                     </span>
                                 </label>
 
+                                {/* PAYMENT PROOF UPLOAD */}
+
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-semibold text-[var(--ljka-primary)]">
+                                        Upload Payment Screenshot / Receipt
+                                    </label>
+
+                                    <input
+                                        id="vyawastha-payment-proof"
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf"
+                                        disabled={submitting || proofPreparing}
+                                        onChange={handleProofSelection}
+                                        className="hidden"
+                                    />
+
+                                    {proofPreparing ? (
+                                        <div className="flex min-h-36 flex-col items-center justify-center rounded-2xl border border-[var(--ljka-border)] bg-white px-4 py-7 text-center shadow-sm">
+                                            <div className="relative mb-3 h-11 w-11">
+                                                <div className="absolute inset-0 animate-spin rounded-full border-4 border-[var(--ljka-border)] border-t-[var(--ljka-primary)]" />
+                                                <div className="absolute inset-2 rounded-full bg-[var(--ljka-primary-bg)]" />
+                                            </div>
+                                            <p className="text-sm font-bold text-[var(--ljka-primary)]">Checking your file</p>
+                                            <p className="mt-1 text-xs text-[var(--ljka-muted)]">Please wait while we prepare the preview...</p>
+                                        </div>
+                                    ) : !selectedProof ? (
+                                        <label
+                                            htmlFor="vyawastha-payment-proof"
+                                            className="group flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[var(--ljka-border)] bg-[var(--ljka-primary-bg)] px-4 py-8 text-center transition hover:border-[var(--ljka-primary)] hover:bg-white"
+                                        >
+                                            <span className="mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-white text-[var(--ljka-primary)] shadow-sm transition group-hover:scale-105">
+                                                <FaDownload className="text-xl" />
+                                            </span>
+                                            <span className="text-sm font-bold text-[var(--ljka-primary)]">
+                                                Choose screenshot or receipt
+                                            </span>
+                                            <span className="mt-1 text-xs font-normal text-[var(--ljka-muted)]">
+                                                JPG, JPEG, PNG, WEBP or PDF · Maximum 1 MB · One file only
+                                            </span>
+                                        </label>
+                                    ) : (
+                                        <div className="rounded-xl border border-[var(--ljka-border)] p-3">
+                                            <div className="flex items-center gap-3">
+                                                {selectedProof.isPdf ? (
+                                                    <div className="grid h-20 w-16 shrink-0 place-items-center rounded-lg bg-red-50 text-red-600">
+                                                        <FaFilePdf className="text-3xl" />
+                                                        <span className="text-[10px] font-bold">PDF</span>
+                                                    </div>
+                                                ) : (
+                                                    <img
+                                                        src={selectedProof.previewUrl}
+                                                        alt="Payment proof preview"
+                                                        className="h-20 w-20 shrink-0 rounded-lg border object-contain"
+                                                    />
+                                                )}
+
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="break-all text-sm font-semibold text-[var(--ljka-primary)]">
+                                                        {selectedProof.originalFilename}
+                                                    </p>
+                                                    <p className="mt-1 text-xs text-[var(--ljka-muted)]">
+                                                        {(selectedProof.file.size / 1024).toFixed(0)} KB · {selectedProof.format.toUpperCase()}
+                                                    </p>
+                                                    {selectedProof.isPdf && (
+                                                        <a
+                                                            href={selectedProof.previewUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-[var(--ljka-primary)] underline"
+                                                        >
+                                                            <FaEye /> Preview PDF
+                                                        </a>
+                                                    )}
+                                                </div>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={removeSelectedProof}
+                                                    disabled={submitting}
+                                                    aria-label="Remove selected payment proof"
+                                                    className="rounded-lg p-2 text-red-600 hover:bg-red-50 disabled:opacity-40"
+                                                >
+                                                    <FaTrash />
+                                                </button>
+                                            </div>
+
+                                            {submitting && (
+                                                <div className="mt-4 flex items-center gap-3">
+                                                    <div
+                                                        className="grid h-12 w-12 shrink-0 place-items-center rounded-full"
+                                                        style={{
+                                                            background: `conic-gradient(var(--ljka-primary) ${uploadProgress}%, #e5e7eb ${uploadProgress}%)`,
+                                                        }}
+                                                    >
+                                                        <div className="grid h-9 w-9 place-items-center rounded-full bg-white text-[10px] font-bold text-[var(--ljka-primary)]">
+                                                            {uploadProgress}%
+                                                        </div>
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-xs font-semibold text-[var(--ljka-primary)]">
+                                                            Uploading payment proof
+                                                        </p>
+                                                        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-100">
+                                                            <div
+                                                                className="h-full rounded-full bg-[var(--ljka-primary)] transition-all"
+                                                                style={{ width: `${uploadProgress}%` }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <p className="text-xs font-normal text-[var(--ljka-muted)]">
+                                        Accepted files: JPG, JPEG, PNG, WEBP and PDF only. Maximum 1 MB. Images are compressed before upload; keep the UTR, amount and transaction date readable.
+                                    </p>
+                                </div>
+
 
                                 {/* SUBMIT */}
 
@@ -1597,38 +1943,16 @@ const VyawasthaShulk = () => {
                                     disabled={!canSubmit}
                                     className="w-full rounded-xl bg-[var(--ljka-primary)] px-5 py-3.5 text-sm font-bold text-white transition hover:bg-[var(--ljka-primary-dark)] disabled:cursor-not-allowed disabled:opacity-40"
                                 >
-                                    {submitting
-                                        ? "Submitting..."
-                                        : "Submit for Verification"}
+                                    {proofPreparing
+                                        ? "Preparing proof..."
+                                        : submitting
+                                            ? uploadProgress < 100
+                                                ? "Uploading proof..."
+                                                : "Submitting..."
+                                            : "Submit for Verification"}
                                 </button>
-
-                                {!validName && (
-                                    <p className="text-xs text-red-600">
-                                        Enter your name to enable submission.
-                                    </p>
-                                )}
-
-                                {validName && !validUtr && (
-                                    <p className="text-xs text-red-600">
-                                        Enter a valid UTR / transaction number to enable submission.
-                                    </p>
-                                )}
                             </form>
                         )}
-
-                        {/* MESSAGE */}
-
-                        {message && (
-                            <div
-                                className={`mt-5 rounded-xl p-4 text-sm ${messageType === "success"
-                                    ? "bg-green-50 text-green-800"
-                                    : "bg-red-50 text-red-700"
-                                    }`}
-                            >
-                                {message}
-                            </div>
-                        )}
-
 
                         <div className="mt-6 flex gap-2 text-xs leading-5 text-[var(--ljka-muted)]">
 
@@ -1644,6 +1968,7 @@ const VyawasthaShulk = () => {
                     </section>
 
                 </div>
+                )}
 
             </section>
 

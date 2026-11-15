@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import crypto from "node:crypto";
+import cloudinary from "../config/cloudinary.js";
 import User from "../models/userModel.js";
 import VyawasthaPayment from "../models/vyawasthaPaymentModel.js";
 import { getMembershipExpiryAt } from "../utils/membershipExpiry.js";
@@ -97,6 +99,108 @@ export const getVyawasthaPaymentInfo = async (req, res) => {
     });
   }
 };
+
+
+const MAX_PROOF_SIZE = 1024 * 1024;
+
+const getSignedPaymentProofUrl = (proof) => {
+  if (!proof?.publicId || !proof?.resourceType) return null;
+
+  const options = {
+    resource_type: proof.resourceType,
+    type: "authenticated",
+    secure: true,
+    sign_url: true,
+  };
+
+  // Raw Cloudinary public IDs include their extension already. Passing format
+  // for them would result in a duplicate .pdf extension in the delivery URL.
+  if (proof.resourceType === "image" && proof.format) {
+    options.format = proof.format;
+  }
+
+  return cloudinary.url(proof.publicId, options);
+};
+
+const verifyVyawasthaPaymentProof = async (userId, proof) => {
+  const allowedFormats = ["jpg", "jpeg", "png", "webp", "pdf"];
+
+  if (!proof || typeof proof !== "object") {
+    throw new Error("Payment proof is required.");
+  }
+
+  const publicId = String(proof.publicId || "").trim();
+  const originalFilename = String(
+    proof.originalFilename || ""
+  ).trim();
+
+  const format = String(proof.format || "")
+    .trim()
+    .toLowerCase()
+    .replace(/^\./, "");
+
+  if (!publicId || !originalFilename) {
+    throw new Error("Invalid payment proof details.");
+  }
+
+  if (!allowedFormats.includes(format)) {
+    throw new Error("Unsupported payment proof format.");
+  }
+
+  const resourceType = format === "pdf" ? "raw" : "image";
+  const expectedFolder =
+    `ljka/vyawastha-payment-proofs/${userId}`;
+
+  if (!publicId.startsWith(`${expectedFolder}/`)) {
+    throw new Error("Payment proof ownership could not be verified.");
+  }
+
+  const alreadyUsed = await VyawasthaPayment.findOne({
+    "paymentProof.publicId": publicId,
+  }).lean();
+
+  if (alreadyUsed) {
+    throw new Error("This payment proof has already been submitted.");
+  }
+
+  const asset = await cloudinary.api.resource(publicId, {
+    resource_type: resourceType,
+    type: "authenticated",
+  });
+
+  if (
+    asset.public_id !== publicId ||
+    asset.resource_type !== resourceType ||
+    asset.type !== "authenticated"
+  ) {
+    throw new Error("Invalid Cloudinary payment proof.");
+  }
+
+  if (
+    String(asset.format || "").toLowerCase() !== format
+  ) {
+    throw new Error("Uploaded file format does not match.");
+  }
+
+  if (
+    !Number.isFinite(asset.bytes) ||
+    asset.bytes < 1 ||
+    asset.bytes > MAX_PROOF_SIZE
+  ) {
+    throw new Error("Payment proof must not exceed 1 MB.");
+  }
+
+  return {
+    publicId: asset.public_id,
+    secureUrl: asset.secure_url,
+    resourceType,
+    format,
+    originalFilename: originalFilename.slice(0, 200),
+    fileSize: asset.bytes,
+    uploadedAt: new Date(),
+  };
+};
+
 
 
 // ============================================================
@@ -253,20 +357,45 @@ export const submitVyawasthaPayment = async (req, res) => {
     // CREATE PAYMENT
     // --------------------------------------------------------
 
+    // --------------------------------------------------------
+    // VERIFY PAYMENT PROOF
+    // --------------------------------------------------------
+
+    let paymentProof;
+
+    try {
+      paymentProof = await verifyVyawasthaPaymentProof(
+        user._id,
+        req.body.paymentProof
+      );
+    } catch (proofError) {
+      return res.status(422).json({
+        success: false,
+        code: "INVALID_PAYMENT_PROOF",
+        message: proofError.message,
+      });
+    }
+
+    // --------------------------------------------------------
+    // CREATE PAYMENT
+    // --------------------------------------------------------
+
     const payment = await VyawasthaPayment.create({
       userId: user._id,
       payerName: payerName.toUpperCase(),
       utrNumber,
       amount: ANNUAL_VYAWASTHA_AMOUNT,
+      paymentProof,
       paymentStatus: "pending",
       paymentFor: "vyawastha_annual",
       financialYear: "2026-27",
     });
 
+
     return res.status(201).json({
       success: true,
       message:
-        "Vywastha Shulk payment submitted successfully. It is awaiting admin verification.",
+        "Vywastha Shulk payment submitted successfully. It is awaiting verification.",
       payment: {
         id: payment._id,
         payerName: payment.payerName,
@@ -301,6 +430,74 @@ export const submitVyawasthaPayment = async (req, res) => {
   }
 };
 
+
+// ============================================================
+// GENERATE CLOUDINARY PAYMENT PROOF UPLOAD SIGNATURE
+// POST /api/user/vyawastha/proof/sign
+// ============================================================
+
+export const getVyawasthaProofUploadOptions = (req) => {
+    const userId = req.userId;
+    if (!userId) {
+      const error = new Error("Not authorized");
+      error.statusCode = 401;
+      throw error;
+    }
+    const format = String(req.body?.format || "")
+      .trim()
+      .toLowerCase()
+      .replace(/^\./, "");
+
+    const allowedFormats = [
+      "jpg",
+      "jpeg",
+      "png",
+      "webp",
+      "pdf",
+    ];
+
+    if (!allowedFormats.includes(format)) {
+      const error = new Error("Only JPG, JPEG, PNG, WEBP and PDF files are allowed.");
+      error.statusCode = 422;
+      throw error;
+    }
+
+    const resourceType =
+      format === "pdf" ? "raw" : "image";
+
+    const folder =
+      `ljka/vyawastha-payment-proofs/${userId}`;
+
+    const uniqueId = crypto.randomUUID();
+
+    const publicId =
+      format === "pdf"
+        ? `${uniqueId}.pdf`
+        : uniqueId;
+
+    const timestamp = Math.floor(Date.now() / 1000);
+
+    // These parameters will be signed by the backend.
+    const paramsToSign = {
+      timestamp,
+      folder,
+      public_id: publicId,
+      type: "authenticated",
+      overwrite: false,
+    };
+
+    return { resourceType, paramsToSign, format, maxFileSize: MAX_PROOF_SIZE };
+};
+
+export const createVyawasthaProofSignature = (req, res) => {
+    return res.status(200).json({
+      success: true,
+      message: "Upload authorization generated.",
+      upload: req.cloudinaryUpload,
+    });
+};
+
+
 export const listVyawasthaPayments = async (req, res) => {
   try {
     const payments = await VyawasthaPayment.find()
@@ -318,9 +515,19 @@ export const listVyawasthaPayments = async (req, res) => {
       })
       .lean();
 
+    const paymentsWithProofPreview = payments.map((payment) => ({
+      ...payment,
+      paymentProof: payment.paymentProof
+        ? {
+            ...payment.paymentProof,
+            previewUrl: getSignedPaymentProofUrl(payment.paymentProof),
+          }
+        : null,
+    }));
+
     return res.json({
       success: true,
-      payments,
+      payments: paymentsWithProofPreview,
     });
   } catch (error) {
     console.error(

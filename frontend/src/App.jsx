@@ -132,14 +132,19 @@ const App = () => {
         <Route path="/user-list" element={<UserList />} />
         <Route path="/vyawastha-list" element={<VyawasthaList />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route
-          path="/kyc"
-          element={
-            <KYCGuard>
-              <KYC />
-            </KYCGuard>
-          }
-        />
+      </Route>
+
+      {/* KYC keeps the member portal visible, but locks navigation until the
+          required profile data has been safely completed. */}
+      <Route
+        path="/kyc"
+        element={
+          <KYCGuard>
+            <UserLayout kycLocked />
+          </KYCGuard>
+        }
+      >
+        <Route index element={<KYC />} />
       </Route>
 
       <Route

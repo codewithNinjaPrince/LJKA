@@ -30,7 +30,7 @@ const MEMBER_NAV_LINKS = [
   ["/user/update-password", "Update Password"],
 ];
 
-const Navbar = ({ memberPortal = false }) => {
+const Navbar = ({ memberPortal = false, kycLocked = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { token, user, logout } = useContext(LJKAContext);
@@ -109,7 +109,9 @@ const Navbar = ({ memberPortal = false }) => {
                     key={path}
                     to={path}
                     className={({ isActive }) =>
-                      `relative whitespace-nowrap rounded-lg px-2.5 py-2.5 text-[12px] font-semibold transition-all xl:px-3 xl:text-[13px] ${isActive
+                      `relative whitespace-nowrap rounded-lg px-2.5 py-2.5 text-[12px] font-semibold transition-all xl:px-3 xl:text-[13px] ${kycLocked
+                        ? "pointer-events-none cursor-not-allowed opacity-40"
+                        : isActive
                         ? "bg-white/20 text-white"
                         : "text-white/75 hover:bg-white/15 hover:text-white"
                       }`
@@ -273,7 +275,9 @@ const Navbar = ({ memberPortal = false }) => {
                   to={path}
                   onClick={closeMenu}
                   className={({ isActive }) =>
-                    `flex items-center justify-between px-3.5 py-3.5 text-[14px] font-semibold transition-all duration-200 hover:rounded-lg ${isActive
+                    `flex items-center justify-between px-3.5 py-3.5 text-[14px] font-semibold transition-all duration-200 hover:rounded-lg ${kycLocked
+                      ? "pointer-events-none cursor-not-allowed opacity-40"
+                      : isActive
                       ? "rounded-lg bg-[var(--ljka-primary)] text-white shadow-sm"
                       : "text-black hover:bg-[var(--ljka-primary)] hover:text-white"
                     }`

@@ -521,24 +521,6 @@ const SahyogLateMembers = () => {
   };
 
   // ==========================================
-  // PUBLIC PAYMENT
-  // ==========================================
-
-  const getPublicPayment = (item) => {
-    const bank = item?.paymentDetails || {};
-    const details = [
-      item?.publicPayment?.upiId && `UPI: ${item.publicPayment.upiId}`,
-      bank.bankName && `Bank: ${bank.bankName}`,
-      bank.accountHolderName && `A/c holder: ${bank.accountHolderName}`,
-      bank.accountNumber && `A/c: ${bank.accountNumber}`,
-      bank.ifsc && `IFSC: ${bank.ifsc}`,
-      bank.branchName && `Branch: ${bank.branchName}`,
-    ].filter(Boolean);
-
-    return details.join(" · ") || item?.publicPayment?.instructions || "Contact LJKA";
-  };
-
-  // ==========================================
   // RENDER
   // ==========================================
 
@@ -962,10 +944,6 @@ const SahyogLateMembers = () => {
                   </th>
 
                   <th className="whitespace-nowrap px-4 py-4 text-xs font-semibold uppercase tracking-wide text-gray-600">
-                    Public Payment
-                  </th>
-
-                  <th className="whitespace-nowrap px-4 py-4 text-xs font-semibold uppercase tracking-wide text-gray-600">
                     Death Date
                   </th>
 
@@ -1030,14 +1008,6 @@ const SahyogLateMembers = () => {
                         <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-600">
                           {item.member?.tehsil ||
                             "-"}
-                        </td>
-
-                        <td className="max-w-[320px] px-4 py-4 text-sm text-gray-600">
-
-                          <span className="block max-w-[300px] truncate">
-                            {getPublicPayment(item)}
-                          </span>
-
                         </td>
 
                         <td className="whitespace-nowrap px-4 py-4 text-sm text-gray-600">
