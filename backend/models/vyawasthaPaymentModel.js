@@ -22,7 +22,6 @@ const vyawasthaPaymentSchema = new mongoose.Schema(
       trim: true,
       uppercase: true,
       unique: true,
-      index: true,
     },
 
     amount: {
@@ -76,10 +75,19 @@ const vyawasthaPaymentSchema = new mongoose.Schema(
   }
 );
 
-vyawasthaPaymentSchema.index({
-  userId: 1,
-  financialYear: 1,
-});
+vyawasthaPaymentSchema.index(
+  {
+    userId: 1,
+    financialYear: 1,
+    paymentFor: 1,
+  },
+  {
+    unique: true,
+    partialFilterExpression: {
+      paymentStatus: "pending",
+    },
+  }
+);
 
 const VyawasthaPayment = mongoose.model(
   "VyawasthaPayment",

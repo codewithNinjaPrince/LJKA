@@ -100,15 +100,22 @@ const safeAdmin = (admin) => {
 
 
 const createToken = (admin) => {
+    if (!process.env.JWT_SECRET || Buffer.byteLength(process.env.JWT_SECRET, "utf8") < 32) {
+        throw new Error("JWT_SECRET must be configured with at least 32 bytes");
+    }
+
     return jwt.sign(
         {
-            id: admin._id,
+            id: String(admin._id),
             type: "admin",
             version: admin.authVersion,
         },
         process.env.JWT_SECRET,
         {
-            expiresIn: "8h",
+            algorithm: "HS256",
+            expiresIn: "1h",
+            issuer: "ljka-admin-api",
+            audience: "ljka-admin-portal",
         }
     );
 };
@@ -858,12 +865,11 @@ export const listActivity = async (
     req,
     res
 ) => {
-    const limit = Math.min(
-        Number(
-            req.query.limit
-        ) || 100,
-        200
-    );
+    const requestedLimit = Number.parseInt(req.query.limit, 10);
+
+    const limit = Number.isFinite(requestedLimit)
+        ? Math.min(Math.max(requestedLimit, 1), 200)
+        : 100;
 
     res.json({
         success: true,
