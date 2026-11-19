@@ -173,6 +173,8 @@ export const createSahyog = async (req, res) => {
     paymentDetails: req.body.paymentDetails, publicPayment: req.body.publicPayment,
     createdBy: req.admin._id, updatedBy: req.admin._id,
   });
+  // Keep the beneficiary's portal access for their profile and ID card. The
+  // restricted member actions are guarded explicitly at route/API level.
   clearListCache();
   await audit(req, { action: "sahyog_created", module: "sahyog", resourceId: item._id, metadata: { sahyogId: item.sahyogId, memberId: member.memberId } });
   res.status(201).json({ success: true, sahyog: item });
@@ -887,6 +889,16 @@ export const userCreateDonation = async (req, res) => {
   }
   const donor = await User.findById(req.userId).select("fullName email mobile");
   if (!donor) return res.status(401).json({ success: false, message: "Member account not found" });
+  const donorIsSahyogBeneficiary = await Sahyog.exists({
+    memberId: donor._id,
+    isDeleted: false,
+  });
+  if (donorIsSahyogBeneficiary) {
+    return res.status(403).json({
+      success: false,
+      message: "A Sahyog beneficiary account cannot submit donations.",
+    });
+  }
   const paymentMethod = String(req.body.paymentMethod || "").trim();
   if (!["bank_transfer", "upi"].includes(paymentMethod)) {
     return res.status(422).json({ success: false, message: "Select Bank transfer or UPI as the payment method" });

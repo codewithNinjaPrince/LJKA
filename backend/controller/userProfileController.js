@@ -101,10 +101,10 @@ const getUserProfile = async (req, res) => {
       }
     }
 
-    const [[donationStats], totalSahyogCases] = await Promise.all([Donation.aggregate([
+    const [[donationStats], totalSahyogCases, sahyogBeneficiary] = await Promise.all([Donation.aggregate([
       { $match: { donorId: user._id, paymentStatus: "success" } },
       { $group: { _id: null, amount: { $sum: "$amount" }, cases: { $addToSet: "$sahyogId" } } },
-    ]), Sahyog.countDocuments({ isDeleted: false })]);
+    ]), Sahyog.countDocuments({ isDeleted: false }), Sahyog.exists({ memberId: user._id, isDeleted: false })]);
     const supportedCases = donationStats?.cases?.length || 0;
 
     return res.status(200).json({
@@ -133,6 +133,7 @@ const getUserProfile = async (req, res) => {
           donationPercentage: totalSahyogCases ? Number(((supportedCases / totalSahyogCases) * 100).toFixed(2)) : 0,
           verifiedAmount: donationStats?.amount || 0,
         },
+        sahyogBeneficiary: Boolean(sahyogBeneficiary),
       },
     });
 

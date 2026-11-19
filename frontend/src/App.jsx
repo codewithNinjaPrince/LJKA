@@ -74,6 +74,12 @@ const KYCGuard = ({ children }) => {
   return children;
 };
 
+const BeneficiaryRestrictedRoute = ({ children }) => {
+  const { user, appLoading } = useContext(LJKAContext);
+  if (appLoading) return null;
+  return user?.sahyogBeneficiary ? <Navigate to="/user/view-profile" replace /> : children;
+};
+
 
 const AuthPageGuard = ({ children }) => {
   const { token, user, appLoading } = useContext(LJKAContext);
@@ -165,8 +171,8 @@ const App = () => {
         <Route path="kanyadan-list" element={<ViewKanyadanSahyog />} />
         <Route path="upload-kanyadan" element={<UploadKanyadan />} />
         <Route path="all-sahyog" element={<ViewAllSahyog />} />
-        <Route path="upload-sahyog" element={<UploadSahyog />} />
-        <Route path="raise-claim" element={<RaiseClaim />} />
+        <Route path="upload-sahyog" element={<BeneficiaryRestrictedRoute><UploadSahyog /></BeneficiaryRestrictedRoute>} />
+        <Route path="raise-claim" element={<BeneficiaryRestrictedRoute><RaiseClaim /></BeneficiaryRestrictedRoute>} />
         <Route path="/user/vyawastha-shulk" element={<VyawasthaShulk />} />
 
       </Route>

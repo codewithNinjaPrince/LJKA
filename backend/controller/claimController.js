@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import Claim from "../models/claimModel.js";
 import User from "../models/userModel.js";
+import Sahyog from "../models/sahyogModel.js";
 import { audit } from "../utils/audit.js";
 import { parseCalendarDate } from "../utils/calendarDate.js";
 
@@ -37,6 +38,12 @@ export const userCreateClaim = async (req, res) => {
     const member = await User.findById(req.userId).select("fullName memberId mobile nominee address");
     if (!member) {
       return res.status(401).json({ success: false, message: "Member account not found" });
+    }
+    if (await Sahyog.exists({ memberId: member._id, isDeleted: false })) {
+      return res.status(403).json({
+        success: false,
+        message: "A Sahyog beneficiary account cannot submit a claim.",
+      });
     }
 
     const dateOfDeath = parseCalendarDate(req.body.dateOfDeath);

@@ -53,6 +53,8 @@ const Navbar = ({ memberPortal = false, kycLocked = false }) => {
     memberPortal || (isKYCPage && Boolean(token));
 
   const links = memberPortal ? MEMBER_NAV_LINKS : NAV_LINKS;
+  const isBeneficiaryRestrictedLink = (path) =>
+    user?.sahyogBeneficiary && ["/user/upload-sahyog", "/user/raise-claim"].includes(path);
 
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
@@ -109,7 +111,7 @@ const Navbar = ({ memberPortal = false, kycLocked = false }) => {
                     key={path}
                     to={path}
                     className={({ isActive }) =>
-                      `relative whitespace-nowrap rounded-lg px-2.5 py-2.5 text-[12px] font-semibold transition-all xl:px-3 xl:text-[13px] ${kycLocked
+                      `relative whitespace-nowrap rounded-lg px-2.5 py-2.5 text-[12px] font-semibold transition-all xl:px-3 xl:text-[13px] ${kycLocked || isBeneficiaryRestrictedLink(path)
                         ? "pointer-events-none cursor-not-allowed opacity-40"
                         : isActive
                         ? "bg-white/20 text-white"
@@ -275,7 +277,7 @@ const Navbar = ({ memberPortal = false, kycLocked = false }) => {
                   to={path}
                   onClick={closeMenu}
                   className={({ isActive }) =>
-                    `flex items-center justify-between px-3.5 py-3.5 text-[14px] font-semibold transition-all duration-200 hover:rounded-lg ${kycLocked
+                    `flex items-center justify-between px-3.5 py-3.5 text-[14px] font-semibold transition-all duration-200 hover:rounded-lg ${kycLocked || isBeneficiaryRestrictedLink(path)
                       ? "pointer-events-none cursor-not-allowed opacity-40"
                       : isActive
                       ? "rounded-lg bg-[var(--ljka-primary)] text-white shadow-sm"
