@@ -982,7 +982,6 @@ const VyawasthaShulk = () => {
 
     const headers = {
         Authorization: `Bearer ${token}`,
-        token,
         "Content-Type": "application/json",
     };
 

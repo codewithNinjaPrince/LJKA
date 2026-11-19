@@ -63,7 +63,6 @@ const LJKAContextProvider = ({ children }) => {
           // Alerts are time-sensitive.  A cache-buster ensures a visitor does
           // not keep receiving a previously cached single-alert response.
           params: { _: Date.now() },
-          headers: { "Cache-Control": "no-cache" },
         }
       );
 
