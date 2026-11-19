@@ -193,7 +193,7 @@ export const updateSahyog = async (req, res) => {
   res.json({ success: true, sahyog: item });
 };
 export const disableSahyog = async (req, res) => { const item = await Sahyog.findOneAndUpdate({ _id: req.params.id, isDeleted: false }, { $set: { status: "disabled", isDeleted: true, updatedBy: req.admin._id } }, { returnDocument: "after" }); if (!item) return res.status(404).json({ success: false, message: "Sahyog case not found" }); clearListCache(); await audit(req, { action: "sahyog_disabled", module: "sahyog", resourceId: item._id }); res.json({ success: true }); };
-export const listDonations = async (req, res) => { const { page, limit } = parsePagination(req); const item = await Sahyog.exists({ _id: req.params.id, isDeleted: false }); if (!item) return res.status(404).json({ success: false, message: "Sahyog case not found" }); const filter = { sahyogId: req.params.id, ...(req.query.status ? { paymentStatus: req.query.status } : {}), ...(req.query.search ? { donorName: new RegExp(String(req.query.search), "i") } : {}) }; const [total, donations] = await Promise.all([Donation.countDocuments(filter), Donation.find(filter).populate("donorId", "memberId fullName").sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean()]); res.json({ success: true, donations: donations.map((donation) => ({ ...donation, paymentProofPreview: signedProofUrl(donation.paymentProofAsset) })), pagination: { page, limit, total, pages: Math.ceil(total / limit) } }); };
+export const listDonations = async (req, res) => { const { page, limit } = parsePagination(req); const item = await Sahyog.exists({ _id: req.params.id, isDeleted: false }); if (!item) return res.status(404).json({ success: false, message: "Sahyog case not found" }); const filter = { sahyogId: req.params.id, ...(req.query.status ? { paymentStatus: req.query.status } : {}), ...(req.query.search ? { donorName: new RegExp(String(req.query.search), "i") } : {}) }; const [total, donations] = await Promise.all([Donation.countDocuments(filter), Donation.find(filter).populate("donorId", "memberId fullName").sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean()]); res.json({ success: true, donations: donations.map((donation) => ({ ...donation, paymentProofAsset: donation.paymentProofAsset ? { ...donation.paymentProofAsset, previewUrl: signedProofUrl(donation.paymentProofAsset) || donation.paymentProofAsset.secureUrl } : null })), pagination: { page, limit, total, pages: Math.ceil(total / limit) } }); };
 const setDonationStatus = async (req, res, paymentStatus) => {
   const changes = paymentStatus === "success"
     ? { paymentStatus, verifiedAt: new Date(), verifiedBy: req.admin._id }
@@ -405,7 +405,15 @@ export const publicGetCaseDonorSummary = async (req, res) => {
     });
   }
 
-  const [value] = await decorate([item]);
+  // Fetch only the aggregates required by this small header endpoint instead
+  // of invoking the broader case-list decoration path.
+  const [donationTotal, totalSahyogCases, memberSupport] = await Promise.all([
+    Donation.aggregate([{ $match: { sahyogId: item._id, paymentStatus: "success" } }, { $group: { _id: null, amount: { $sum: "$amount" }, count: { $sum: 1 } } }]),
+    Sahyog.countDocuments({ isDeleted: false }),
+    Donation.aggregate([{ $match: { donorId: item.memberId._id, paymentStatus: "success" } }, { $group: { _id: null, cases: { $addToSet: "$sahyogId" }, amount: { $sum: "$amount" } } }]),
+  ]);
+
+  const value = item;
 
   const member = value.memberId || {};
   const payment = value.paymentDetails || {};
@@ -464,12 +472,12 @@ export const publicGetCaseDonorSummary = async (req, res) => {
          DONATION SUMMARY
       ================================= */
 
-      donationSummary:
-        value.donationSummary || {
-          amount: 0,
-          count: 0,
-        },
-      memberSahyogSupport: value.memberSahyogSupport || { supportedCases: 0, totalCases: 0, donationPercentage: 0, verifiedAmount: 0 },
+      donationSummary: { amount: donationTotal[0]?.amount || 0, count: donationTotal[0]?.count || 0 },
+      memberSahyogSupport: (() => {
+        const supportedCases = memberSupport[0]?.cases?.filter((caseId) => String(caseId) !== String(item._id)).length || 0;
+        const totalCases = Math.max(totalSahyogCases - 1, 0);
+        return { supportedCases, totalCases, donationPercentage: totalCases ? Number(((supportedCases / totalCases) * 100).toFixed(2)) : 0, verifiedAmount: memberSupport[0]?.amount || 0 };
+      })(),
     },
   });
 };

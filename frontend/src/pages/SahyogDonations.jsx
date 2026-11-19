@@ -343,12 +343,18 @@ const SahyogDonations = () => {
     // ==========================================
 
     useEffect(() => {
+        // For a specific case, render the beneficiary details first. This also
+        // avoids competing initial API requests on slower tablet/mobile links.
+        if (sahyogId && !caseSummary && !summaryError) {
+            return undefined;
+        }
+
         const controller = new AbortController();
 
         fetchDonations(controller.signal);
 
         return () => controller.abort();
-    }, [page, search, filters, queryKey, sahyogId]);
+    }, [page, search, filters, queryKey, sahyogId, caseSummary, summaryError]);
 
     // ==========================================
     // SEARCH
@@ -597,6 +603,14 @@ const SahyogDonations = () => {
                         </div>
                     </div>
                 </div>
+
+                {sahyogId && !caseSummary && !summaryError && (
+                    <section className="mb-6 animate-pulse rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+                        <div className="h-3 w-28 rounded bg-gray-200" />
+                        <div className="mt-3 h-7 w-56 rounded bg-gray-200" />
+                        <div className="mt-5 grid gap-3 sm:grid-cols-3"><div className="h-14 rounded-lg bg-gray-100" /><div className="h-14 rounded-lg bg-gray-100" /><div className="h-14 rounded-lg bg-gray-100" /></div>
+                    </section>
+                )}
 
                 {sahyogId && caseSummary && (
                     <section className="mb-6 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
