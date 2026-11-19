@@ -636,15 +636,15 @@ const KYC = () => {
       submitInProgressRef.current = true;
       setLoading(true);
 
-      // authUser middleware — adjust header if your middleware expects
-      // "Authorization: Bearer <token>" instead of a raw "token" header.
+      // Use the standard bearer header. It is also explicitly allowed by the
+      // production CORS policy, unlike the old custom `token` header.
       const res = await axios({
         method: "post",
         url: isUpdateMode
           ? `${backendUrl}/api/member-update-request/submit`
           : `${backendUrl}/api/user/kyc/submit`,
         data: payload,
-        headers: { token },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!res.data?.success) {
@@ -689,7 +689,10 @@ const KYC = () => {
         return;
       }
 
-      toastError(response?.data?.message || "Something went wrong");
+      toastError(
+        response?.data?.message ||
+        "Unable to submit KYC. Please check your internet connection and try again."
+      );
     } finally {
       submitInProgressRef.current = false;
       setLoading(false);
