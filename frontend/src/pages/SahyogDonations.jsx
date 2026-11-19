@@ -699,6 +699,11 @@ const SahyogDonations = () => {
 
                                 {/* Death Date */}
                                 <div>
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Joined LJKA</p>
+                                    <p className="mt-1 font-semibold text-gray-800">{caseSummary.member?.joinedAt ? new Date(caseSummary.member.joinedAt).toLocaleDateString("en-IN", { timeZone: "UTC", day: "2-digit", month: "short", year: "numeric" }) : "—"}</p>
+                                </div>
+
+                                <div>
                                     <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
                                         Death Date
                                     </p>
@@ -715,6 +720,13 @@ const SahyogDonations = () => {
                                             })
                                             : "—"}
                                     </p>
+                                </div>
+
+                                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 sm:col-span-2 lg:col-span-3">
+                                    <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Member's past Sahyog support</p><span className="rounded-md bg-white px-2 py-1 text-xs font-bold text-emerald-800">{caseSummary.memberSahyogSupport?.donationPercentage || 0}%</span></div>
+                                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-emerald-100"><div className="h-full rounded-full bg-emerald-600" style={{ width: `${Math.min(100, caseSummary.memberSahyogSupport?.donationPercentage || 0)}%` }} /></div>
+                                    <p className="mt-2 text-sm font-semibold text-emerald-900">Supported {caseSummary.memberSahyogSupport?.supportedCases || 0} of {caseSummary.memberSahyogSupport?.totalCases || 0} Sahyog members</p>
+                                    <p className="mt-1 text-xs text-emerald-800">Verified amount donated: ₹{Number(caseSummary.memberSahyogSupport?.verifiedAmount || 0).toLocaleString("en-IN")}</p>
                                 </div>
 
                                 <div className="sm:col-span-2">

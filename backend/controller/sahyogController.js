@@ -70,21 +70,34 @@ const publicCase = (item) => ({
     ifsc: item.paymentDetails?.ifsc || "",
     branchName: item.paymentDetails?.branchName || "",
   },
-  createdAt: item.createdAt, member: publicMember(item.memberId), donationSummary: item.donationSummary,
+  createdAt: item.createdAt, member: publicMember(item.memberId), donationSummary: item.donationSummary, memberSahyogSupport: item.memberSahyogSupport,
 });
 const totalsFor = async (ids) => Donation.aggregate([{ $match: { sahyogId: { $in: ids }, paymentStatus: "success" } }, { $group: { _id: "$sahyogId", amount: { $sum: "$amount" }, count: { $sum: 1 } } }]);
 const decorate = async (cases) => {
   const totals = await totalsFor(cases.map((item) => item._id));
   const byId = new Map(totals.map((item) => [String(item._id), { amount: item.amount, count: item.count }]));
-  const eligibleMembers = await User.countDocuments({ kycCompleted: true, accountStatus: { $ne: "disabled" } });
+  const memberIds = cases.map((item) => item.memberId?._id || item.memberId).filter(Boolean);
+  const [totalSahyogCases, pastSupport] = await Promise.all([
+    Sahyog.countDocuments({ isDeleted: false }),
+    Donation.aggregate([
+      { $match: { donorId: { $in: memberIds }, paymentStatus: "success" } },
+      { $group: { _id: "$donorId", supportedCases: { $addToSet: "$sahyogId" }, amount: { $sum: "$amount" } } },
+    ]),
+  ]);
+  const supportByMember = new Map(pastSupport.map((item) => [String(item._id), { count: item.supportedCases.length, amount: item.amount }]));
   return cases.map((item) => {
     const donationSummary = byId.get(String(item._id)) || { amount: 0, count: 0 };
+    const memberId = item.memberId?._id || item.memberId;
+    const memberSupport = supportByMember.get(String(memberId)) || { count: 0, amount: 0 };
+    const supportTotal = Math.max(totalSahyogCases - 1, 0);
     return {
       ...item.toObject?.() || item,
-      donationSummary: {
-        ...donationSummary,
-        eligibleMembers,
-        donationPercentage: eligibleMembers ? Number(((donationSummary.count / eligibleMembers) * 100).toFixed(2)) : 0,
+      donationSummary,
+      memberSahyogSupport: {
+        supportedCases: memberSupport.count,
+        totalCases: supportTotal,
+        donationPercentage: supportTotal ? Number(((memberSupport.count / supportTotal) * 100).toFixed(2)) : 0,
+        verifiedAmount: memberSupport.amount,
       },
     };
   });
@@ -382,10 +395,7 @@ export const publicGetCaseDonorSummary = async (req, res) => {
     status: "active",
     isDeleted: false,
   })
-    .populate(
-      "memberId",
-      "fullName memberId aadhaar"
-    )
+    .populate("memberId", `${memberFields} aadhaar`)
     .lean();
 
   if (!item) {
@@ -418,6 +428,7 @@ export const publicGetCaseDonorSummary = async (req, res) => {
         fullName: member.fullName || "Member",
         memberId: member.memberId || "—",
         aadhaar: maskedAadhaar,
+        joinedAt: member.createdAt || null,
       },
 
       /* ================================
@@ -458,6 +469,7 @@ export const publicGetCaseDonorSummary = async (req, res) => {
           amount: 0,
           count: 0,
         },
+      memberSahyogSupport: value.memberSahyogSupport || { supportedCases: 0, totalCases: 0, donationPercentage: 0, verifiedAmount: 0 },
     },
   });
 };
@@ -901,7 +913,7 @@ export const userCreateDonation = async (req, res) => {
 };
 export const userListMyDonations = async (req, res) => {
   const { page, limit } = parsePagination(req);
-  const [total, donations] = await Promise.all([
+  const [total, donations, supportStats, totalSahyogCases] = await Promise.all([
     Donation.countDocuments({ donorId: req.userId }),
     Donation.find({ donorId: req.userId })
       .populate({ path: "sahyogId", select: "sahyogId dateOfDeath memberId", populate: { path: "memberId", select: "fullName memberId" } })
@@ -909,7 +921,10 @@ export const userListMyDonations = async (req, res) => {
       .skip((page - 1) * limit)
       .limit(limit)
       .lean(),
+    Donation.aggregate([{ $match: { donorId: new mongoose.Types.ObjectId(req.userId), paymentStatus: "success" } }, { $group: { _id: null, amount: { $sum: "$amount" }, cases: { $addToSet: "$sahyogId" } } }]),
+    Sahyog.countDocuments({ isDeleted: false }),
   ]);
+  const supportedCases = supportStats[0]?.cases?.length || 0;
 
   res.json({
     success: true,
@@ -929,6 +944,7 @@ export const userListMyDonations = async (req, res) => {
       },
       caseId: donation.sahyogId?.sahyogId || "",
     })),
+    supportSummary: { supportedCases, totalSahyogCases, donationPercentage: totalSahyogCases ? Number(((supportedCases / totalSahyogCases) * 100).toFixed(2)) : 0, verifiedAmount: supportStats[0]?.amount || 0 },
     pagination: { page, limit, total, pages: Math.ceil(total / limit) },
   });
 };

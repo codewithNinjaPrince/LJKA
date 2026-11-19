@@ -213,14 +213,11 @@ const ViewProfile = () => {
         />
       )}
 
-      {Number(user.donationStats?.verifiedCount || 0) > 0 && (
-        <section className="mb-6 flex flex-col gap-4 rounded-2xl border border-[#b8e2d1] bg-[#f0fbf6] p-5 shadow-[var(--ljka-shadow-sm)] sm:flex-row sm:items-center sm:justify-between sm:p-6">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-700">Verified Sahyog contribution</p>
-            <h2 className="mt-2 text-xl font-bold text-emerald-900">₹{Number(user.donationStats.verifiedAmount || 0).toLocaleString("en-IN")} donated</h2>
-            <p className="mt-1 text-sm text-emerald-800">Your {user.donationStats.verifiedCount} verified Sahyog contribution{user.donationStats.verifiedCount === 1 ? "" : "s"} help LJKA members and their families.</p>
-          </div>
-          <div className="rounded-lg bg-white px-4 py-3 text-sm font-bold text-emerald-800">Sahyog supporter</div>
+      {Number(user.donationStats?.supportedCases || 0) > 0 && (
+        <section className="mb-6 rounded-2xl border border-[#b8e2d1] bg-[#f0fbf6] p-5 shadow-[var(--ljka-shadow-sm)] sm:p-6">
+          <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-700">Your Sahyog support</p><h2 className="mt-1 text-xl font-bold text-emerald-900">₹{Number(user.donationStats.verifiedAmount || 0).toLocaleString("en-IN")} donated</h2></div><span className="rounded-lg bg-white px-3 py-2 text-sm font-bold text-emerald-800">{user.donationStats.donationPercentage || 0}% support</span></div>
+          <div className="mt-4 h-2 overflow-hidden rounded-full bg-emerald-100"><div className="h-full rounded-full bg-emerald-600" style={{ width: `${Math.min(100, user.donationStats.donationPercentage || 0)}%` }} /></div>
+          <p className="mt-3 text-sm font-medium text-emerald-800">Supported {user.donationStats.supportedCases} of {user.donationStats.totalSahyogCases || 0} Sahyog members.</p>
         </section>
       )}
 

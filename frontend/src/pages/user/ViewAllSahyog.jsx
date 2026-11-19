@@ -15,13 +15,14 @@ const ViewAllSahyog = () => {
   const [donations, setDonations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [supportSummary, setSupportSummary] = useState(null);
 
   useEffect(() => {
     fetch(`${backendUrl}/api/user/donations?limit=100`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((response) => (response.ok ? response.json() : Promise.reject()))
-      .then((data) => setDonations(data.donations || []))
+      .then((data) => { setDonations(data.donations || []); setSupportSummary(data.supportSummary || null); })
       .catch(() => setMessage("Unable to load your Sahyog contributions."))
       .finally(() => setLoading(false));
   }, [backendUrl, token]);
@@ -30,8 +31,6 @@ const ViewAllSahyog = () => {
     return <main className="min-h-screen bg-[var(--ljka-bg)] grid place-items-center text-[var(--ljka-primary)]">Loading your contributions…</main>;
   }
 
-  const verifiedDonations = donations.filter((donation) => donation.paymentStatus === "success");
-  const verifiedTotal = verifiedDonations.reduce((sum, donation) => sum + Number(donation.amount || 0), 0);
 
   return (
     <main className="min-h-screen bg-[var(--ljka-bg)]">
@@ -50,7 +49,7 @@ const ViewAllSahyog = () => {
 
           {message && <p className="mt-6 rounded-xl bg-[var(--ljka-bg)] p-4 text-sm text-[var(--ljka-text)]">{message}</p>}
 
-          {verifiedDonations.length > 0 && <section className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5"><p className="text-xs font-bold uppercase tracking-[.16em] text-emerald-700">Your verified Sahyog support</p><p className="mt-2 text-2xl font-bold text-emerald-900">₹{verifiedTotal.toLocaleString("en-IN")}</p><p className="mt-1 text-sm text-emerald-800">Across {verifiedDonations.length} verified contribution{verifiedDonations.length === 1 ? "" : "s"}.</p></section>}
+          {supportSummary?.supportedCases > 0 && <section className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-emerald-700">Your Sahyog support</p><p className="mt-1 text-2xl font-bold text-emerald-900">₹{Number(supportSummary.verifiedAmount || 0).toLocaleString("en-IN")}</p></div><span className="rounded-lg bg-white px-3 py-2 text-sm font-bold text-emerald-800">{supportSummary.donationPercentage || 0}%</span></div><div className="mt-4 h-2 overflow-hidden rounded-full bg-emerald-100"><div className="h-full rounded-full bg-emerald-600" style={{ width: `${Math.min(100, supportSummary.donationPercentage || 0)}%` }} /></div><p className="mt-3 text-sm font-medium text-emerald-800">Supported {supportSummary.supportedCases} of {supportSummary.totalSahyogCases || 0} Sahyog members.</p></section>}
 
           {!donations.length && !message && (
             <p className="mt-8 rounded-xl bg-[var(--ljka-bg)] p-5 text-center text-[var(--ljka-muted)]">You have not submitted any Sahyog contributions yet.</p>
