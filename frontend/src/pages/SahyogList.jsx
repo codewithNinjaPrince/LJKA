@@ -28,12 +28,12 @@ const SahyogList = () => {
 
   return (
     <main className="min-h-[calc(100vh-112px)] bg-[var(--ljka-bg)]">
-      <section className="mx-auto flex w-full max-w-7xl flex-col px-5 py-10 sm:px-8 sm:py-12 lg:px-10">
+      <section className="mx-auto flex w-full max-w-6xl flex-col px-5 py-7 sm:px-8 sm:py-9 lg:px-10">
 
         {/* =========================
             PAGE HEADER
         ========================= */}
-        <div className="mb-9 text-center">
+        <div className="mb-6 text-center">
           <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[var(--ljka-gold-dark)]">
             LJKA Community Support
           </p>
@@ -50,7 +50,7 @@ const SahyogList = () => {
         {/* =========================
             CARDS
         ========================= */}
-        <div className="grid items-stretch gap-6 md:grid-cols-2">
+        <div className="grid items-stretch gap-4 md:grid-cols-2">
           {cards.map(({ title, description, to, icon: Icon }) => (
             <button
               key={to}
@@ -60,7 +60,7 @@ const SahyogList = () => {
                 group
                 relative
                 flex
-                min-h-[225px]
+                min-h-[180px]
                 w-full
                 flex-col
                 overflow-hidden
@@ -68,7 +68,7 @@ const SahyogList = () => {
                 border
                 border-[var(--ljka-border-light)]
                 bg-white
-                p-7
+                p-5 sm:p-6
                 text-left
                 shadow-[var(--ljka-shadow-sm)]
                 transition-all
@@ -100,12 +100,12 @@ const SahyogList = () => {
                 <div
                   className="
                     grid
-                    h-[58px]
-                    w-[58px]
+                  h-12
+                  w-12
                     place-items-center
                     rounded-2xl
                     bg-[var(--ljka-primary-bg)]
-                    text-[23px]
+                  text-xl
                     text-[var(--ljka-primary)]
                     transition-all
                     duration-300
@@ -139,18 +139,18 @@ const SahyogList = () => {
               </div>
 
               {/* Content */}
-              <div className="mt-6">
-                <h2 className="text-xl font-bold tracking-tight text-[var(--ljka-primary)]">
+              <div className="mt-4">
+                <h2 className="text-lg font-bold tracking-tight text-[var(--ljka-primary)]">
                   {title}
                 </h2>
 
-                <p className="mt-2.5 max-w-md text-sm leading-6 text-[var(--ljka-muted)]">
+                <p className="mt-1.5 max-w-md text-sm leading-5 text-[var(--ljka-muted)]">
                   {description}
                 </p>
               </div>
 
               {/* Bottom action */}
-              <div className="mt-auto flex items-center pt-6 text-sm font-bold text-[var(--ljka-primary)]">
+              <div className="mt-auto flex items-center pt-4 text-sm font-bold text-[var(--ljka-primary)]">
                 View details
 
                 <span
@@ -170,7 +170,7 @@ const SahyogList = () => {
         </div>
 
         {/* Small bottom spacing only */}
-        <div className="h-4 sm:h-6" />
+        <div className="h-2 sm:h-3" />
       </section>
     </main>
   );

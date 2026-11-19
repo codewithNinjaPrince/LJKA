@@ -23,6 +23,13 @@ import locationData from "../data/india/locationData.json";
 const DONATION_CACHE_TTL_MS = 0;
 const donationResponseCache = new Map();
 
+const CompactDetail = ({ label, value }) => (
+    <div className="min-w-0 rounded-lg bg-gray-50 px-3 py-2">
+        <p className="text-[10px] font-bold uppercase tracking-wide text-gray-400">{label}</p>
+        <p className="mt-0.5 truncate text-sm font-semibold text-gray-800" title={value || "—"}>{value || "—"}</p>
+    </div>
+);
+
 const SahyogDonations = () => {
     const { backendUrl } = useContext(LJKAContext);
     const [searchParams] = useSearchParams();
@@ -637,108 +644,19 @@ const SahyogDonations = () => {
                             </div>
                         </div>
 
-                        {/* Details */}
-                        <div className="border-t border-gray-100 px-5 py-5 sm:px-6">
-
-                            <div className="grid grid-cols-1 gap-x-10 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
-
-                                {/* A/c Holder */}
-                                <div>
-                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                                        A/c Holder Name
-                                    </p>
-
-                                    <p className="mt-1 font-semibold text-gray-800">
-                                        {caseSummary.bank?.accountHolderName || "—"}
-                                    </p>
-                                </div>
-
-                                {/* Account Number */}
-                                <div>
-                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                                        A/c No
-                                    </p>
-
-                                    <p className="mt-1 font-semibold tracking-wide text-gray-800">
-                                        {caseSummary.bank?.accountNumber || "—"}
-                                    </p>
-                                </div>
-
-                                {/* IFSC */}
-                                <div>
-                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                                        IFSC Code
-                                    </p>
-
-                                    <p className="mt-1 font-semibold text-gray-800">
-                                        {caseSummary.bank?.ifsc || "—"}
-                                    </p>
-                                </div>
-
-                                {/* Bank Name */}
-                                <div>
-                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                                        Bank Name
-                                    </p>
-
-                                    <p className="mt-1 font-semibold text-gray-800">
-                                        {caseSummary.bank?.bankName || "—"}
-                                    </p>
-                                </div>
-
-                                {/* Branch */}
-                                <div>
-                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                                        Branch Name
-                                    </p>
-
-                                    <p className="mt-1 font-semibold text-gray-800">
-                                        {caseSummary.bank?.branchName || "—"}
-                                    </p>
-                                </div>
-
-                                {/* Death Date */}
-                                <div>
-                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Joined LJKA</p>
-                                    <p className="mt-1 font-semibold text-gray-800">{caseSummary.member?.joinedAt ? new Date(caseSummary.member.joinedAt).toLocaleDateString("en-IN", { timeZone: "UTC", day: "2-digit", month: "short", year: "numeric" }) : "—"}</p>
-                                </div>
-
-                                <div>
-                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                                        Death Date
-                                    </p>
-
-                                    <p className="mt-1 font-semibold text-gray-800">
-                                        {caseSummary.dateOfDeath
-                                            ? new Date(
-                                                caseSummary.dateOfDeath
-                                            ).toLocaleDateString("en-IN", {
-                                                timeZone: "UTC",
-                                                day: "2-digit",
-                                                month: "short",
-                                                year: "numeric",
-                                            })
-                                            : "—"}
-                                    </p>
-                                </div>
-
-                                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 sm:col-span-2 lg:col-span-3">
-                                    <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Member's past Sahyog support</p><span className="rounded-md bg-white px-2 py-1 text-xs font-bold text-emerald-800">{caseSummary.memberSahyogSupport?.donationPercentage || 0}%</span></div>
-                                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-emerald-100"><div className="h-full rounded-full bg-emerald-600" style={{ width: `${Math.min(100, caseSummary.memberSahyogSupport?.donationPercentage || 0)}%` }} /></div>
-                                    <p className="mt-2 text-sm font-semibold text-emerald-900">Supported {caseSummary.memberSahyogSupport?.supportedCases || 0} of {caseSummary.memberSahyogSupport?.totalCases || 0} Sahyog members</p>
-                                    <p className="mt-1 text-xs text-emerald-800">Verified amount donated: ₹{Number(caseSummary.memberSahyogSupport?.verifiedAmount || 0).toLocaleString("en-IN")}</p>
-                                </div>
-
-                                <div className="sm:col-span-2">
-                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                                        Death Reason
-                                    </p>
-
-                                    <p className="mt-1 whitespace-pre-wrap font-semibold text-gray-800">
-                                        {caseSummary.causeOfDeath || "—"}
-                                    </p>
-                                </div>
-
+                        <div className="border-t border-gray-100 px-5 py-4 sm:px-6">
+                            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1.15fr_1fr_.85fr]">
+                                <CompactDetail label="Account holder" value={caseSummary.bank?.accountHolderName} />
+                                <CompactDetail label="Bank / branch" value={[caseSummary.bank?.bankName, caseSummary.bank?.branchName].filter(Boolean).join(" · ")} />
+                                <CompactDetail label="Account / IFSC" value={`${caseSummary.bank?.accountNumber || "—"} · ${caseSummary.bank?.ifsc || "—"}`} />
+                                <CompactDetail label="Joined LJKA" value={caseSummary.member?.joinedAt ? new Date(caseSummary.member.joinedAt).toLocaleDateString("en-IN", { timeZone: "UTC", day: "2-digit", month: "short", year: "numeric" }) : "—"} />
+                                <CompactDetail label="Date of death" value={caseSummary.dateOfDeath ? new Date(caseSummary.dateOfDeath).toLocaleDateString("en-IN", { timeZone: "UTC", day: "2-digit", month: "short", year: "numeric" }) : "—"} />
+                                <CompactDetail label="Death reason" value={caseSummary.causeOfDeath || "—"} />
+                            </div>
+                            <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                                <div className="flex items-center justify-between gap-3"><p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Member's past Sahyog support</p><span className="rounded-md bg-white px-2 py-1 text-xs font-bold text-emerald-800">{caseSummary.memberSahyogSupport?.donationPercentage || 0}%</span></div>
+                                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-emerald-100"><div className="h-full rounded-full bg-emerald-600" style={{ width: `${Math.min(100, caseSummary.memberSahyogSupport?.donationPercentage || 0)}%` }} /></div>
+                                <p className="mt-2 text-sm font-semibold text-emerald-900">Supported {caseSummary.memberSahyogSupport?.supportedCases || 0} of {caseSummary.memberSahyogSupport?.totalCases || 0} members · ₹{Number(caseSummary.memberSahyogSupport?.verifiedAmount || 0).toLocaleString("en-IN")}</p>
                             </div>
                         </div>
 
