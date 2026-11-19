@@ -36,8 +36,6 @@ const LJKAContextProvider = ({ children }) => {
      STATES
   ===================================================== */
 
-  const [userList, setUserList] = useState([]);
-
   const [search, setSearch] = useState("");
 
   const [showSearch, setShowSearch] = useState(false);
@@ -89,45 +87,6 @@ const LJKAContextProvider = ({ children }) => {
       setSahyogAlerts([]);
     }
   }, [backendUrl]);
-
-
-  const getUserList = useCallback(async () => {
-
-    try {
-
-      const { data } = await axios.get(
-        `${backendUrl}/api/users/list`
-      );
-
-      if (data.success) {
-
-        setUserList(data.users);
-
-      } else {
-
-        toast.error(
-          data.message ||
-          "Unable to fetch user list"
-        );
-
-      }
-
-    } catch (error) {
-
-      console.error(
-        "GET USER LIST ERROR:",
-        error
-      );
-
-      toast.error(
-        error.response?.data?.message ||
-        "Failed to fetch user list"
-      );
-
-    }
-
-  }, [backendUrl]);
-
 
   /* =====================================================
      GET LOGGED-IN USER PROFILE
@@ -359,11 +318,6 @@ const LJKAContextProvider = ({ children }) => {
     user,
     setUser,
     getUserProfile,
-
-    /* User list */
-    userList,
-    setUserList,
-    getUserList,
 
     /* Search */
     search,

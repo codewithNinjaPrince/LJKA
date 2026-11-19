@@ -66,7 +66,10 @@ app.use(
   })
 );
 
-app.use(express.json({ limit: "1mb" }));
+// Sahyog payment proofs are accepted as up to 2 MB images on the member
+// portal. Base64 JSON is larger than the original file, so the deployed API
+// must match the local server's 3 MB request allowance.
+app.use(express.json({ limit: "3mb" }));
 
 app.use("/api/user", userRouter);
 app.use("/api/user/kyc", kycRouter);

@@ -1,4 +1,5 @@
 import userModel from "../models/userModel.js";
+import Donation from "../models/donationModel.js";
 import brevo from "../config/brevo.js";
 
 const MEMBERSHIP_DAYS = 365;
@@ -99,6 +100,11 @@ const getUserProfile = async (req, res) => {
       }
     }
 
+    const [donationStats] = await Donation.aggregate([
+      { $match: { donorId: user._id, paymentStatus: "success" } },
+      { $group: { _id: null, amount: { $sum: "$amount" }, count: { $sum: 1 } } },
+    ]);
+
     return res.status(200).json({
       success: true,
       message: "Profile fetched successfully",
@@ -119,6 +125,10 @@ const getUserProfile = async (req, res) => {
 
         membershipActive:
           membershipPaid && remainingDays > 0,
+        donationStats: {
+          verifiedCount: donationStats?.count || 0,
+          verifiedAmount: donationStats?.amount || 0,
+        },
       },
     });
 

@@ -30,6 +30,9 @@ const ViewAllSahyog = () => {
     return <main className="min-h-screen bg-[var(--ljka-bg)] grid place-items-center text-[var(--ljka-primary)]">Loading your contributions…</main>;
   }
 
+  const verifiedDonations = donations.filter((donation) => donation.paymentStatus === "success");
+  const verifiedTotal = verifiedDonations.reduce((sum, donation) => sum + Number(donation.amount || 0), 0);
+
   return (
     <main className="min-h-screen bg-[var(--ljka-bg)]">
       <section className="mx-auto max-w-5xl px-5 py-10 sm:px-8">
@@ -46,6 +49,8 @@ const ViewAllSahyog = () => {
           </div>
 
           {message && <p className="mt-6 rounded-xl bg-[var(--ljka-bg)] p-4 text-sm text-[var(--ljka-text)]">{message}</p>}
+
+          {verifiedDonations.length > 0 && <section className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5"><p className="text-xs font-bold uppercase tracking-[.16em] text-emerald-700">Your verified Sahyog support</p><p className="mt-2 text-2xl font-bold text-emerald-900">₹{verifiedTotal.toLocaleString("en-IN")}</p><p className="mt-1 text-sm text-emerald-800">Across {verifiedDonations.length} verified contribution{verifiedDonations.length === 1 ? "" : "s"}.</p></section>}
 
           {!donations.length && !message && (
             <p className="mt-8 rounded-xl bg-[var(--ljka-bg)] p-5 text-center text-[var(--ljka-muted)]">You have not submitted any Sahyog contributions yet.</p>

@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import mongoose from "mongoose";
+import cloudinary from "../config/cloudinary.js";
 import Sahyog from "../models/sahyogModel.js";
 import Donation from "../models/donationModel.js";
 import User from "../models/userModel.js";
@@ -7,6 +8,28 @@ import { audit } from "../utils/audit.js";
 import { parseCalendarDate } from "../utils/calendarDate.js";
 
 const makeId = (prefix) => `${prefix}-${Date.now().toString(36).toUpperCase()}${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
+const PROOF_MAX_BYTES = 1024 * 1024;
+const PROOF_FORMATS = ["jpg", "jpeg", "png", "webp", "pdf"];
+
+const signedProofUrl = (asset) => asset?.publicId ? cloudinary.url(asset.publicId, {
+  resource_type: asset.resourceType,
+  type: "authenticated",
+  secure: true,
+  sign_url: true,
+  ...(asset.resourceType === "image" ? { format: asset.format } : {}),
+}) : null;
+
+const verifySahyogProof = async (userId, proof) => {
+  const publicId = String(proof?.publicId || "").trim();
+  const format = String(proof?.format || "").toLowerCase().replace(/^\./, "");
+  if (!publicId || !PROOF_FORMATS.includes(format)) throw new Error("A valid payment proof is required.");
+  const resourceType = format === "pdf" ? "raw" : "image";
+  const folder = `ljka/sahyog-payment-proofs/${userId}`;
+  if (!publicId.startsWith(`${folder}/`)) throw new Error("Payment proof ownership could not be verified.");
+  const asset = await cloudinary.api.resource(publicId, { resource_type: resourceType, type: "authenticated" });
+  if (asset.public_id !== publicId || asset.type !== "authenticated" || asset.resource_type !== resourceType || asset.bytes > PROOF_MAX_BYTES) throw new Error("Invalid payment proof.");
+  return { publicId, secureUrl: asset.secure_url, resourceType, format, originalFilename: String(proof.originalFilename || "Payment proof").slice(0, 200), fileSize: asset.bytes, uploadedAt: new Date() };
+};
 const LIST_CACHE_TTL_MS = 0;
 const MAX_CACHED_LISTS = 100;
 const listResponseCache = new Map();
@@ -28,12 +51,13 @@ const cacheList = (key, payload) => {
 };
 
 const clearListCache = () => listResponseCache.clear();
-const memberFields = "fullName memberId mobile address";
+const memberFields = "fullName memberId mobile address createdAt";
 const publicMember = (member) => ({
   fullName: String(member?.fullName || "Member").toUpperCase(),
   memberId: member?.memberId || "—",
   district: member?.address?.districtName || "—",
   tehsil: member?.address?.tehsilName || "—",
+  joinedAt: member?.createdAt || null,
 });
 const publicCase = (item) => ({
   _id: item._id, sahyogId: item.sahyogId, photoUrl: item.photoUrl, dateOfDeath: item.dateOfDeath, causeOfDeath: item.causeOfDeath,
@@ -52,7 +76,18 @@ const totalsFor = async (ids) => Donation.aggregate([{ $match: { sahyogId: { $in
 const decorate = async (cases) => {
   const totals = await totalsFor(cases.map((item) => item._id));
   const byId = new Map(totals.map((item) => [String(item._id), { amount: item.amount, count: item.count }]));
-  return cases.map((item) => ({ ...item.toObject?.() || item, donationSummary: byId.get(String(item._id)) || { amount: 0, count: 0 } }));
+  const eligibleMembers = await User.countDocuments({ kycCompleted: true, accountStatus: { $ne: "disabled" } });
+  return cases.map((item) => {
+    const donationSummary = byId.get(String(item._id)) || { amount: 0, count: 0 };
+    return {
+      ...item.toObject?.() || item,
+      donationSummary: {
+        ...donationSummary,
+        eligibleMembers,
+        donationPercentage: eligibleMembers ? Number(((donationSummary.count / eligibleMembers) * 100).toFixed(2)) : 0,
+      },
+    };
+  });
 };
 const parsePagination = (req) => ({ page: Math.max(1, Number(req.query.page) || 1), limit: Math.min(100, Math.max(1, Number(req.query.limit) || 20)) });
 const validateSahyogInput = (value) => {
@@ -145,7 +180,7 @@ export const updateSahyog = async (req, res) => {
   res.json({ success: true, sahyog: item });
 };
 export const disableSahyog = async (req, res) => { const item = await Sahyog.findOneAndUpdate({ _id: req.params.id, isDeleted: false }, { $set: { status: "disabled", isDeleted: true, updatedBy: req.admin._id } }, { returnDocument: "after" }); if (!item) return res.status(404).json({ success: false, message: "Sahyog case not found" }); clearListCache(); await audit(req, { action: "sahyog_disabled", module: "sahyog", resourceId: item._id }); res.json({ success: true }); };
-export const listDonations = async (req, res) => { const { page, limit } = parsePagination(req); const item = await Sahyog.exists({ _id: req.params.id, isDeleted: false }); if (!item) return res.status(404).json({ success: false, message: "Sahyog case not found" }); const filter = { sahyogId: req.params.id, ...(req.query.status ? { paymentStatus: req.query.status } : {}), ...(req.query.search ? { donorName: new RegExp(String(req.query.search), "i") } : {}) }; const [total, donations] = await Promise.all([Donation.countDocuments(filter), Donation.find(filter).populate("donorId", "memberId fullName").sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean()]); res.json({ success: true, donations, pagination: { page, limit, total, pages: Math.ceil(total / limit) } }); };
+export const listDonations = async (req, res) => { const { page, limit } = parsePagination(req); const item = await Sahyog.exists({ _id: req.params.id, isDeleted: false }); if (!item) return res.status(404).json({ success: false, message: "Sahyog case not found" }); const filter = { sahyogId: req.params.id, ...(req.query.status ? { paymentStatus: req.query.status } : {}), ...(req.query.search ? { donorName: new RegExp(String(req.query.search), "i") } : {}) }; const [total, donations] = await Promise.all([Donation.countDocuments(filter), Donation.find(filter).populate("donorId", "memberId fullName").sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean()]); res.json({ success: true, donations: donations.map((donation) => ({ ...donation, paymentProofPreview: signedProofUrl(donation.paymentProofAsset) })), pagination: { page, limit, total, pages: Math.ceil(total / limit) } }); };
 const setDonationStatus = async (req, res, paymentStatus) => {
   const changes = paymentStatus === "success"
     ? { paymentStatus, verifiedAt: new Date(), verifiedBy: req.admin._id }
@@ -808,6 +843,17 @@ export const publicListCaseDonors = async (req, res) => { req.query.sahyogId = r
 export const initiatePublicDonation = async (req, res) => { const { donorName, donorEmail, donorMobile, amount } = req.body; const item = await Sahyog.findOne({ _id: req.params.id, status: "active", isDeleted: false }); if (!item) return res.status(404).json({ success: false, message: "Sahyog case not found" }); if (!amount || Number(amount) <= 0) return res.status(422).json({ success: false, message: "A valid donation amount is required" }); const donation = await Donation.create({ donationId: makeId("DON"), sahyogId: item._id, donorName, donorEmail, donorMobile, amount: Number(amount), isAnonymous: false, paymentMethod: "unconfigured", paymentStatus: "pending" }); res.status(202).json({ success: true, message: "Donation intent recorded. Payment remains pending until a verified payment provider is configured.", donationId: donation.donationId, paymentStatus: donation.paymentStatus }); };
 export const userListSahyog = publicListSahyog;
 export const userGetSahyog = async (req, res) => { const item = await Sahyog.findOne({ _id: req.params.id, status: "active", isDeleted: false }).populate("memberId", memberFields); if (!item) return res.status(404).json({ success: false, message: "Sahyog case not found" }); const value = (await decorate([item]))[0]; res.json({ success: true, sahyog: publicCase(value) }); };
+export const getSahyogProofUploadOptions = async (req) => {
+  if (!mongoose.isValidObjectId(req.params.id)) { const error = new Error("Invalid Sahyog case"); error.statusCode = 422; throw error; }
+  const exists = await Sahyog.exists({ _id: req.params.id, status: "active", isDeleted: false });
+  if (!exists) { const error = new Error("Sahyog case not found"); error.statusCode = 404; throw error; }
+  const format = String(req.body?.format || "").toLowerCase().replace(/^\./, "");
+  if (!PROOF_FORMATS.includes(format)) { const error = new Error("Only JPG, JPEG, PNG, WEBP and PDF files are allowed."); error.statusCode = 422; throw error; }
+  const resourceType = format === "pdf" ? "raw" : "image";
+  const folder = `ljka/sahyog-payment-proofs/${req.userId}`;
+  return { resourceType, format, maxFileSize: PROOF_MAX_BYTES, paramsToSign: { timestamp: Math.floor(Date.now() / 1000), folder, public_id: format === "pdf" ? `${crypto.randomUUID()}.pdf` : crypto.randomUUID(), type: "authenticated", overwrite: false } };
+};
+export const createSahyogProofSignature = (req, res) => res.json({ success: true, upload: req.cloudinaryUpload });
 export const userCreateDonation = async (req, res) => {
   const item = await Sahyog.findOne({ _id: req.params.id, status: "active", isDeleted: false });
   if (!item) return res.status(404).json({ success: false, message: "Sahyog case not found" });
@@ -833,12 +879,9 @@ export const userCreateDonation = async (req, res) => {
   if (existingDonation) {
     return res.status(409).json({ success: false, message: "You already have a donation submitted for this member. A new donation is allowed only after the previous one is rejected." });
   }
-  const paymentProof = String(req.body.paymentProof || "");
-  if (paymentProof) {
-    if (!/^data:image\/(png|jpeg|webp);base64,/i.test(paymentProof) || Buffer.byteLength(paymentProof, "utf8") > 2.8 * 1024 * 1024) {
-      return res.status(422).json({ success: false, message: "Payment proof must be a PNG, JPG, or WEBP image smaller than 2 MB" });
-    }
-  }
+  let paymentProofAsset;
+  try { paymentProofAsset = await verifySahyogProof(req.userId, req.body.paymentProof); }
+  catch (error) { return res.status(422).json({ success: false, message: error.message }); }
   const donation = await Donation.create({
     donationId: makeId("DON"),
     sahyogId: item._id,
@@ -850,7 +893,7 @@ export const userCreateDonation = async (req, res) => {
     isAnonymous: false,
     transactionId,
     paymentMethod,
-    paymentProof,
+    paymentProofAsset,
     paymentStatus: "pending",
   });
   clearListCache();

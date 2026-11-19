@@ -213,6 +213,17 @@ const ViewProfile = () => {
         />
       )}
 
+      {Number(user.donationStats?.verifiedCount || 0) > 0 && (
+        <section className="mb-6 flex flex-col gap-4 rounded-2xl border border-[#b8e2d1] bg-[#f0fbf6] p-5 shadow-[var(--ljka-shadow-sm)] sm:flex-row sm:items-center sm:justify-between sm:p-6">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-700">Verified Sahyog contribution</p>
+            <h2 className="mt-2 text-xl font-bold text-emerald-900">₹{Number(user.donationStats.verifiedAmount || 0).toLocaleString("en-IN")} donated</h2>
+            <p className="mt-1 text-sm text-emerald-800">Your {user.donationStats.verifiedCount} verified Sahyog contribution{user.donationStats.verifiedCount === 1 ? "" : "s"} help LJKA members and their families.</p>
+          </div>
+          <div className="rounded-lg bg-white px-4 py-3 text-sm font-bold text-emerald-800">Sahyog supporter</div>
+        </section>
+      )}
+
       {user.kycCompleted && (
         <section className="mb-6 flex flex-col gap-4 rounded-2xl border border-[#b8e2d1] bg-[#f0fbf6] p-5 shadow-[var(--ljka-shadow-sm)] sm:flex-row sm:items-center sm:justify-between sm:p-6">
           <div>
