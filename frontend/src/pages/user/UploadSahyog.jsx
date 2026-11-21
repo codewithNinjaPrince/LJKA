@@ -1,5 +1,5 @@
-import React, { useCallback, useContext, useEffect, useState } from "react";
-import { FaCheckCircle, FaClock, FaDownload, FaHandsHelping, FaShieldAlt, FaTimesCircle } from "react-icons/fa";
+import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { FaCheckCircle, FaClock, FaDownload, FaEye, FaFilePdf, FaHandsHelping, FaShieldAlt, FaTimesCircle, FaTrash } from "react-icons/fa";
 import { jsPDF } from "jspdf";
 import { LJKAContext } from "../../context/LJKAContext";
 import { toastError, toastSuccess } from "../../utils/toast";
@@ -11,27 +11,34 @@ const proofFormat = (file) => file?.name.split(".").pop()?.toLowerCase().replace
 const prepareProof = async (file) => {
   const format = proofFormat(file);
   if (!["jpg", "png", "webp", "pdf"].includes(format)) throw new Error("Only JPG, PNG, WEBP and PDF files are allowed.");
+  if (file.size > MAX_PROOF_SIZE) throw new Error("File size must be 1 MB or less. Please choose a smaller file.");
   if (format === "pdf") {
-    if (file.size > MAX_PROOF_SIZE) throw new Error("PDF payment proof must be 1 MB or smaller.");
     return file;
   }
-  if (!file.type.startsWith("image/")) throw new Error("Please choose a valid image or PDF.");
-  // Keep readable screenshots while converting the image to an upload-friendly JPEG.
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) throw new Error("Please choose a valid JPG, PNG or WEBP image.");
+  if (typeof createImageBitmap !== "function") throw new Error("Your browser cannot process this image. Please use a modern browser.");
   const bitmap = await createImageBitmap(file);
   try {
-    let scale = Math.min(1, 2000 / Math.max(bitmap.width, bitmap.height));
-    for (let attempt = 0; attempt < 6; attempt += 1) {
+    let width = bitmap.width; let height = bitmap.height;
+    if (Math.max(width, height) > 2400) { const scale = 2400 / Math.max(width, height); width = Math.round(width * scale); height = Math.round(height * scale); }
+    let bestFile = null;
+    for (let attempt = 0; attempt < 7; attempt += 1) {
       const canvas = document.createElement("canvas");
-      canvas.width = Math.round(bitmap.width * scale); canvas.height = Math.round(bitmap.height * scale);
+      canvas.width = width; canvas.height = height;
       const context = canvas.getContext("2d"); if (!context) throw new Error("Unable to prepare this image.");
       context.fillStyle = "#fff"; context.fillRect(0, 0, canvas.width, canvas.height); context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-      for (const quality of [0.9, 0.8, 0.7]) {
+      for (const quality of [0.92, 0.86, 0.8, 0.74, 0.68]) {
         const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
-        if (blob && blob.size <= MAX_PROOF_SIZE) return new File([blob], `${file.name.replace(/\.[^.]+$/, "")}.jpg`, { type: "image/jpeg" });
+        if (!blob) continue;
+        const compressed = new File([blob], `${file.name.replace(/\.[^.]+$/, "")}.jpg`, { type: "image/jpeg", lastModified: Date.now() });
+        if (!bestFile || compressed.size < bestFile.size) bestFile = compressed;
+        if (compressed.size <= MAX_PROOF_SIZE) return compressed.size <= file.size ? compressed : file;
       }
-      scale *= 0.75;
+      width = Math.round(width * 0.82); height = Math.round(height * 0.82);
+      if (Math.max(width, height) < 900) break;
     }
-    throw new Error("This image could not be compressed below 1 MB. Please choose a clearer, smaller screenshot.");
+    if (bestFile?.size <= MAX_PROOF_SIZE) return bestFile;
+    throw new Error("This image could not be compressed below 1 MB while keeping it readable. Please choose another screenshot.");
   } finally { bitmap.close?.(); }
 };
 
@@ -144,15 +151,24 @@ const Detail = ({ label, value }) => (
 
 const SupportDetails = ({ support }) => (
   <div className="mt-4 border-t border-[var(--ljka-border)] pt-4">
-    <div className="flex items-center justify-between gap-3"><span className="text-xs font-bold uppercase tracking-wide text-emerald-700">Past Sahyog support</span><span className="rounded-md bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-800">{support?.donationPercentage || 0}%</span></div>
+    <div className="flex items-center justify-between gap-3"><span className="text-xs font-bold uppercase tracking-wide text-emerald-700">Past Sahyog record</span><span className="rounded-md bg-emerald-100 px-2 py-1 text-xs font-bold text-emerald-800">{support?.donationPercentage || 0}%</span></div>
     <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-emerald-100"><div className="h-full rounded-full bg-emerald-600" style={{ width: `${Math.min(100, support?.donationPercentage || 0)}%` }} /></div>
-    <p className="mt-2 text-sm font-semibold text-emerald-900">Supported {support?.supportedCases || 0} of {support?.totalCases || 0} Sahyog members</p>
-    <p className="mt-1 text-xs text-emerald-800">Verified amount donated: ₹{Number(support?.verifiedAmount || 0).toLocaleString("en-IN")}</p>
+    <p className="mt-2 text-sm font-semibold text-emerald-900">Supported {support?.supportedCases || 0} of {support?.totalCases || 0}  members</p>
+    <p className="mt-1 text-xs text-emerald-800">Total amount donated: ₹{Number(support?.verifiedAmount || 0).toLocaleString("en-IN")}</p>
+  </div>
+);
+
+const PaymentProofPicker = ({ paymentProof, proofPreparing, submitting, uploadProgress, onChange, onRemove }) => (
+  <div className="space-y-2 sm:col-span-2">
+    <label className="block text-sm font-semibold">Payment proof (required)</label>
+    <input id="sahyog-payment-proof" type="file" accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf" disabled={submitting || proofPreparing} onChange={onChange} className="hidden" />
+    {proofPreparing ? <div className="flex min-h-36 flex-col items-center justify-center rounded-2xl border bg-white px-4 py-7 text-center shadow-sm"><div className="relative mb-3 h-11 w-11"><div className="absolute inset-0 animate-spin rounded-full border-4 border-[var(--ljka-border)] border-t-[var(--ljka-primary)]" /><div className="absolute inset-2 rounded-full bg-[var(--ljka-primary-bg)]" /></div><p className="text-sm font-bold text-[var(--ljka-primary)]">Checking your file</p><p className="mt-1 text-xs text-[var(--ljka-muted)]">Please wait while we prepare the preview...</p></div> : !paymentProof ? <label htmlFor="sahyog-payment-proof" className="group flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-[var(--ljka-border)] bg-[var(--ljka-primary-bg)] px-4 py-8 text-center transition hover:border-[var(--ljka-primary)] hover:bg-white"><span className="mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-white text-[var(--ljka-primary)] shadow-sm transition group-hover:scale-105"><FaDownload className="text-xl" /></span><span className="text-sm font-bold text-[var(--ljka-primary)]">Choose screenshot or receipt</span><span className="mt-1 text-xs font-normal text-[var(--ljka-muted)]">JPG, JPEG, PNG, WEBP or PDF · Maximum 1 MB · One file only</span></label> : <div className="rounded-xl border border-[var(--ljka-border)] p-3"><div className="flex items-center gap-3">{paymentProof.isPdf ? <div className="grid h-20 w-16 shrink-0 place-items-center rounded-lg bg-red-50 text-red-600"><FaFilePdf className="text-3xl" /><span className="text-[10px] font-bold">PDF</span></div> : <img src={paymentProof.previewUrl} alt="Sahyog payment proof preview" className="h-20 w-20 shrink-0 rounded-lg border object-contain" />}<div className="min-w-0 flex-1"><p className="break-all text-sm font-semibold text-[var(--ljka-primary)]">{paymentProof.originalFilename}</p><p className="mt-1 text-xs text-[var(--ljka-muted)]">{(paymentProof.file.size / 1024).toFixed(0)} KB · {paymentProof.format.toUpperCase()}</p>{paymentProof.isPdf && <a href={paymentProof.previewUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-[var(--ljka-primary)] underline"><FaEye /> Preview PDF</a>}</div><button type="button" onClick={onRemove} disabled={submitting} aria-label="Remove selected payment proof" className="rounded-lg p-2 text-red-600 hover:bg-red-50 disabled:opacity-40"><FaTrash /></button></div>{submitting && <div className="mt-4 flex items-center gap-3"><div className="grid h-12 w-12 shrink-0 place-items-center rounded-full" style={{ background: `conic-gradient(var(--ljka-primary) ${uploadProgress}%, #e5e7eb ${uploadProgress}%)` }}><div className="grid h-9 w-9 place-items-center rounded-full bg-white text-[10px] font-bold text-[var(--ljka-primary)]">{uploadProgress}%</div></div><div className="min-w-0 flex-1"><p className="text-xs font-semibold text-[var(--ljka-primary)]">Uploading payment proof</p><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-gray-100"><div className="h-full rounded-full bg-[var(--ljka-primary)] transition-all" style={{ width: `${uploadProgress}%` }} /></div></div></div>}</div>}
+    <p className="text-xs font-normal text-[var(--ljka-muted)]">Accepted files: JPG, JPEG, PNG, WEBP and PDF only. Maximum 1 MB. Images are compressed before upload; keep the UTR, amount and transaction date readable.</p>
   </div>
 );
 
 const UploadSahyog = () => {
-  const { backendUrl, token } = useContext(LJKAContext);
+  const { backendUrl, token, user } = useContext(LJKAContext);
   const [cases, setCases] = useState([]);
   const [selected, setSelected] = useState("");
   const [item, setItem] = useState(null);
@@ -161,10 +177,18 @@ const UploadSahyog = () => {
   const [form, setForm] = useState({ amount: "", transactionId: "", paymentMethod: "bank_transfer" });
   const [paymentProof, setPaymentProof] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [proofInputKey, setProofInputKey] = useState(0);
+  const [proofPreparing, setProofPreparing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [draftReady, setDraftReady] = useState(false);
+  const restoredDraft = useRef(null);
+  const draftOwner = user?._id || user?.id || user?.email || "current";
+  const draftKey = `ljka_sahyog_donation_draft:${draftOwner}`;
   const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+
+  useEffect(() => () => {
+    if (paymentProof?.previewUrl) URL.revokeObjectURL(paymentProof.previewUrl);
+  }, [paymentProof]);
 
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true);
@@ -181,11 +205,29 @@ const UploadSahyog = () => {
   }, [backendUrl, token]);
 
   useEffect(() => {
+    try {
+      const saved = localStorage.getItem(draftKey);
+      restoredDraft.current = saved ? JSON.parse(saved) : null;
+      if (restoredDraft.current?.form) {
+        setForm((current) => ({ ...current, ...restoredDraft.current.form }));
+      }
+    } catch (error) {
+      restoredDraft.current = null;
+      console.error("Failed to restore Sahyog donation draft:", error);
+    } finally {
+      setDraftReady(true);
+    }
+  }, [draftKey]);
+
+  useEffect(() => {
     fetch(`${backendUrl}/api/user/sahyog?limit=100`, { headers })
       .then((response) => response.ok ? response.json() : Promise.reject(new Error("Unable to load available Sahyog cases.")))
       .then((data) => {
         setCases(data.cases || []);
-        if (data.cases?.length) setSelected(data.cases[0]._id);
+        if (data.cases?.length) {
+          const savedSelection = restoredDraft.current?.selected;
+          setSelected(data.cases.some((item) => item._id === savedSelection) ? savedSelection : data.cases[0]._id);
+        }
       })
       .catch((error) => toastError(error.message || "Unable to load available Sahyog cases."))
       .finally(() => setLoading(false));
@@ -200,25 +242,50 @@ const UploadSahyog = () => {
       .then((response) => response.ok ? response.json() : Promise.reject(new Error("Unable to load payment instructions.")))
       .then((data) => {
         setItem(data.sahyog);
-        setForm((previous) => ({ ...previous, amount: data.sahyog.minimumDonationAmount ? String(data.sahyog.minimumDonationAmount) : "", transactionId: "" }));
+        const keepingRestoredDraft = restoredDraft.current?.selected === selected;
+        setForm((previous) => ({
+          ...previous,
+          amount: keepingRestoredDraft && previous.amount
+            ? previous.amount
+            : (data.sahyog.minimumDonationAmount ? String(data.sahyog.minimumDonationAmount) : ""),
+          transactionId: keepingRestoredDraft ? previous.transactionId : "",
+        }));
+        restoredDraft.current = null;
         setPaymentProof(null);
-        setProofInputKey((value) => value + 1);
+        setUploadProgress(0);
       })
       .catch((error) => toastError(error.message || "Unable to load payment instructions."));
   }, [backendUrl, selected, token]);
 
+  useEffect(() => {
+    if (!draftReady) return;
+    try {
+      const selectedForDraft = selected || restoredDraft.current?.selected || "";
+      const hasDraft = Boolean(selectedForDraft && (form.amount || form.transactionId));
+      if (hasDraft) localStorage.setItem(draftKey, JSON.stringify({ selected: selectedForDraft, form }));
+      else localStorage.removeItem(draftKey);
+    } catch (error) {
+      console.error("Failed to save Sahyog donation draft:", error);
+    }
+  }, [draftKey, draftReady, form, selected]);
+
   const activeDonation = item && donations.find((donation) => donation.caseId === item.sahyogId && donation.paymentStatus !== "rejected");
-  const valid = Boolean(selected && item && paymentProof && !activeDonation && Number(form.amount) >= (item.minimumDonationAmount || 1) && /^[A-Za-z0-9][A-Za-z0-9\-_/:.]{5,63}$/.test(form.transactionId.trim()));
+  const valid = Boolean(selected && item && paymentProof && !proofPreparing && !activeDonation && Number(form.amount) >= (item.minimumDonationAmount || 1) && /^[A-Za-z0-9][A-Za-z0-9\-_/:.]{5,63}$/.test(form.transactionId.trim()));
   const handleProofChange = async (event) => {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
+    setPaymentProof(null);
+    setProofPreparing(true);
+    setUploadProgress(0);
     try {
       const prepared = await prepareProof(file);
-      setPaymentProof({ file: prepared, format: proofFormat(prepared), originalFilename: file.name });
-      toastSuccess("Payment proof is ready to upload.");
-    } catch (error) { setPaymentProof(null); toastError(error.message || "Unable to prepare payment proof."); }
+      const format = proofFormat(prepared);
+      setPaymentProof({ file: prepared, format, originalFilename: file.name, previewUrl: URL.createObjectURL(prepared), isPdf: format === "pdf" });
+      toastSuccess(format === "pdf" ? "PDF ready to upload." : "Image ready to upload.");
+    } catch (error) { setPaymentProof(null); toastError(error.message || "Unable to prepare payment proof."); } finally { setProofPreparing(false); }
   };
+  const removePaymentProof = () => { setPaymentProof(null); setUploadProgress(0); };
   const submit = async (event) => {
     event.preventDefault();
     if (!valid || submitting) return;
@@ -236,10 +303,10 @@ const UploadSahyog = () => {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Unable to submit donation.");
+      localStorage.removeItem(draftKey);
       setForm({ amount: "", transactionId: "", paymentMethod: "bank_transfer" });
       setPaymentProof(null);
       setUploadProgress(0);
-      setProofInputKey((value) => value + 1);
       toastSuccess("Your donation has been submitted and is awaiting confirmation.");
       await loadHistory();
     } catch (error) {
@@ -255,8 +322,8 @@ const UploadSahyog = () => {
     <div className="flex gap-4"><span className="grid h-14 w-14 place-items-center rounded-2xl bg-[var(--ljka-primary-bg)] text-2xl text-[var(--ljka-primary)]"><FaHandsHelping /></span><div><p className="text-xs font-bold uppercase tracking-[.16em] text-[var(--ljka-gold-dark)]">Sahyog donation</p><h1 className="mt-1 text-2xl font-bold text-[var(--ljka-primary)]">Submit a donation for verification</h1></div></div>
     {!cases.length ? <p className="mt-8 rounded-xl bg-[var(--ljka-bg)] p-5 text-center text-[var(--ljka-muted)]">No active Sahyog cases are currently available.</p> : <>
       <label className="mt-8 block text-sm font-semibold">Late member<select required value={selected} onChange={(event) => setSelected(event.target.value)} className="mt-2 w-full rounded-lg border p-3">{cases.map((caseItem) => <option key={caseItem._id} value={caseItem._id}>{upper(caseItem.member.fullName)} · {caseItem.member.memberId}</option>)}</select></label>
-      {item && <div className="mt-6 grid gap-5 lg:grid-cols-2"><section className="rounded-2xl bg-[var(--ljka-primary-bg)] p-5"><h2 className="font-bold text-[var(--ljka-primary)]">Late member</h2><dl className="mt-3 grid gap-3"><Detail label="Member name" value={upper(item.member.fullName)} /><Detail label="Member ID" value={item.member.memberId} /><Detail label="Joined LJKA" value={item.member?.joinedAt ? new Date(item.member.joinedAt).toLocaleDateString("en-IN") : "—"} /><Detail label="Date of death" value={item.dateOfDeath ? new Date(item.dateOfDeath).toLocaleDateString("en-IN") : "—"} /><Detail label="Death reason" value={item.causeOfDeath} /><Detail label="Minimum donation" value={item.minimumDonationAmount ? `₹${item.minimumDonationAmount}` : "Not set"} /></dl><SupportDetails support={item.memberSahyogSupport} /></section><section className="rounded-2xl border p-5"><h2 className="font-bold text-[var(--ljka-primary)]">Payment details</h2><dl className="mt-3 grid gap-3 sm:grid-cols-2"><Detail label="A/c holder name" value={item.paymentDetails?.accountHolderName} /><Detail label="Bank name" value={item.paymentDetails?.bankName} /><Detail label="Account number" value={item.paymentDetails?.accountNumber} /><Detail label="IFSC code" value={item.paymentDetails?.ifsc} /><Detail label="Branch name" value={item.paymentDetails?.branchName} /><Detail label="Public UPI ID" value={item.publicPayment?.upiId} /></dl></section></div>}
-      {activeDonation ? <div className={`mt-6 rounded-2xl border p-5 ${activeDonation.paymentStatus === "success" ? "border-green-200 bg-green-50 text-green-800" : "border-amber-200 bg-amber-50 text-amber-800"}`}><p className="font-bold">Donation already submitted</p><p className="mt-1 text-sm">Your previous donation for this late member is {statusDetails(activeDonation.paymentStatus).label.toLowerCase()}</p></div> : <form onSubmit={submit} className="mt-6 grid gap-4 rounded-2xl border p-5 sm:grid-cols-2"><label className="text-sm font-semibold">Donation amount (₹)<input required min={item?.minimumDonationAmount || 1} type="number" value={form.amount} onChange={(event) => setForm({ ...form, amount: event.target.value })} className="mt-2 w-full rounded-lg border p-3" /><span className="mt-1 block text-xs font-normal text-[var(--ljka-muted)]">The minimum amount is preset. You may increase it, but cannot decrease it.</span></label><label className="text-sm font-semibold">Payment method<select required value={form.paymentMethod} onChange={(event) => setForm({ ...form, paymentMethod: event.target.value })} className="mt-2 w-full rounded-lg border p-3"><option value="bank_transfer">Bank transfer</option><option value="upi">UPI</option></select></label><label className="text-sm font-semibold sm:col-span-2">Payment proof (required)<input key={proofInputKey} type="file" accept="image/png,image/jpeg,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf" onChange={handleProofChange} className="mt-2 w-full rounded-lg border p-3" /><span className="mt-1 block text-xs font-normal text-[var(--ljka-muted)]">JPG, PNG, WEBP or PDF, maximum 1 MB. Images are prepared before secure upload. {paymentProof ? `${paymentProof.originalFilename} ready.` : ""}</span>{submitting && <span className="mt-2 block text-xs font-bold text-[var(--ljka-primary)]">Uploading proof: {uploadProgress}%</span>}</label><label className="text-sm font-semibold sm:col-span-2">Transaction / UTR reference (Mandatory)<input required value={form.transactionId} onChange={(event) => setForm({ ...form, transactionId: event.target.value.toUpperCase() })} className="mt-2 w-full rounded-lg border p-3" /></label><button disabled={!valid || submitting} className="rounded-lg bg-[var(--ljka-primary)] px-5 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50 sm:col-span-2">{submitting ? (uploadProgress < 100 ? "Uploading proof…" : "Submitting…") : "Submit for verification"}</button></form>}
+      {item && <div className="mt-6 grid gap-5 lg:grid-cols-2"><section className="rounded-2xl bg-[var(--ljka-primary-bg)] p-5"><h2 className="font-bold text-[var(--ljka-primary)]">Late member</h2><dl className="mt-3 grid gap-3"><Detail label="Member name" value={upper(item.member.fullName)} /><Detail label="Member ID" value={item.member.memberId} /><Detail label="Joining Date" value={item.member?.joinedAt ? new Date(item.member.joinedAt).toLocaleDateString("en-IN") : "—"} /><Detail label="Date of death" value={item.dateOfDeath ? new Date(item.dateOfDeath).toLocaleDateString("en-IN") : "—"} /><Detail label="Death reason" value={item.causeOfDeath} /><Detail label="Minimum donation" value={item.minimumDonationAmount ? `₹${item.minimumDonationAmount}` : "Not set"} /></dl><SupportDetails support={item.memberSahyogSupport} /></section><section className="rounded-2xl border p-5"><h2 className="font-bold text-[var(--ljka-primary)]">Payment details</h2><dl className="mt-3 grid gap-3 sm:grid-cols-2"><Detail label="A/c holder name" value={item.paymentDetails?.accountHolderName} /><Detail label="Bank name" value={item.paymentDetails?.bankName} /><Detail label="Account number" value={item.paymentDetails?.accountNumber} /><Detail label="IFSC code" value={item.paymentDetails?.ifsc} /><Detail label="Branch name" value={item.paymentDetails?.branchName} /><Detail label="Public UPI ID" value={item.publicPayment?.upiId} /></dl></section></div>}
+      {activeDonation ? <div className={`mt-6 rounded-2xl border p-5 ${activeDonation.paymentStatus === "success" ? "border-green-200 bg-green-50 text-green-800" : "border-amber-200 bg-amber-50 text-amber-800"}`}><p className="font-bold">Donation already submitted</p><p className="mt-1 text-sm">Your previous donation for this late member is {statusDetails(activeDonation.paymentStatus).label.toLowerCase()}</p></div> : <form onSubmit={submit} className="mt-6 grid gap-4 rounded-2xl border p-5 sm:grid-cols-2"><label className="text-sm font-semibold">Donation amount (₹)<input required min={item?.minimumDonationAmount || 1} type="number" value={form.amount} onChange={(event) => setForm({ ...form, amount: event.target.value })} className="mt-2 w-full rounded-lg border p-3" /><span className="mt-1 block text-xs font-normal text-[var(--ljka-muted)]">The minimum amount is preset. You may increase it, but cannot decrease it.</span></label><label className="text-sm font-semibold">Payment method<select required value={form.paymentMethod} onChange={(event) => setForm({ ...form, paymentMethod: event.target.value })} className="mt-2 w-full rounded-lg border p-3"><option value="bank_transfer">Bank transfer</option><option value="upi">UPI</option></select></label><PaymentProofPicker paymentProof={paymentProof} proofPreparing={proofPreparing} submitting={submitting} uploadProgress={uploadProgress} onChange={handleProofChange} onRemove={removePaymentProof} /><label className="text-sm font-semibold sm:col-span-2">Transaction / UTR reference (Mandatory)<input required value={form.transactionId} onChange={(event) => setForm({ ...form, transactionId: event.target.value.toUpperCase() })} className="mt-2 w-full rounded-lg border p-3" /></label><button disabled={!valid || submitting || proofPreparing} className="rounded-lg bg-[var(--ljka-primary)] px-5 py-3 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50 sm:col-span-2">{proofPreparing ? "Preparing proof…" : submitting ? (uploadProgress < 100 ? "Uploading proof…" : "Submitting…") : "Submit for verification"}</button></form>}
     </>}
     <section className="mt-8 overflow-hidden rounded-2xl border border-[var(--ljka-border-light)]"><div className="border-b bg-[var(--ljka-primary-bg)] px-5 py-4"><h2 className="font-bold text-[var(--ljka-primary)]">Your Sahyog payment history</h2></div>{historyLoading ? <p className="p-5 text-sm text-[var(--ljka-muted)]">Loading payment history…</p> : !donations.length ? <p className="p-5 text-sm text-[var(--ljka-muted)]">No Sahyog payments submitted yet.</p> : <div className="divide-y">{donations.map((payment) => { const status = statusDetails(payment.paymentStatus); return <article key={payment._id} className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-bold text-[var(--ljka-primary)]">To: {upper(payment.lateMember?.fullName)} <span className="text-sm font-normal text-[var(--ljka-muted)]">({payment.lateMember?.memberId || "—"})</span></p><p className="mt-1 text-sm">₹{Number(payment.amount || 0).toLocaleString("en-IN")} · {String(payment.paymentMethod || "manual payment").replaceAll("_", " ")}</p><p className="mt-1 text-xs text-[var(--ljka-muted)]">Reference: {payment.transactionId || "—"} · Submitted: {formatDate(payment.createdAt)}</p>{payment.paymentStatus === "success" && <p className="mt-1 text-xs text-green-700">Accepted: {formatDate(payment.verifiedAt)}</p>}</div><div className="flex shrink-0 items-center gap-3"><span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold ${status.className}`}><status.Icon />{status.label}</span>{payment.paymentStatus === "success" && <button type="button" onClick={() => downloadSahyogReceipt(payment)} className="inline-flex items-center gap-2 rounded-lg bg-[var(--ljka-primary)] px-3 py-2 text-xs font-bold text-white"><FaDownload />Receipt</button>}</div></article>; })}</div>}</section>
     <p className="mt-5 flex gap-2 text-xs leading-5 text-[var(--ljka-muted)]"><FaShieldAlt className="shrink-0 text-[var(--ljka-primary)]" /> Payment details and verification are controlled by LJKA administration.</p>

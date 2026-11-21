@@ -28,6 +28,8 @@ export default function SahyogForm({ token, root }) {
   const [memberSearch, setMemberSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [draftReady, setDraftReady] = useState(false);
+  const draftKey = `ljka_admin_sahyog_draft:${editing ? id : "new"}`;
 
   useEffect(() => {
     const load = async () => {
@@ -35,19 +37,38 @@ export default function SahyogForm({ token, root }) {
         if (editing) {
           const response = await adminApi(token).get(`/sahyog/${id}`);
           const item = response.data.sahyog;
-          setForm({ ...blankForm(), ...item, memberId: item.memberId?._id || item.memberId, dateOfDeath: dateInputValue(item.dateOfDeath), paymentDetails: { ...blankForm().paymentDetails, ...item.paymentDetails }, publicPayment: { upiId: item.publicPayment?.upiId || "" } });
+          const serverForm = { ...blankForm(), ...item, memberId: item.memberId?._id || item.memberId, dateOfDeath: dateInputValue(item.dateOfDeath), paymentDetails: { ...blankForm().paymentDetails, ...item.paymentDetails }, publicPayment: { upiId: item.publicPayment?.upiId || "" } };
+          const saved = localStorage.getItem(draftKey);
+          const draft = saved ? JSON.parse(saved) : null;
+          setForm(draft?.form ? { ...serverForm, ...draft.form, paymentDetails: { ...serverForm.paymentDetails, ...draft.form.paymentDetails }, publicPayment: { ...serverForm.publicPayment, ...draft.form.publicPayment } } : serverForm);
         } else {
           const response = await adminApi(token).get("/sahyog/eligible-members");
           setMembers(response.data.members);
+          const saved = localStorage.getItem(draftKey);
+          const draft = saved ? JSON.parse(saved) : null;
+          if (draft?.form) setForm({ ...blankForm(), ...draft.form, paymentDetails: { ...blankForm().paymentDetails, ...draft.form.paymentDetails }, publicPayment: { ...blankForm().publicPayment, ...draft.form.publicPayment } });
+          if (draft?.memberSearch) setMemberSearch(draft.memberSearch);
         }
       } catch (error) {
         toast.error(error.response?.data?.message || "Could not load Sahyog form");
       } finally {
+        setDraftReady(true);
         setIsLoading(false);
       }
     };
     load();
-  }, [editing, id, token]);
+  }, [draftKey, editing, id, token]);
+
+  useEffect(() => {
+    if (!draftReady) return;
+    try {
+      const hasDraft = Object.entries(form).some(([key, value]) => key !== "status" && (typeof value === "object" ? Object.values(value).some(Boolean) : Boolean(value)));
+      if (hasDraft) localStorage.setItem(draftKey, JSON.stringify({ form, memberSearch }));
+      else localStorage.removeItem(draftKey);
+    } catch (error) {
+      console.error("Failed to save Sahyog form draft:", error);
+    }
+  }, [draftKey, draftReady, form, memberSearch]);
 
   const set = (key, value) => setForm((current) => ({ ...current, [key]: value }));
   const setPayment = (key, value) => setForm((current) => ({ ...current, paymentDetails: { ...current.paymentDetails, [key]: value } }));
@@ -82,6 +103,7 @@ export default function SahyogForm({ token, root }) {
       };
       if (editing) await adminApi(token).patch(`/sahyog/${id}`, payload);
       else await adminApi(token).post("/sahyog", payload);
+      localStorage.removeItem(draftKey);
       toast.success(editing ? "Sahyog case updated" : "Sahyog case created");
       navigate(`${root}/sahyog`);
     } catch (error) {

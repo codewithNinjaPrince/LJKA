@@ -81,13 +81,23 @@ const KYC = () => {
   const { token, navigate, backendUrl, user, setUser, getUserProfile } = useContext(LJKAContext);
   const location = useLocation();
   const isUpdateMode = location.pathname === "/user/update-profile";
-  const KYC_DRAFT_KEY = isUpdateMode
+  // Keep drafts separate for each signed-in member and make them survive
+  // navigation, refreshes and reopening the browser/app.
+  const draftOwner = user?._id || user?.id || user?.email || "current";
+  const KYC_DRAFT_KEY = `${isUpdateMode
     ? "ljka_kyc_update_draft"
-    : "ljka_kyc_draft";
+    : "ljka_kyc_draft"}:${draftOwner}`;
   const dobBounds = useMemo(getDobBounds, []);
 
   const [loading, setLoading] = useState(false);
-  const [kycConsent, setKycConsent] = useState(false);
+  const [kycConsent, setKycConsent] = useState(() => {
+    try {
+      const saved = localStorage.getItem(KYC_DRAFT_KEY);
+      return Boolean(saved && JSON.parse(saved)?.kycConsent);
+    } catch {
+      return false;
+    }
+  });
   const [profileReady, setProfileReady] = useState(!isUpdateMode);
   const profileLoadStarted = useRef(false);
   const submitInProgressRef = useRef(false);
@@ -122,12 +132,13 @@ const KYC = () => {
 
   const [formData, setFormData] = useState(() => {
     try {
-      const saved = sessionStorage.getItem(KYC_DRAFT_KEY);
+      const saved = localStorage.getItem(KYC_DRAFT_KEY);
 
       if (saved) {
+        const parsed = JSON.parse(saved);
         return {
           ...INITIAL_FORM_DATA,
-          ...JSON.parse(saved),
+          ...(parsed.formData || parsed),
         };
       }
     } catch (error) {
@@ -139,14 +150,14 @@ const KYC = () => {
 
   useEffect(() => {
     try {
-      sessionStorage.setItem(
+      localStorage.setItem(
         KYC_DRAFT_KEY,
-        JSON.stringify(formData)
+        JSON.stringify({ formData, kycConsent })
       );
     } catch (error) {
       console.error("Failed to save KYC draft:", error);
     }
-  }, [formData, KYC_DRAFT_KEY]);
+  }, [formData, kycConsent, KYC_DRAFT_KEY]);
 
   const stateOptions = [...locationData.states].sort((a, b) =>
     a.name.localeCompare(b.name)
@@ -339,23 +350,20 @@ const KYC = () => {
          */
         let finalFormData = profileFormData;
 
-        const savedDraft =
-          sessionStorage.getItem(KYC_DRAFT_KEY);
+        const savedDraft = localStorage.getItem(KYC_DRAFT_KEY);
 
         if (savedDraft) {
           try {
             const parsedDraft = JSON.parse(savedDraft);
+            const savedFormData = parsedDraft.formData || parsedDraft;
 
-            if (
-              parsedDraft &&
-              typeof parsedDraft === "object"
-            ) {
+            if (savedFormData && typeof savedFormData === "object") {
               /*
                * Determine whether the draft actually contains
                * something useful.
                */
               const hasMeaningfulDraft =
-                Object.entries(parsedDraft).some(
+                Object.entries(savedFormData).some(
                   ([key, value]) => {
                     if (!(key in INITIAL_FORM_DATA)) {
                       return false;
@@ -377,14 +385,14 @@ const KYC = () => {
               if (hasMeaningfulDraft) {
                 finalFormData = {
                   ...profileFormData,
-                  ...parsedDraft,
+                  ...savedFormData,
                 };
               } else {
                 /*
                  * Empty/stale draft — remove it so it cannot
                  * interfere with the next Update Profile load.
                  */
-                sessionStorage.removeItem(
+                localStorage.removeItem(
                   KYC_DRAFT_KEY
                 );
               }
@@ -395,7 +403,7 @@ const KYC = () => {
               error
             );
 
-            sessionStorage.removeItem(
+            localStorage.removeItem(
               KYC_DRAFT_KEY
             );
           }
@@ -653,7 +661,7 @@ const KYC = () => {
       }
 
       if (isUpdateMode) {
-        sessionStorage.removeItem(KYC_DRAFT_KEY);
+        localStorage.removeItem(KYC_DRAFT_KEY);
 
         toastSuccess(
           "Your update request has been submitted for admin verification."
@@ -669,7 +677,7 @@ const KYC = () => {
       // bounce a successful KYC submission back to the same page.
       localStorage.setItem("kycCompleted", "true");
       sessionStorage.removeItem("ljka_kyc_in_progress");
-      sessionStorage.removeItem(KYC_DRAFT_KEY);
+      localStorage.removeItem(KYC_DRAFT_KEY);
       setUser((current) => ({
         ...(current || {}),
         ...(res.data.user || {}),

@@ -67,13 +67,13 @@ const Register = () => {
     let restoredData = null;
 
     try {
-      const saved = sessionStorage.getItem(SIGNUP_STORAGE_KEY);
+      const saved = localStorage.getItem(SIGNUP_STORAGE_KEY);
 
       if (saved) {
         restoredData = JSON.parse(saved);
       }
     } catch {
-      sessionStorage.removeItem(SIGNUP_STORAGE_KEY);
+      localStorage.removeItem(SIGNUP_STORAGE_KEY);
     }
 
     if (restoredData) {
@@ -119,7 +119,7 @@ const Register = () => {
       agreeTerms,
     };
 
-    sessionStorage.setItem(SIGNUP_STORAGE_KEY, JSON.stringify(data));
+    localStorage.setItem(SIGNUP_STORAGE_KEY, JSON.stringify(data));
   }, [
     fullName,
     email,
@@ -163,7 +163,7 @@ const Register = () => {
       changes the email after the draft has been restored.
     */
 
-    const saved = sessionStorage.getItem(SIGNUP_STORAGE_KEY);
+    const saved = localStorage.getItem(SIGNUP_STORAGE_KEY);
 
     if (!saved) return;
 
@@ -385,7 +385,7 @@ const Register = () => {
         Registration succeeded.
         The temporary registration draft is no longer required.
       */
-      sessionStorage.removeItem(SIGNUP_STORAGE_KEY);
+      localStorage.removeItem(SIGNUP_STORAGE_KEY);
 
       try {
         const loginRes = await axios.post(`${backendUrl}/api/user/login`, {
@@ -429,7 +429,7 @@ const Register = () => {
       if (response?.data?.code === "EMAIL_EXISTS") {
         toastInfo("Account already exists. Please login 🙂");
 
-        sessionStorage.removeItem(SIGNUP_STORAGE_KEY);
+        localStorage.removeItem(SIGNUP_STORAGE_KEY);
 
         navigate("/login");
 

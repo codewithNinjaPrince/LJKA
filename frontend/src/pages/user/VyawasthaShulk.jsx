@@ -971,6 +971,9 @@ const VyawasthaShulk = () => {
     const [selectedProof, setSelectedProof] = useState(null);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [proofPreparing, setProofPreparing] = useState(false);
+    const [draftReady, setDraftReady] = useState(false);
+    const draftOwner = user?._id || user?.id || user?.email || "current";
+    const draftKey = `ljka_vyawastha_draft:${draftOwner}`;
 
     useEffect(() => {
         return () => {
@@ -984,6 +987,30 @@ const VyawasthaShulk = () => {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
     };
+
+    // Browsers cannot restore a selected file, but preserve the typed payment
+    // details while the member navigates around the application.
+    useEffect(() => {
+        try {
+            const saved = localStorage.getItem(draftKey);
+            if (saved) setForm((current) => ({ ...current, ...JSON.parse(saved) }));
+        } catch (error) {
+            console.error("Failed to restore Vyawastha draft:", error);
+        } finally {
+            setDraftReady(true);
+        }
+    }, [draftKey]);
+
+    useEffect(() => {
+        if (!draftReady) return;
+        try {
+            const hasDraft = Object.values(form).some((value) => String(value).trim());
+            if (hasDraft) localStorage.setItem(draftKey, JSON.stringify(form));
+            else localStorage.removeItem(draftKey);
+        } catch (error) {
+            console.error("Failed to save Vyawastha draft:", error);
+        }
+    }, [draftKey, draftReady, form]);
 
 
     // ==========================================================
@@ -1361,10 +1388,9 @@ const VyawasthaShulk = () => {
 
             toastSuccess(data.message || "Payment submitted for verification.");
 
-            setForm((current) => ({
-                ...current,
-                utrNumber: "",
-            }));
+            localStorage.removeItem(draftKey);
+
+            setForm({ payerName: "", utrNumber: "" });
 
             setSelectedProof(null);
             setUploadProgress(0);

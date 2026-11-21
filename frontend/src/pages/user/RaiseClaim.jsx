@@ -13,11 +13,14 @@ const emptyForm = {
 };
 
 const RaiseClaim = () => {
-  const { backendUrl, token } = useContext(LJKAContext);
+  const { backendUrl, token, user } = useContext(LJKAContext);
   const [form, setForm] = useState(emptyForm);
   const [claims, setClaims] = useState([]);
   const [saving, setSaving] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [draftReady, setDraftReady] = useState(false);
+  const draftOwner = user?._id || user?.id || user?.email || "current";
+  const draftKey = `ljka_claim_draft:${draftOwner}`;
 
   const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 
@@ -31,6 +34,32 @@ const RaiseClaim = () => {
   useEffect(() => {
     load();
   }, [backendUrl, token]);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(draftKey);
+      if (saved) {
+        const draft = JSON.parse(saved);
+        setForm({ ...emptyForm, ...(draft.form || {}) });
+        setConfirmed(Boolean(draft.confirmed));
+      }
+    } catch (error) {
+      console.error("Failed to restore claim draft:", error);
+    } finally {
+      setDraftReady(true);
+    }
+  }, [draftKey]);
+
+  useEffect(() => {
+    if (!draftReady) return;
+    try {
+      const hasDraft = Object.values(form).some((value) => String(value).trim());
+      if (hasDraft) localStorage.setItem(draftKey, JSON.stringify({ form, confirmed }));
+      else localStorage.removeItem(draftKey);
+    } catch (error) {
+      console.error("Failed to save claim draft:", error);
+    }
+  }, [confirmed, draftKey, draftReady, form]);
 
   const set = (key, value) => setForm((current) => ({ ...current, [key]: value }));
 
@@ -70,6 +99,7 @@ const RaiseClaim = () => {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.message || "Unable to submit claim.");
+      localStorage.removeItem(draftKey);
       setForm(emptyForm);
       setConfirmed(false);
       toastSuccess("Claim is submitted successfully. Waiting for approval.");
