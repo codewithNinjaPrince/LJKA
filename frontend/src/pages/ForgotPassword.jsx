@@ -356,7 +356,6 @@ const ForgotPassword = () => {
                 Registered Email Address
               </label>
               <div className="relative">
-                <FaEnvelope className="ljka-recovery-leading-icon" />
                 <input
                   id="recovery-email"
                   type="email"
@@ -468,7 +467,6 @@ const ForgotPassword = () => {
                     New Password
                   </label>
                   <div className="relative">
-                    <FaLock className="ljka-recovery-leading-icon" />
                     <input
                       id="new-password"
                       type={showPass ? "text" : "password"}
@@ -518,7 +516,6 @@ const ForgotPassword = () => {
                     Confirm New Password
                   </label>
                   <div className="relative">
-                    <FaLock className="ljka-recovery-leading-icon" />
                     <input
                       id="confirm-password"
                       type={showPass2 ? "text" : "password"}

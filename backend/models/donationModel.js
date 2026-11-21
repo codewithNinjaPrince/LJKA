@@ -20,7 +20,7 @@ const donationSchema = new mongoose.Schema({
   isAnonymous: { type: Boolean, default: false },
   amount: { type: Number, required: true, min: 1 },
   paymentStatus: { type: String, enum: ["pending", "success", "failed", "rejected", "refunded"], default: "pending", index: true },
-  transactionId: { type: String, trim: true, default: "" },
+  transactionId: { type: String, trim: true, uppercase: true, default: "" },
   paymentMethod: { type: String, trim: true, enum: ["bank_transfer", "upi", ""], default: "" },
   paymentProof: { type: String, default: "" },
   // Versioned Cloudinary proof for new submissions. `paymentProof` remains

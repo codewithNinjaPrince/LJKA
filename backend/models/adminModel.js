@@ -70,7 +70,7 @@ const permissionSchema = new mongoose.Schema(
 
 const adminSchema = new mongoose.Schema(
   {
-    fullName: { type: String, required: true, trim: true, maxlength: 120 },
+    fullName: { type: String, required: true, trim: true, uppercase: true, maxlength: 120 },
     email: {
       type: String,
       required: true,

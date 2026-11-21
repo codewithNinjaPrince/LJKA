@@ -128,11 +128,11 @@ export default function MemberManagement({ token, canCreate, canUpdate }) {
     const district = districtOptions.find((item) => String(item.code) === String(form.district));
     const tehsil = tehsilOptions.find((item) => String(item.code) === String(form.tehsil));
     return {
-      fullName: form.fullName.trim(),
+      fullName: form.fullName.trim().toUpperCase(),
       email: form.email.trim(),
       mobile: form.mobile,
       password: form.password,
-      fatherHusbandName: form.fatherHusbandName.trim(),
+      fatherHusbandName: form.fatherHusbandName.trim().toUpperCase(),
       aadhaar: form.aadhaar,
       dob: form.dob,
       gender: form.gender,
@@ -143,15 +143,15 @@ export default function MemberManagement({ token, canCreate, canUpdate }) {
         districtName: district?.name || "",
         tehsilCode: Number(form.tehsil),
         tehsilName: tehsil?.name || "",
-        townVillage: form.townVillage.trim(),
-        address: form.addressLine.trim(),
+        townVillage: form.townVillage.trim().toUpperCase(),
+        address: form.addressLine.trim().toUpperCase(),
         pincode: form.pincode,
       },
       employmentStatus: form.employmentStatus,
-      occupation: form.occupation.trim(),
+      occupation: form.occupation.trim().toUpperCase(),
       referralCode: form.referralCode.trim().toUpperCase(),
       nominee: {
-        name: form.nomineeName.trim(),
+        name: form.nomineeName.trim().toUpperCase(),
         mobile: form.nomineeMobile,
         aadhaar: form.nomineeAadhaar,
         relationship: form.nomineeRelationship.trim(),
@@ -234,24 +234,24 @@ export default function MemberManagement({ token, canCreate, canUpdate }) {
           </div>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {field("Full name", <input required value={form.fullName} onChange={(event) => set("fullName", event.target.value)} className="mt-1 w-full rounded-lg border p-3" />)}
+            {field("Full name", <input required value={form.fullName} onChange={(event) => set("fullName", event.target.value.toUpperCase())} className="mt-1 w-full rounded-lg border p-3" />)}
             {field("Mobile", <input required inputMode="numeric" maxLength={10} value={form.mobile} onChange={(event) => set("mobile", event.target.value.replace(/\D/g, "").slice(0, 10))} className="mt-1 w-full rounded-lg border p-3" />)}
             {!editingId && field("Email", <input required type="email" value={form.email} onChange={(event) => set("email", event.target.value)} className="mt-1 w-full rounded-lg border p-3" />)}
             {!editingId && field("Temporary password", <input required minLength={6} type="password" value={form.password} onChange={(event) => set("password", event.target.value)} className="mt-1 w-full rounded-lg border p-3" />)}
-            {field("Father / Husband name", <input required value={form.fatherHusbandName} onChange={(event) => set("fatherHusbandName", event.target.value)} className="mt-1 w-full rounded-lg border p-3" />)}
+            {field("Father / Husband name", <input required value={form.fatherHusbandName} onChange={(event) => set("fatherHusbandName", event.target.value.toUpperCase())} className="mt-1 w-full rounded-lg border p-3" />)}
             {field("Aadhaar", <input required={!editingId} inputMode="numeric" maxLength={12} value={form.aadhaar} onChange={(event) => set("aadhaar", event.target.value.replace(/\D/g, "").slice(0, 12))} className="mt-1 w-full rounded-lg border p-3" />)}
             {field("Date of birth", <input required type="date" value={form.dob} onChange={(event) => set("dob", event.target.value)} className="mt-1 w-full rounded-lg border p-3" />)}
             {field("Gender", <select required value={form.gender} onChange={(event) => set("gender", event.target.value)} className="mt-1 w-full rounded-lg border p-3"><option value="">Select gender</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select>)}
             {field("State", <select required value={form.state} onChange={(event) => set("state", event.target.value)} className="mt-1 w-full rounded-lg border p-3"><option value="">Select state</option>{stateOptions.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}</select>)}
             {field("District", <select required disabled={!form.state} value={form.district} onChange={(event) => set("district", event.target.value)} className="mt-1 w-full rounded-lg border p-3"><option value="">Select district</option>{districtOptions.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}</select>)}
             {field("Tehsil", <select required disabled={!form.district} value={form.tehsil} onChange={(event) => set("tehsil", event.target.value)} className="mt-1 w-full rounded-lg border p-3"><option value="">Select tehsil</option>{tehsilOptions.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}</select>)}
-            {field("Town / village / city", <input required value={form.townVillage} onChange={(event) => set("townVillage", event.target.value)} className="mt-1 w-full rounded-lg border p-3" />)}
-            {field("Address", <textarea required value={form.addressLine} onChange={(event) => set("addressLine", event.target.value)} className="mt-1 min-h-20 w-full rounded-lg border p-3" />)}
+            {field("Town / village / city", <input required value={form.townVillage} onChange={(event) => set("townVillage", event.target.value.toUpperCase())} className="mt-1 w-full rounded-lg border p-3" />)}
+            {field("Address", <textarea required value={form.addressLine} onChange={(event) => set("addressLine", event.target.value.toUpperCase())} className="mt-1 min-h-20 w-full rounded-lg border p-3" />)}
             {field("Pincode", <input required inputMode="numeric" maxLength={6} value={form.pincode} onChange={(event) => set("pincode", event.target.value.replace(/\D/g, "").slice(0, 6))} className="mt-1 w-full rounded-lg border p-3" />)}
             {field("Employment status", <select required value={form.employmentStatus} onChange={(event) => set("employmentStatus", event.target.value)} className="mt-1 w-full rounded-lg border p-3"><option value="">Select status</option><option value="government">Government</option><option value="private">Private</option><option value="business">Business</option><option value="others">Others</option></select>)}
-            {field("Occupation", <input required value={form.occupation} onChange={(event) => set("occupation", event.target.value)} className="mt-1 w-full rounded-lg border p-3" />)}
+            {field("Occupation", <input required value={form.occupation} onChange={(event) => set("occupation", event.target.value.toUpperCase())} className="mt-1 w-full rounded-lg border p-3" />)}
             {field("Referral code", <input required={!editingId} value={form.referralCode} onChange={(event) => set("referralCode", event.target.value.toUpperCase())} className="mt-1 w-full rounded-lg border p-3" />)}
-            {field("Nominee name", <input required value={form.nomineeName} onChange={(event) => set("nomineeName", event.target.value)} className="mt-1 w-full rounded-lg border p-3" />)}
+            {field("Nominee name", <input required value={form.nomineeName} onChange={(event) => set("nomineeName", event.target.value.toUpperCase())} className="mt-1 w-full rounded-lg border p-3" />)}
             {field("Nominee mobile", <input required inputMode="numeric" maxLength={10} value={form.nomineeMobile} onChange={(event) => set("nomineeMobile", event.target.value.replace(/\D/g, "").slice(0, 10))} className="mt-1 w-full rounded-lg border p-3" />)}
             {field("Nominee Aadhaar", <input required inputMode="numeric" maxLength={12} value={form.nomineeAadhaar} onChange={(event) => set("nomineeAadhaar", event.target.value.replace(/\D/g, "").slice(0, 12))} className="mt-1 w-full rounded-lg border p-3" />)}
             {field("Nominee relationship", <input required value={form.nomineeRelationship} onChange={(event) => set("nomineeRelationship", event.target.value)} className="mt-1 w-full rounded-lg border p-3" />)}

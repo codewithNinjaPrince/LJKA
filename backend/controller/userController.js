@@ -114,7 +114,7 @@ const registerUser = async (req, res) => {
       });
     }
 
-    const normalizedFullName = fullName.trim();
+    const normalizedFullName = fullName.trim().toUpperCase();
 
     if (normalizedFullName.length < 3) {
       return res.status(400).json({

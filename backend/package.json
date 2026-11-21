@@ -9,7 +9,8 @@
     "prepare-member-directory": "node scripts/prepareMemberDirectory.js",
     "apply-launch-membership-expiry": "node scripts/applyLaunchMembershipExpiry.js",
     "activate-existing-admins": "node scripts/activateExistingAdmins.js",
-    "create-superadmin": "node scripts/createSuperAdmin.js"
+    "create-superadmin": "node scripts/createSuperAdmin.js",
+    "normalize-text-uppercase": "node scripts/normalizeTextToUppercase.js"
   },
   "keywords": [],
   "author": "",

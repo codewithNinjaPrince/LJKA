@@ -570,7 +570,7 @@ const Register = () => {
 
               <input
                 value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                onChange={(e) => setFullName(e.target.value.toUpperCase())}
                 placeholder="Enter your full name"
                 className="ljka-input"
                 required

@@ -6,6 +6,7 @@ const contactSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      uppercase: true,
     },
 
     email: {
@@ -25,12 +26,14 @@ const contactSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+      uppercase: true,
     },
 
     message: {
       type: String,
       required: true,
       trim: true,
+      uppercase: true,
     },
 
     status: {

@@ -452,10 +452,15 @@ const KYC = () => {
 
   /* ---------------- HANDLERS ---------------- */
   const handleChange = (name, value) => {
+    const upperCaseFields = new Set([
+      "fullName", "fatherHusbandName", "townVillage", "addressLine",
+      "occupation", "referralCode", "nomineeName",
+    ]);
+    const normalizedValue = upperCaseFields.has(name) ? value.toUpperCase() : value;
     setFormData((prev) => {
       const next = {
         ...prev,
-        [name]: value,
+        [name]: normalizedValue,
       };
 
       // When state changes, reset district and tehsil

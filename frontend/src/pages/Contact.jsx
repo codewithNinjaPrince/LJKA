@@ -41,7 +41,7 @@ const Contact = () => {
 
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+        [name]: name === "email" ? value : value.toUpperCase(),
     }));
   };
 
@@ -123,11 +123,11 @@ const Contact = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            name: formData.name.trim(),
+            name: formData.name.trim().toUpperCase(),
             email: formData.email.trim(),
             phone: formData.phone.trim(),
-            subject: formData.subject.trim(),
-            message: formData.message.trim(),
+            subject: formData.subject.trim().toUpperCase(),
+            message: formData.message.trim().toUpperCase(),
           }),
         }
       );

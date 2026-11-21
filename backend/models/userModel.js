@@ -69,22 +69,22 @@ const userSchema = new mongoose.Schema({
 
   address: {
     stateCode: { type: Number },
-    stateName: { type: String, trim: true },
+    stateName: { type: String, trim: true, uppercase: true },
 
     districtCode: { type: Number },
-    districtName: { type: String, trim: true },
+    districtName: { type: String, trim: true, uppercase: true },
 
     tehsilCode: { type: Number },
-    tehsilName: { type: String, trim: true },
+    tehsilName: { type: String, trim: true, uppercase: true },
 
-    townVillage: { type: String, trim: true },
+    townVillage: { type: String, trim: true, uppercase: true },
 
-    address: { type: String, trim: true },
+    address: { type: String, trim: true, uppercase: true },
     pincode: { type: String, trim: true },
   },
 
   employmentStatus: { type: String, enum: ["government", "private", "business", "others"] },
-  occupation: { type: String, trim: true },
+  occupation: { type: String, trim: true, uppercase: true },
 
   nominee: {
     name: { type: String, trim: true, uppercase: true },
@@ -93,7 +93,7 @@ const userSchema = new mongoose.Schema({
     relationship: { type: String, trim: true },
   },
 
-  referralCode: { type: String, trim: true },
+  referralCode: { type: String, trim: true, uppercase: true },
 
   // KYC STATUS
   kycCompleted: { type: Boolean, default: false },

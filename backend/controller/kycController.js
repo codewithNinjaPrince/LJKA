@@ -381,32 +381,32 @@ const submitKYC = async (req, res) => {
         // ==========================================
         user.referralCode = finalReferralCode;
 
-        user.fatherHusbandName = fatherHusbandName.trim();
+        user.fatherHusbandName = fatherHusbandName.trim().toUpperCase();
         user.aadhaar = aadhaar.trim();
         user.dob = dobDate;
         user.gender = gender;
 
         user.address = {
             stateCode: Number(stateCode),
-            stateName: stateName.trim(),
+            stateName: stateName.trim().toUpperCase(),
 
             districtCode: Number(districtCode),
-            districtName: districtName.trim(),
+            districtName: districtName.trim().toUpperCase(),
 
             tehsilCode: Number(tehsilCode),
-            tehsilName: tehsilName.trim(),
+            tehsilName: tehsilName.trim().toUpperCase(),
 
-            townVillage: townVillage.trim(),
+            townVillage: townVillage.trim().toUpperCase(),
 
-            address: addressLine.trim(),
+            address: addressLine.trim().toUpperCase(),
             pincode: pincode.trim(),
         };
 
         user.employmentStatus = employmentStatus;
-        user.occupation = occupation.trim();
+        user.occupation = occupation.trim().toUpperCase();
 
         user.nominee = {
-            name: nominee.name.trim(),
+            name: nominee.name.trim().toUpperCase(),
             mobile: nominee.mobile,
             aadhaar: nominee.aadhaar.trim(),
             relationship: nominee.relationship.trim(),
