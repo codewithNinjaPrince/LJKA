@@ -19,6 +19,7 @@ import {
 import { Link, useSearchParams } from "react-router-dom";
 import { LJKAContext } from "../context/LJKAContext";
 import locationData from "../data/india/locationData.json";
+import { upper } from "../utils/displayText";
 
 const DONATION_CACHE_TTL_MS = 0;
 const donationResponseCache = new Map();
@@ -625,7 +626,7 @@ const SahyogDonations = () => {
                                     </p>
 
                                     <h2 className="mt-1 text-xl font-bold text-[var(--ljka-primary)] sm:text-2xl">
-                                        {caseSummary.member?.fullName || "Sahyog Case"}
+                                        {upper(caseSummary.member?.fullName, "SAHYOG CASE")}
                                     </h2>
 
                                     <p className="mt-1 text-sm text-gray-500">
@@ -1073,7 +1074,7 @@ const SahyogDonations = () => {
                                                 {/* Donor Name */}
 
                                                 <td className="whitespace-nowrap px-4 py-4 text-sm font-medium text-gray-900">
-                                                    {donor?.fullName || (
+                                                    {donor?.fullName ? upper(donor.fullName) : (
                                                         <span className="font-medium text-gray-500">
                                                             —
                                                         </span>
@@ -1095,7 +1096,7 @@ const SahyogDonations = () => {
                                                 {/* Late Member */}
 
                                                 <td className="whitespace-nowrap px-4 py-4 text-sm font-medium text-gray-900">
-                                                    {lateMember?.fullName || "-"}
+                                                    {upper(lateMember?.fullName, "-")}
                                                 </td>
 
                                                 {/* Amount Donated */}

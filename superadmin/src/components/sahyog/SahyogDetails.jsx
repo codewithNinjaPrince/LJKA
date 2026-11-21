@@ -6,6 +6,17 @@ import { adminApi } from "../../services/adminApi.js";
 import { formatDateOnly } from "../../utils/dates.js";
 import { PageHeading, StatusBadge } from "./SahyogUi.jsx";
 
+const upper = (value, fallback = "—") => String(value ?? "").trim().toUpperCase() || fallback;
+const upperVisibleSahyog = (item) => ({
+  ...item,
+  causeOfDeath: upper(item.causeOfDeath, ""),
+  contactName: upper(item.contactName, ""),
+  address: upper(item.address, ""),
+  memberId: item.memberId ? { ...item.memberId, fullName: upper(item.memberId.fullName, ""), address: item.memberId.address ? { ...item.memberId.address, stateName: upper(item.memberId.address.stateName, ""), districtName: upper(item.memberId.address.districtName, ""), tehsilName: upper(item.memberId.address.tehsilName, "") } : item.memberId.address } : item.memberId,
+  paymentDetails: item.paymentDetails ? Object.fromEntries(Object.entries(item.paymentDetails).map(([key, value]) => [key, upper(value, "")])) : item.paymentDetails,
+  publicPayment: item.publicPayment ? { ...item.publicPayment, upiId: upper(item.publicPayment.upiId, "") } : item.publicPayment,
+});
+
 const canUpdate = (admin) => admin.role === "superadmin" || admin.permissions?.some((item) => item.module === "sahyog" && item.actions.includes("update"));
 
 export default function SahyogDetails({ token, admin, root }) {
@@ -14,7 +25,7 @@ export default function SahyogDetails({ token, admin, root }) {
   const [item, setItem] = useState(null);
 
   useEffect(() => {
-    adminApi(token).get(`/sahyog/${id}`).then((response) => setItem(response.data.sahyog)).catch((error) => toast.error(error.response?.data?.message || "Could not load Sahyog case"));
+    adminApi(token).get(`/sahyog/${id}`).then((response) => setItem(upperVisibleSahyog(response.data.sahyog))).catch((error) => toast.error(error.response?.data?.message || "Could not load Sahyog case"));
   }, [id, token]);
 
   if (!item) return <p className="py-12 text-center text-slate-500">Loading Sahyog case…</p>;

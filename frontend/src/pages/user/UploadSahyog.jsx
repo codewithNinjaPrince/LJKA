@@ -138,7 +138,7 @@ export const downloadSahyogReceipt = async (payment) => {
 const Detail = ({ label, value }) => (
   <div>
     <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--ljka-muted)]">{label}</dt>
-    <dd className="mt-1 break-words text-sm font-medium text-[var(--ljka-primary)]">{value || "—"}</dd>
+    <dd className="mt-1 break-words text-sm font-medium text-[var(--ljka-primary)]">{upper(value)}</dd>
   </div>
 );
 

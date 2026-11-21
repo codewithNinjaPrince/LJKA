@@ -20,6 +20,7 @@ import { useNavigate, useSearchParams, Link } from "react-router-dom";
 
 import { LJKAContext } from "../context/LJKAContext";
 import locationData from "../data/india/locationData.json";
+import { upper } from "../utils/displayText";
 
 const SAHYOG_CACHE_TTL_MS = 0;
 const sahyogResponseCache = new Map();
@@ -994,8 +995,7 @@ const SahyogLateMembers = () => {
                             }
                             className="font-semibold text-gray-900 hover:text-[var(--ljka-primary)] hover:underline"
                           >
-                            {item.member?.fullName ||
-                              "-"}
+                            {upper(item.member?.fullName, "-")}
                           </button>
 
                         </td>

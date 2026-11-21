@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import locationData from "@indiaLocations";
 import { adminApi } from "../services/adminApi.js";
 import { dateInputValue } from "../utils/dates.js";
+import { upper } from "../utils/displayText.js";
 
 const emptyForm = {
   fullName: "",
@@ -209,7 +210,7 @@ export default function MemberManagement({ token, canCreate, canUpdate }) {
         <tbody>
           {members.map((member) => (
             <tr key={member._id} className="border-t">
-              <td className="p-4"><b>{member.fullName}</b><br /><span className="text-slate-500">{member.email}</span></td>
+              <td className="p-4"><b>{upper(member.fullName)}</b><br /><span className="text-slate-500">{member.email}</span></td>
               <td className="p-4">{member.memberId || "—"}</td>
               <td className="p-4">{member.mobile || "—"}</td>
               <td className="p-4"><Badge value={member.kycCompleted ? "completed" : "pending"} /></td>
@@ -269,12 +270,12 @@ export default function MemberManagement({ token, canCreate, canUpdate }) {
     {selectedMember && (
       <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4" role="dialog" aria-modal="true">
         <section className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
-          <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-wide text-[#78081c]">Member details</p><h3 className="mt-1 text-xl font-bold text-slate-800">{selectedMember.fullName}</h3></div><button onClick={() => setSelectedMember(null)} className="rounded-lg border px-3 py-1.5 text-sm font-semibold">Back</button></div>
+          <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-wide text-[#78081c]">Member details</p><h3 className="mt-1 text-xl font-bold text-slate-800">{upper(selectedMember.fullName)}</h3></div><button onClick={() => setSelectedMember(null)} className="rounded-lg border px-3 py-1.5 text-sm font-semibold">Back</button></div>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <Detail label="Member ID" value={selectedMember.memberId} /><Detail label="Account status" value={selectedMember.accountStatus} /><Detail label="Email" value={selectedMember.email} /><Detail label="Mobile" value={selectedMember.mobile} /><Detail label="Aadhaar" value={selectedMember.aadhaar} /><Detail label="KYC status" value={selectedMember.kycCompleted ? "Completed" : "Pending"} /><Detail label="Referral code" value={selectedMember.referralCode} /><Detail label="Father / Husband name" value={selectedMember.fatherHusbandName} /><Detail label="Date of birth" value={selectedMember.dob ? new Date(selectedMember.dob).toLocaleDateString("en-IN") : "—"} /><Detail label="Gender" value={selectedMember.gender} /><Detail label="Occupation" value={selectedMember.occupation} /><Detail label="Employment status" value={selectedMember.employmentStatus} /><Detail label="Registered" value={selectedMember.createdAt ? new Date(selectedMember.createdAt).toLocaleString("en-IN") : "—"} />
+            <Detail label="Member ID" value={selectedMember.memberId} /><Detail label="Account status" value={selectedMember.accountStatus} /><Detail label="Email" value={selectedMember.email} /><Detail label="Mobile" value={selectedMember.mobile} /><Detail label="Aadhaar" value={selectedMember.aadhaar} /><Detail label="KYC status" value={selectedMember.kycCompleted ? "Completed" : "Pending"} /><Detail label="Referral code" value={upper(selectedMember.referralCode)} /><Detail label="Father / Husband name" value={upper(selectedMember.fatherHusbandName)} /><Detail label="Date of birth" value={selectedMember.dob ? new Date(selectedMember.dob).toLocaleDateString("en-IN") : "—"} /><Detail label="Gender" value={selectedMember.gender} /><Detail label="Occupation" value={upper(selectedMember.occupation)} /><Detail label="Employment status" value={selectedMember.employmentStatus} /><Detail label="Registered" value={selectedMember.createdAt ? new Date(selectedMember.createdAt).toLocaleString("en-IN") : "—"} />
           </div>
-          <section className="mt-6 rounded-xl bg-slate-50 p-4"><h4 className="font-bold text-[#5a0615]">Address</h4><p className="mt-2 text-sm leading-6">{[selectedMember.address?.address, selectedMember.address?.townVillage, selectedMember.address?.tehsilName, selectedMember.address?.districtName, selectedMember.address?.stateName, selectedMember.address?.pincode].filter(Boolean).join(", ") || "—"}</p></section>
-          <section className="mt-4 rounded-xl bg-slate-50 p-4"><h4 className="font-bold text-[#5a0615]">Nominee</h4><p className="mt-2 text-sm leading-6">{selectedMember.nominee?.name || "—"} · {selectedMember.nominee?.relationship || "—"}<br />{selectedMember.nominee?.mobile || "—"}{selectedMember.nominee?.aadhaar ? ` · Aadhaar: ${selectedMember.nominee.aadhaar}` : ""}</p></section>
+          <section className="mt-6 rounded-xl bg-slate-50 p-4"><h4 className="font-bold text-[#5a0615]">Address</h4><p className="mt-2 text-sm leading-6">{upper([selectedMember.address?.address, selectedMember.address?.townVillage, selectedMember.address?.tehsilName, selectedMember.address?.districtName, selectedMember.address?.stateName, selectedMember.address?.pincode].filter(Boolean).join(", "))}</p></section>
+          <section className="mt-4 rounded-xl bg-slate-50 p-4"><h4 className="font-bold text-[#5a0615]">Nominee</h4><p className="mt-2 text-sm leading-6">{upper(selectedMember.nominee?.name)} · {selectedMember.nominee?.relationship || "—"}<br />{selectedMember.nominee?.mobile || "—"}{selectedMember.nominee?.aadhaar ? ` · Aadhaar: ${selectedMember.nominee.aadhaar}` : ""}</p></section>
           <p className="mt-5 text-xs text-slate-500">Aadhaar details are visible only in the Super Admin portal.</p>
         </section>
       </div>

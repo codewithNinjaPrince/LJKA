@@ -3,6 +3,7 @@ import html2canvas from "html2canvas-pro";
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
 import { LJKAContext } from "../../context/LJKAContext";
+import { upper } from "../../utils/displayText";
 
 const DownloadIdCard = () => {
   const { user } = useContext(LJKAContext);
@@ -317,7 +318,7 @@ const DownloadIdCard = () => {
               </p>
 
               <p className="truncate text-lg font-extrabold text-[var(--ljka-primary)]">
-                {user.fullName || "—"}
+                {upper(user.fullName)}
               </p>
             </div>
 
@@ -474,7 +475,7 @@ const DownloadIdCard = () => {
                   </p>
 
                   <p className="text-[9px] font-semibold capitalize text-gray-700">
-                    {user.occupation || "—"}
+                    {upper(user.occupation)}
                   </p>
                 </div>
               </div>
@@ -503,7 +504,7 @@ const DownloadIdCard = () => {
 
               <div className="mt-1 flex justify-between gap-4">
                 <p className="text-[9px] font-bold text-gray-700">
-                  {user.nominee?.name || "—"}
+                  {upper(user.nominee?.name)}
                 </p>
 
                 <p className="text-[9px] font-semibold capitalize text-gray-600">

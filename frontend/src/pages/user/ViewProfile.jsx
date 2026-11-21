@@ -8,6 +8,7 @@ import { FaCalendarAlt, FaCheckCircle, FaExclamationTriangle } from "react-icons
 import { useNavigate } from "react-router-dom";
 
 import { LJKAContext } from "../../context/LJKAContext";
+import { upper } from "../../utils/displayText";
 
 const getMembershipExpiry = (profile) => {
   // Membership is not active until payment is completed.
@@ -253,7 +254,7 @@ const ViewProfile = () => {
 
         <Detail
           label="Full Name"
-          value={user.fullName}
+          value={upper(user.fullName)}
         />
 
         <Detail
@@ -268,7 +269,7 @@ const ViewProfile = () => {
 
         <Detail
           label="Father / Husband Name"
-          value={user.fatherHusbandName}
+          value={upper(user.fatherHusbandName)}
         />
 
         <Detail
@@ -288,7 +289,7 @@ const ViewProfile = () => {
 
         <Detail
           label="Occupation"
-          value={user.occupation}
+          value={upper(user.occupation)}
         />
 
       </ProfileSection>
@@ -302,27 +303,27 @@ const ViewProfile = () => {
 
         <Detail
           label="Address Line"
-          value={user.address?.address}
+          value={upper(user.address?.address)}
         />
 
         <Detail
           label="Town / Village"
-          value={user.address?.townVillage}
+          value={upper(user.address?.townVillage)}
         />
 
         <Detail
           label="Tehsil / Sub District"
-          value={user.address?.tehsilName}
+          value={upper(user.address?.tehsilName)}
         />
 
         <Detail
           label="District"
-          value={user.address?.districtName}
+          value={upper(user.address?.districtName)}
         />
 
         <Detail
           label="State"
-          value={user.address?.stateName}
+          value={upper(user.address?.stateName)}
         />
 
         <Detail
@@ -338,7 +339,7 @@ const ViewProfile = () => {
       ========================================== */}
 
       <ProfileSection title="Nominee Details">
-        <Detail label="Nominee Name" value={user.nominee?.name} />
+        <Detail label="Nominee Name" value={upper(user.nominee?.name)} />
         <Detail label="Relationship" value={formatRelationship(user.nominee?.relationship)} />
         <Detail label="Mobile" value={user.nominee?.mobile} />
         <Detail label="Aadhaar" value={maskAadhaar(user.nominee?.aadhaar)} />
@@ -346,7 +347,7 @@ const ViewProfile = () => {
 
       <ProfileSection title="KYC & Account Details">
         <Detail label="Aadhaar" value={maskAadhaar(user.aadhaar)} />
-        <Detail label="Referral Code" value={user.referralCode} />
+        <Detail label="Referral Code" value={upper(user.referralCode)} />
         <Detail label="Email Verified" value={user.emailVerified ? "Verified" : "Not Verified"} />
         <Detail label="Mobile Verified" value={user.mobileVerified ? "Verified" : "Not Verified"} />
         <Detail label="Registered On" value={formatDate(user.createdAt)} />
